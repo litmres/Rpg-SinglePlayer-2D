@@ -11,7 +11,7 @@ class SimpleGame {
 		this.game = new Phaser.Game( 800, 600, Phaser.AUTO, "content", { preload: this.preload, create: this.create} );
 	}
 	
-	preload() {
+	private preload() {
 		// add our logo image to the assets class under the
 		// key 'logo'. We're also setting the background colour
 		// so it's the same as the background colour in the image
@@ -19,7 +19,7 @@ class SimpleGame {
 		this.game.stage.backgroundColor = 0xB20059;
 	}
 	
-	create() {
+	private create() {
 		// add the 'logo' sprite to the game, position it in the
 		// center of the screen, and set the anchor to the center of
 		// the image so it's centered properly. There's a lot of
