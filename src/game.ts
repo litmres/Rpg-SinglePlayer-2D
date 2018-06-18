@@ -1,9 +1,13 @@
 class SimpleGame {
 	public game: Phaser.Game;
 	public loadingText:Phaser.Text;
+	private gameWidth = 800;
+	private gameHeight = 600;
+	private gameState = gameStateEnum.startMenu;
+	
 	
 	constructor() {
-		this.game = new Phaser.Game( 800, 600, Phaser.AUTO, "content", { preload: this.preload, create: this.create} );
+		this.game = new Phaser.Game( this.gameWidth, this.gameHeight, Phaser.AUTO, "content", { preload: this.preload, create: this.create} );
 		this.loadingText = this.game.add.text(0, 0, "", {
 			fill: "#ffffff",
 		});
@@ -17,8 +21,10 @@ class SimpleGame {
 	}
 	
 	private create() {
+		this.loadingText.destroy();
 		const logo = this.game.add.sprite( this.game.world.centerX, this.game.world.centerY, "logo" );
 		logo.anchor.setTo( 0.5, 0.5 );
+		this.game.world.setBounds(0, 0, this.gameWidth, this.gameHeight);
 	}
 }
 
@@ -35,6 +41,7 @@ function assets(this:SimpleGame) {
 		fill: "#ffffff",
 	});
 	this.game.stage.backgroundColor = 0xB20059;
+	this.game.load.spritesheet("player", "assets/player_placeholder.png", 31, 24);
 }
 
 function finishedLoading(this:SimpleGame) {
