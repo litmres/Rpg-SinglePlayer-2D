@@ -1,8 +1,8 @@
 {
     "defaultSeverity": "error",
-    "extends": [
+    /*"extends": [
         "tslint:recommended"
-    ],
+    ],*/
     "jsRules": {},
     "rules": {
         "indent": [
