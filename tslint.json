@@ -5,11 +5,7 @@
     ],*/
     "jsRules": {},
     "rules": {
-        "indent": [
-            true,
-            "tabs",
-            4
-        ],
+        "indent": false,
         // "no-string-literal": true, // we use query['foo'] in some cases to make clear that it is an any...
         "no-inferrable-types": true,
         "no-internal-module": true,
