@@ -1,42 +1,28 @@
 "use strict";
-var SimpleGame = /** @class */ (function () {
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+var SimpleGame = /** @class */ (function (_super) {
+    __extends(SimpleGame, _super);
     function SimpleGame() {
-        this.gameWidth = 800;
-        this.gameHeight = 600;
-        this.gameState = gameStateEnum.startMenu;
-        this.game = new Phaser.Game(this.gameWidth, this.gameHeight, Phaser.AUTO, "content", { preload: this.preload, create: this.create });
-        this.loadingText = this.game.add.text(0, 0, "", {
-            fill: "#ffffff",
-        });
+        var _this = _super.call(this, 800, 600, Phaser.AUTO, "content", null) || this;
+        _this.state.add("boot", new BootState());
+        _this.state.add("preload", new PreloadState());
+        _this.state.add("title", new TitleState());
+        _this.state.add("play", new PlayState());
+        _this.state.start("boot");
+        return _this;
     }
-    SimpleGame.prototype.preload = function () {
-        this.game.load.onLoadStart.add(assets, this);
-        this.game.load.image("logo", "assets/ds_logo.png");
-        this.game.load.onFileComplete.add(progressBar, this);
-        this.game.load.onLoadComplete.add(finishedLoading, this);
-    };
-    SimpleGame.prototype.create = function () {
-        this.loadingText.destroy();
-        var logo = this.game.add.sprite(this.game.world.centerX, this.game.world.centerY, "logo");
-        logo.anchor.setTo(0.5, 0.5);
-        this.game.world.setBounds(0, 0, this.gameWidth, this.gameHeight);
-    };
     return SimpleGame;
-}());
+}(Phaser.Game));
 window.onload = function () {
     var game = new SimpleGame();
 };
-function progressBar(progress, cacheKey, success, totalLoaded, totalFiles) {
-    this.loadingText.setText("File Complete: " + progress + "% - " + totalLoaded + " out of " + totalFiles);
-}
-function assets() {
-    this.loadingText = this.game.add.text(this.game.camera.x, this.game.camera.height / 2, "loading...", {
-        fill: "#ffffff",
-    });
-    this.game.stage.backgroundColor = 0xB20059;
-    this.game.load.spritesheet("player", "assets/player_placeholder.png", 31, 24);
-}
-function finishedLoading() {
-    this.loadingText.setText("Load Complete");
-}
 //# sourceMappingURL=game.js.map
