@@ -1,9 +1,12 @@
 class SimpleGame {
-	private game: Phaser.Game;
-	private loadingText:Phaser.Text;
+	public game: Phaser.Game;
+	public loadingText:Phaser.Text;
 	
 	constructor() {
 		this.game = new Phaser.Game( 800, 600, Phaser.AUTO, "content", { preload: this.preload, create: this.create} );
+		this.loadingText = this.game.add.text(0, 0, "", {
+			fill: "#ffffff",
+		});
 	}
 	
 	private preload() {
@@ -11,7 +14,6 @@ class SimpleGame {
 		this.game.load.image( "logo", "assets/ds_logo.png" );
 		this.game.load.onFileComplete.add(progressBar, this);
 		this.game.load.onLoadComplete.add(finishedLoading, this);
-
 	}
 	
 	private create() {
@@ -24,17 +26,17 @@ window.onload = () => {
 	const game = new SimpleGame();
 };
 
-function progressBar(progress, cacheKey, success, totalLoaded, totalFiles) {
+function progressBar(this:SimpleGame, progress:Phaser.Loader, cacheKey:Phaser.Cache, success:Phaser.Signal, totalLoaded:Phaser.Loader, totalFiles:Phaser.Loader) {
 	this.loadingText.setText("File Complete: " + progress + "% - " + totalLoaded + " out of " + totalFiles);
 }
 
-function assets() {
+function assets(this:SimpleGame) {
 	this.loadingText = this.game.add.text(this.game.camera.x, this.game.camera.height / 2, "loading...", {
 		fill: "#ffffff",
 	});
 	this.game.stage.backgroundColor = 0xB20059;
 }
 
-function finishedLoading() {
+function finishedLoading(this:SimpleGame) {
 	this.loadingText.setText("Load Complete");
 }
