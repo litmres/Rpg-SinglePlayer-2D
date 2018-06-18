@@ -1,6 +1,7 @@
 class PreloadState extends Phaser.State {
-    background!:any;
+    background!:number|Phaser.Image;
     loadingText!:Phaser.Text;
+    logo!:Phaser.Image;
     preload() {
         this.game.load.onLoadStart.add(this.assets, this);
 		this.game.load.image( "logo", "assets/ds_logo.png" );
@@ -10,10 +11,6 @@ class PreloadState extends Phaser.State {
         
     create() {
         this.loadingText.destroy();
-		const logo = this.game.add.sprite( this.game.world.centerX, this.game.world.centerY, "logo" );
-		logo.anchor.setTo( 0.5, 0.5 );
-		this.game.world.setBounds(0, 0, this.game.width, this.game.height);
-        logo.destroy();
         this.startTitleMenu();
     }
         

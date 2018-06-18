@@ -16,7 +16,11 @@ var Player = /** @class */ (function (_super) {
         _this.anchor.setTo(0.5, 0);
         game.physics.arcade.enableBody(_this);
         game.add.existing(_this);
+        _this.body.gravity.y = 1000;
+        _this.body.collideWorldBounds = true;
+        game.physics.enable(_this, Phaser.Physics.ARCADE);
         return _this;
+        //this.health = new Health();
     }
     Player.prototype.update = function () {
         this.body.velocity.x = 0;

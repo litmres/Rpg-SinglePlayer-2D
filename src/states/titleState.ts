@@ -9,7 +9,7 @@ class TitleState extends Phaser.State {
     create() {
         this.game.stage.backgroundColor = this.background;
         this.logo = this.game.add.sprite( this.game.world.centerX, this.game.world.centerY, "logo" );
-            
+        this.logo.anchor.setTo( 0.5, 0.5 );
         this.input.onDown.addOnce(this.fadeOut, this);
     }
         

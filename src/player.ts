@@ -5,6 +5,10 @@ class Player extends Phaser.Sprite {
         this.anchor.setTo(0.5, 0);
         game.physics.arcade.enableBody(this);
         game.add.existing(this);
+        this.body.gravity.y = 1000;
+        this.body.collideWorldBounds = true;
+        game.physics.enable(this, Phaser.Physics.ARCADE);
+        //this.health = new Health();
     }
     
     update() {

@@ -22,10 +22,6 @@ var PreloadState = /** @class */ (function (_super) {
     };
     PreloadState.prototype.create = function () {
         this.loadingText.destroy();
-        var logo = this.game.add.sprite(this.game.world.centerX, this.game.world.centerY, "logo");
-        logo.anchor.setTo(0.5, 0.5);
-        this.game.world.setBounds(0, 0, this.game.width, this.game.height);
-        logo.destroy();
         this.startTitleMenu();
     };
     PreloadState.prototype.startTitleMenu = function () {
