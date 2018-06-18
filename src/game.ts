@@ -4,7 +4,8 @@ class SimpleGame extends Phaser.Game{
 		this.state.add("boot", new BootState());
 		this.state.add("preload", new PreloadState());
         this.state.add("title", new TitleState());
-        this.state.add("play", new PlayState());
+		this.state.add("play", new PlayState());
+		this.state.add("level1", new Level1());
         
        this.state.start("boot");
 	}

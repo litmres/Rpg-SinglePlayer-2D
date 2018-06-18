@@ -16,7 +16,7 @@ var PreloadState = /** @class */ (function (_super) {
     }
     PreloadState.prototype.preload = function () {
         this.game.load.onLoadStart.add(this.assets, this);
-        this.game.load.image("logo", "assets/ds_logo.png");
+        this.game.load.image("floor", "assets/floor.png");
         this.game.load.onFileComplete.add(this.progressBar, this);
         this.game.load.onLoadComplete.add(this.finishedLoading, this);
     };
@@ -36,7 +36,10 @@ var PreloadState = /** @class */ (function (_super) {
         });
         this.game.stage.backgroundColor = 0xB20059;
         this.game.load.spritesheet("player", "assets/player_placeholder.png", 24, 31);
-        this.game.load.image("ground", "assets/platform.png");
+        this.game.load.image("floor", "assets/floor.png");
+        this.game.load.image("wall", "assets/wall.png");
+        this.game.load.image("gate", "assets/gate.png");
+        this.game.load.image("ceiling", "assets/ceiling.png");
     };
     PreloadState.prototype.finishedLoading = function () {
         this.loadingText.setText("Load Complete");

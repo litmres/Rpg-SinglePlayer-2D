@@ -17,6 +17,7 @@ var SimpleGame = /** @class */ (function (_super) {
         _this.state.add("preload", new PreloadState());
         _this.state.add("title", new TitleState());
         _this.state.add("play", new PlayState());
+        _this.state.add("level1", new Level1());
         _this.state.start("boot");
         return _this;
     }
