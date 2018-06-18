@@ -42,7 +42,7 @@ window.onload = () => {
 };
 
 const assets = () => {
-	//this.game.load.image( "logo", "assets/ds_logo.png" );
+	this.game.load.image( "logo", "assets/ds_logo.png" );
 };
 
 const progressBar = (progress, cacheKey, success, totalLoaded, totalFiles, text) => {
