@@ -11,6 +11,14 @@ enum playerStateEnum {
 	idle,
 }
 
+enum npcStateEnum {
+	movingLeft = 0,
+	movingRight,
+	movingJump,
+	movingFall,
+	idle,
+}
+
 enum levelsEnum {
 	level0 = 0,
 	level1,

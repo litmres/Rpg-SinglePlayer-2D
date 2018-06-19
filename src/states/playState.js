@@ -27,6 +27,8 @@ var PlayState = /** @class */ (function (_super) {
         this.platforms.forEach(function (platform) {
             platform.body.immovable = true;
         });
+        this.npcs = this.game.add.group();
+        this.npcs.add(new RogueNpc(this.game, 600, ground.y - ground.height));
         this.game.time.advancedTiming = true;
         this.game.physics.enable(ground, Phaser.Physics.ARCADE);
     };
@@ -40,11 +42,26 @@ var PlayState = /** @class */ (function (_super) {
         this.player = new Player(this.game, this.playerStorage.x, this.playerStorage.y);
         this.player.x += this.player.width;
         this.player.y -= this.player.height * 2;
+        this.game.physics.startSystem(Phaser.Physics.ARCADE);
     };
     PlayState.prototype.update = function () {
         this.game.physics.arcade.collide(this.player, this.platforms);
-        if (this.player.x > 200) {
+        this.game.physics.arcade.collide(this.npcs, this.platforms);
+        if (this.player.x >= this.game.width - this.player.width) {
             this.nextLevel();
+        }
+        this.playerFacingNpc();
+    };
+    PlayState.prototype.playerFacingNpc = function () {
+        for (var ii = 0; ii < this.npcs.children.length; ii++) {
+            if (this.game.physics.arcade.distanceBetween(this.player, this.npcs.children[ii]) < this.npcs.children[ii].interactRange) {
+                this.npcs.children[ii].canInteract = true;
+                this.player.facingNpc = this.npcs.children[ii];
+            }
+            else {
+                this.npcs.children[ii].canInteract = false;
+                this.player.facingNpc = null;
+            }
         }
     };
     PlayState.prototype.nextLevel = function () {

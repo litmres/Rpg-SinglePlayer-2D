@@ -32,22 +32,43 @@ var Player = /** @class */ (function (_super) {
         _this.body.gravity.y = 1000;
         _this.body.collideWorldBounds = true;
         game.physics.enable(_this, Phaser.Physics.ARCADE);
-        return _this;
         //this.health = new Health();
+        _this.controls = {
+            UP: game.input.keyboard.addKey(Phaser.Keyboard.W),
+            DOWN: game.input.keyboard.addKey(Phaser.Keyboard.S),
+            LEFT: game.input.keyboard.addKey(Phaser.Keyboard.A),
+            RIGHT: game.input.keyboard.addKey(Phaser.Keyboard.D),
+            E: game.input.keyboard.addKey(Phaser.Keyboard.E),
+            ESC: game.input.keyboard.addKey(Phaser.Keyboard.ESC),
+            P: game.input.keyboard.addKey(Phaser.Keyboard.P)
+        };
+        game.input.keyboard.addKeyCapture([
+            Phaser.Keyboard.W,
+            Phaser.Keyboard.A,
+            Phaser.Keyboard.S,
+            Phaser.Keyboard.D,
+            Phaser.Keyboard.E
+        ]);
+        return _this;
     }
     Player.prototype.update = function () {
         this.resetVelocity();
-        if (this.game.input.keyboard.isDown(Phaser.Keyboard.LEFT)) {
+        if (this.controls.LEFT.isDown) {
             this.moveLeft();
         }
-        else if (this.game.input.keyboard.isDown(Phaser.Keyboard.RIGHT)) {
+        else if (this.controls.RIGHT.isDown) {
             this.moveRight();
         }
         else {
             this.idle();
         }
-        if (this.game.input.keyboard.isDown(Phaser.Keyboard.ESC) || this.game.input.keyboard.isDown(Phaser.Keyboard.P)) {
+        if (this.controls.ESC.isDown || this.controls.P.isDown) {
             this.handlePauseMenu();
+        }
+        if (this.controls.E.justPressed()) {
+            if (this.facingNpc) {
+                this.facingNpc.nextDialogueText();
+            }
         }
         this.fpsCounter.setText("FPS: " + this.game.time.fps);
     };

@@ -1,6 +1,7 @@
 class Player extends Phaser.Sprite {
     playerState:playerStateEnum = playerStateEnum.idle;
     lastCheckPoint:levelsEnum = levelsEnum.level0;
+    facingNpc!:RogueNpc;
     pauseMenu:any = {
         backgroundImage: null,
         continueGame: null,
@@ -12,6 +13,7 @@ class Player extends Phaser.Sprite {
         font: "24px Arial",
         fill: "#fff"
     });
+    controls:any;
     constructor(game: Phaser.Game, x: number, y: number) {
         super(game, x, y, "player", 0);
         this.anchor.setTo(0.5, 0);
@@ -21,23 +23,45 @@ class Player extends Phaser.Sprite {
         this.body.collideWorldBounds = true;
         game.physics.enable(this, Phaser.Physics.ARCADE);
         //this.health = new Health();
+        this.controls = {
+            UP:game.input.keyboard.addKey(Phaser.Keyboard.W),
+            DOWN:game.input.keyboard.addKey(Phaser.Keyboard.S),
+            LEFT:game.input.keyboard.addKey(Phaser.Keyboard.A),
+            RIGHT:game.input.keyboard.addKey(Phaser.Keyboard.D),
+            E:game.input.keyboard.addKey(Phaser.Keyboard.E),
+            ESC:game.input.keyboard.addKey(Phaser.Keyboard.ESC),
+            P:game.input.keyboard.addKey(Phaser.Keyboard.P)
+        };
+        game.input.keyboard.addKeyCapture([
+            Phaser.Keyboard.W,
+            Phaser.Keyboard.A,
+            Phaser.Keyboard.S,
+            Phaser.Keyboard.D,
+            Phaser.Keyboard.E
+        ]);
     }
     
     update() {
         this.resetVelocity();
         
-        if (this.game.input.keyboard.isDown(Phaser.Keyboard.LEFT)) {
+        if (this.controls.LEFT.isDown) {
             this.moveLeft();
-        } else if (this.game.input.keyboard.isDown(Phaser.Keyboard.RIGHT)) {
+        } else if (this.controls.RIGHT.isDown) {
             this.moveRight();
         }else{
             this.idle();
         }
 
-        if(this.game.input.keyboard.isDown(Phaser.Keyboard.ESC) || this.game.input.keyboard.isDown(Phaser.Keyboard.P)){
+        if(this.controls.ESC.isDown || this.controls.P.isDown){
             this.handlePauseMenu();
         }
-        
+
+        if(this.controls.E.justPressed()){
+            if(this.facingNpc){
+                this.facingNpc.nextDialogueText();
+            }
+        }
+
         this.fpsCounter.setText("FPS: " + this.game.time.fps);
     }
 

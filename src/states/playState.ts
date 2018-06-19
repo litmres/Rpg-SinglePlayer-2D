@@ -5,6 +5,7 @@ class PlayState extends Phaser.State {
     player!: Player;
     platforms!:Phaser.Group;
     playerStorage:savePlayerInterface = JSON.parse(window.localStorage.getItem("player")!);
+    npcs!:Phaser.Group;
 
     preload(){
         this.background = 0x49801;
@@ -19,6 +20,9 @@ class PlayState extends Phaser.State {
         this.platforms.forEach(function(platform:Phaser.Sprite){
             platform.body.immovable = true;
         });
+
+        this.npcs = this.game.add.group();
+        this.npcs.add(new RogueNpc(this.game, 600, ground.y - ground.height));
 
         this.game.time.advancedTiming = true;
 
@@ -35,13 +39,30 @@ class PlayState extends Phaser.State {
         this.player = new Player(this.game, this.playerStorage.x, this.playerStorage.y);
         this.player.x += this.player.width;
         this.player.y -= this.player.height*2;
+        this.game.physics.startSystem(Phaser.Physics.ARCADE);
     }
 
     update(){
         this.game.physics.arcade.collide(this.player, this.platforms);
-        if(this.player.x > 200){
+        this.game.physics.arcade.collide(this.npcs, this.platforms);
+        if(this.player.x >= this.game.width - this.player.width){
             this.nextLevel();
         }
+
+        this.playerFacingNpc();
+    }
+
+    playerFacingNpc(){
+        for(let ii = 0; ii < this.npcs.children.length; ii++){
+            if(this.game.physics.arcade.distanceBetween(this.player, this.npcs.children[ii]) < this.npcs.children[ii].interactRange){
+                this.npcs.children[ii].canInteract = true;
+                this.player.facingNpc = this.npcs.children[ii];
+            }else{
+                this.npcs.children[ii].canInteract = false;
+                this.player.facingNpc = null;
+            }
+        }
+        
     }
 
     nextLevel(){

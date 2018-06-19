@@ -40,6 +40,7 @@ var PreloadState = /** @class */ (function (_super) {
         this.game.load.image("wall", "assets/wall.png");
         this.game.load.image("gate", "assets/gate.png");
         this.game.load.image("ceiling", "assets/ceiling.png");
+        this.game.load.spritesheet("rogue", "assets/rogue.png", 32, 32);
     };
     PreloadState.prototype.finishedLoading = function () {
         this.loadingText.setText("Load Complete");
