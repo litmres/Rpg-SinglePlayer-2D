@@ -6,6 +6,7 @@ class Level1 extends Phaser.State {
     platforms!:Phaser.Group;
     enemies!:Phaser.Group;
     playerStorage:savePlayerInterface = JSON.parse(window.localStorage.getItem("player")!);
+    npcs!:Phaser.Group;
     interActive:any = {
         gate1: {
             closed:false,
@@ -21,7 +22,6 @@ class Level1 extends Phaser.State {
 
         this.platforms = this.game.add.group();
         this.platforms.enableBody = true;
-
 
         const ground = this.platforms.create(0, this.game.height, "floor");
         ground.y -= ground.height;
@@ -45,17 +45,31 @@ class Level1 extends Phaser.State {
             platform.body.immovable = true;
         });
 
+        this.enemies = this.game.add.group();
+        this.enemies.add(new RogueEnemy(this.game, 600, ground.y - ground.height));
+
         this.physics.enable(this.platforms, Phaser.Physics.ARCADE);
     }
         
     create() {
         this.game.stage.backgroundColor = this.background;
         this.game.world.setBounds(0, 0, this.game.width, this.game.height);
-        this.player = new Player(this.game, this.playerStorage.x, this.playerStorage.y);
+        this.player = new Player(this.game, 0, 0);
+        this.loadPlayer();
+    }
+
+    loadPlayer(){
+        if(this.playerStorage){
+            this.player.stats = this.playerStorage.stats;
+            this.player.x = this.playerStorage.x;
+            this.player.y = this.playerStorage.y;
+            this.player.lastCheckPoint = this.playerStorage.lastCheckPoint;
+        }
     }
 
     update(){
         this.game.physics.arcade.collide(this.player, this.platforms);
+        this.game.physics.arcade.collide(this.enemies, this.platforms);
 
         this.closeGate();
         this.openGate();
@@ -80,8 +94,7 @@ class Level1 extends Phaser.State {
         const savePlayer:savePlayerInterface = {
             lastCheckPoint: this.player.lastCheckPoint,
             currentRoom:this.levelNumber,
-            maxhp:this.player.maxHealth,
-            hp:this.player.health,
+            stats:this.player.stats,
             y:this.player.y,
             x:x,
         };
@@ -91,23 +104,71 @@ class Level1 extends Phaser.State {
     closeGate(){
         if(!this.interActive.gate1.closed && !this.roomIsClear() && this.player.x > this.interActive.gate1.gate.x + this.interActive.gate1.gate.width*2){
             this.interActive.gate1.closed = true;
-            this.interActive.gate1.gate.y += this.interActive.gate1.gate.height;
+            const endX = this.interActive.gate1.gate.x;
+            const endY = this.interActive.gate1.gate.y + this.interActive.gate1.gate.height;
+            this.game.physics.arcade.moveToXY(
+                this.interActive.gate1.gate,
+                this.interActive.gate1.gate.x,
+                this.interActive.gate1.gate.y + this.interActive.gate1.gate.height,
+                0.2,
+                500
+            );
+
+            this.game.time.events.add(500, () => {
+                this.interActive.gate1.gate.body.velocity.x = 0;
+                this.interActive.gate1.gate.body.velocity.y = 0;
+                this.interActive.gate1.gate.body.x = endX;
+                this.interActive.gate1.gate.body.y = endY;
+            }, this);
         }
     }
 
     openGate(){
         if(this.interActive.gate1.closed && this.roomIsClear()){
             this.interActive.gate1.closed = false;
-            this.interActive.gate1.gate.y -= this.interActive.gate1.gate.height;
+            const endX = this.interActive.gate1.gate.x;
+            const endY = this.interActive.gate1.gate.y -= this.interActive.gate1.gate.height;
+            this.game.physics.arcade.moveToXY(
+                this.interActive.gate1.gate,
+                endX,
+                endY,
+                0.1,
+                500
+            );
+
+            this.game.time.events.add(500, () => {
+                this.interActive.gate1.gate.body.velocity.x = 0;
+                this.interActive.gate1.gate.body.velocity.y = 0;
+                this.interActive.gate1.gate.body.x = endX;
+                this.interActive.gate1.gate.body.y = endY;
+            }, this);
         }
 
         if(this.interActive.gate2.closed && this.roomIsClear()){
             this.interActive.gate2.closed = false;
-            this.interActive.gate2.gate.y -= this.interActive.gate2.gate.height;
+            const endX = this.interActive.gate2.gate.x;
+            const endY = this.interActive.gate2.gate.y -= this.interActive.gate2.gate.height;
+            this.game.physics.arcade.moveToXY(
+                this.interActive.gate2.gate,
+                endX,
+                endY,
+                0.1,
+                500
+            );
+
+            this.game.time.events.add(500, () => {
+                this.interActive.gate2.gate.body.velocity.x = 0;
+                this.interActive.gate2.gate.body.velocity.y = 0;
+                this.interActive.gate2.gate.body.x = endX;
+                this.interActive.gate2.gate.body.y = endY;
+            }, this);
         }
     }
 
     roomIsClear():boolean{
+        if(this.enemies.children.length === 0){
+            return true;
+        }
         return false;
     }
 }

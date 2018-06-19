@@ -32,14 +32,20 @@ class PlayState extends Phaser.State {
     create() {
         this.game.stage.backgroundColor = this.background;
         this.game.world.setBounds(0, 0, this.game.width, this.game.height);
-        if(!this.playerStorage){
-            this.playerStorage!.x = 0;
-            this.playerStorage!.y = 0;
-        }
-        this.player = new Player(this.game, this.playerStorage.x, this.playerStorage.y);
+        this.player = new Player(this.game, 0, 0);
         this.player.x += this.player.width;
         this.player.y -= this.player.height*2;
+        this.loadPlayer();
         this.game.physics.startSystem(Phaser.Physics.ARCADE);
+    }
+
+    loadPlayer(){
+        if(this.playerStorage){
+            this.player.stats = this.playerStorage.stats;
+            this.player.x = this.playerStorage.x;
+            this.player.y = this.playerStorage.y;
+            this.player.lastCheckPoint = this.playerStorage.lastCheckPoint;
+        }
     }
 
     update(){
@@ -74,8 +80,7 @@ class PlayState extends Phaser.State {
         const savePlayer:savePlayerInterface = {
             lastCheckPoint: this.player.lastCheckPoint,
             currentRoom:this.levelNumber,
-            maxhp:this.player.maxHealth,
-            hp:this.player.health,
+            stats:this.player.stats,
             y:this.player.y,
             x:x,
         };

@@ -52,6 +52,13 @@ var TitleState = /** @class */ (function (_super) {
                 this.game.state.start("play", true, false);
                 break;
             case this.loadGame:
+                var loadedGame = JSON.parse(window.localStorage.getItem("player"));
+                if (loadedGame) {
+                    this.game.state.start("level" + loadedGame.currentRoom);
+                }
+                else {
+                    alert("no Saved Game Found!");
+                }
                 break;
             case this.Options:
                 break;

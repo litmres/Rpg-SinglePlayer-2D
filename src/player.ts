@@ -1,7 +1,7 @@
 class Player extends Phaser.Sprite {
     playerState:playerStateEnum = playerStateEnum.idle;
     lastCheckPoint:levelsEnum = levelsEnum.level0;
-    facingNpc!:RogueNpc;
+    facingNpc:any;
     pauseMenu:any = {
         backgroundImage: null,
         continueGame: null,
@@ -13,6 +13,9 @@ class Player extends Phaser.Sprite {
         font: "24px Arial",
         fill: "#fff"
     });
+    stats:playerStatsInterface;
+    playerHealthBar:any = null;
+    playerStaminaBar:any = null;
     controls:any;
     constructor(game: Phaser.Game, x: number, y: number) {
         super(game, x, y, "player", 0);
@@ -22,7 +25,16 @@ class Player extends Phaser.Sprite {
         this.body.gravity.y = 1000;
         this.body.collideWorldBounds = true;
         game.physics.enable(this, Phaser.Physics.ARCADE);
-        //this.health = new Health();
+        this.stats = {
+            maxHealth: this.maxHealth,
+            health: this.maxHealth,
+            maxStamina: this.maxHealth,
+            stamina: this.maxHealth,
+            attack: 1,
+            defense: 1,
+            movespeed: 1,
+            luck: 1,
+        };
         this.controls = {
             UP:game.input.keyboard.addKey(Phaser.Keyboard.W),
             DOWN:game.input.keyboard.addKey(Phaser.Keyboard.S),
@@ -39,8 +51,11 @@ class Player extends Phaser.Sprite {
             Phaser.Keyboard.D,
             Phaser.Keyboard.E
         ]);
+
+        this.healthBar();
+        this.staminaBar();
     }
-    
+
     update() {
         this.resetVelocity();
         
@@ -62,7 +77,38 @@ class Player extends Phaser.Sprite {
             }
         }
 
+        this.updateHealthBar();
+        this.updateStaminaBar();
+
         this.fpsCounter.setText("FPS: " + this.game.time.fps);
+    }
+
+    healthBar(){
+        if(!this.playerHealthBar){
+            this.playerHealthBar = this.game.add.sprite(50,50, "healthbar");
+            this.playerHealthBar.height = 15;
+        }
+    }
+
+    updateHealthBar(){
+        if(this.stats){
+            this.playerHealthBar.width = this.stats.health*2;
+        }
+    }
+
+    updateStaminaBar(){
+        if(this.stats){
+            this.playerStaminaBar.width = this.stats.stamina*2;
+        }
+    }
+
+    staminaBar(){
+        if(!this.playerStaminaBar && this.playerHealthBar){
+            const x = this.playerHealthBar.x;
+            const y = this.playerHealthBar.y + this.playerHealthBar.width;
+            this.playerStaminaBar = this.game.add.sprite(x,y, "staminabar");
+            this.playerStaminaBar.height = 15;
+        }
     }
 
     resetVelocity(){

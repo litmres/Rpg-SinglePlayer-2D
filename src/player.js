@@ -26,13 +26,24 @@ var Player = /** @class */ (function (_super) {
             font: "24px Arial",
             fill: "#fff"
         });
+        _this.playerHealthBar = null;
+        _this.playerStaminaBar = null;
         _this.anchor.setTo(0.5, 0);
         game.physics.arcade.enableBody(_this);
         game.add.existing(_this);
         _this.body.gravity.y = 1000;
         _this.body.collideWorldBounds = true;
         game.physics.enable(_this, Phaser.Physics.ARCADE);
-        //this.health = new Health();
+        _this.stats = {
+            maxHealth: _this.maxHealth,
+            health: _this.maxHealth,
+            maxStamina: _this.maxHealth,
+            stamina: _this.maxHealth,
+            attack: 1,
+            defense: 1,
+            movespeed: 1,
+            luck: 1,
+        };
         _this.controls = {
             UP: game.input.keyboard.addKey(Phaser.Keyboard.W),
             DOWN: game.input.keyboard.addKey(Phaser.Keyboard.S),
@@ -49,6 +60,8 @@ var Player = /** @class */ (function (_super) {
             Phaser.Keyboard.D,
             Phaser.Keyboard.E
         ]);
+        _this.healthBar();
+        _this.staminaBar();
         return _this;
     }
     Player.prototype.update = function () {
@@ -70,7 +83,33 @@ var Player = /** @class */ (function (_super) {
                 this.facingNpc.nextDialogueText();
             }
         }
+        this.updateHealthBar();
+        this.updateStaminaBar();
         this.fpsCounter.setText("FPS: " + this.game.time.fps);
+    };
+    Player.prototype.healthBar = function () {
+        if (!this.playerHealthBar) {
+            this.playerHealthBar = this.game.add.sprite(50, 50, "healthbar");
+            this.playerHealthBar.height = 15;
+        }
+    };
+    Player.prototype.updateHealthBar = function () {
+        if (this.stats) {
+            this.playerHealthBar.width = this.stats.health * 2;
+        }
+    };
+    Player.prototype.updateStaminaBar = function () {
+        if (this.stats) {
+            this.playerStaminaBar.width = this.stats.stamina * 2;
+        }
+    };
+    Player.prototype.staminaBar = function () {
+        if (!this.playerStaminaBar && this.playerHealthBar) {
+            var x = this.playerHealthBar.x;
+            var y = this.playerHealthBar.y + this.playerHealthBar.width;
+            this.playerStaminaBar = this.game.add.sprite(x, y, "staminabar");
+            this.playerStaminaBar.height = 15;
+        }
     };
     Player.prototype.resetVelocity = function () {
         this.body.velocity.x = 0;

@@ -43,7 +43,12 @@ class TitleState extends Phaser.State {
         switch(item){
             case this.startGame: this.game.state.start("play", true, false);
             break;
-            case this.loadGame:
+            case this.loadGame: const loadedGame = JSON.parse(window.localStorage.getItem("player")!);
+                if(loadedGame){
+                    this.game.state.start("level" + loadedGame.currentRoom);
+                }else{
+                    alert("no Saved Game Found!");
+                }
             break;
             case this.Options:
             break;

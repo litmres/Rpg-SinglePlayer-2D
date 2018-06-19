@@ -12,6 +12,14 @@ var playerStateEnum;
     playerStateEnum[playerStateEnum["movingFall"] = 3] = "movingFall";
     playerStateEnum[playerStateEnum["idle"] = 4] = "idle";
 })(playerStateEnum || (playerStateEnum = {}));
+var enemyStateEnum;
+(function (enemyStateEnum) {
+    enemyStateEnum[enemyStateEnum["movingLeft"] = 0] = "movingLeft";
+    enemyStateEnum[enemyStateEnum["movingRight"] = 1] = "movingRight";
+    enemyStateEnum[enemyStateEnum["movingJump"] = 2] = "movingJump";
+    enemyStateEnum[enemyStateEnum["movingFall"] = 3] = "movingFall";
+    enemyStateEnum[enemyStateEnum["idle"] = 4] = "idle";
+})(enemyStateEnum || (enemyStateEnum = {}));
 var npcStateEnum;
 (function (npcStateEnum) {
     npcStateEnum[npcStateEnum["movingLeft"] = 0] = "movingLeft";

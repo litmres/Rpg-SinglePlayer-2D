@@ -46,15 +46,27 @@ var Level1 = /** @class */ (function (_super) {
         this.platforms.forEach(function (platform) {
             platform.body.immovable = true;
         });
+        this.enemies = this.game.add.group();
+        this.enemies.add(new RogueEnemy(this.game, 600, ground.y - ground.height));
         this.physics.enable(this.platforms, Phaser.Physics.ARCADE);
     };
     Level1.prototype.create = function () {
         this.game.stage.backgroundColor = this.background;
         this.game.world.setBounds(0, 0, this.game.width, this.game.height);
-        this.player = new Player(this.game, this.playerStorage.x, this.playerStorage.y);
+        this.player = new Player(this.game, 0, 0);
+        this.loadPlayer();
+    };
+    Level1.prototype.loadPlayer = function () {
+        if (this.playerStorage) {
+            this.player.stats = this.playerStorage.stats;
+            this.player.x = this.playerStorage.x;
+            this.player.y = this.playerStorage.y;
+            this.player.lastCheckPoint = this.playerStorage.lastCheckPoint;
+        }
     };
     Level1.prototype.update = function () {
         this.game.physics.arcade.collide(this.player, this.platforms);
+        this.game.physics.arcade.collide(this.enemies, this.platforms);
         this.closeGate();
         this.openGate();
         this.nextLevel();
@@ -76,30 +88,58 @@ var Level1 = /** @class */ (function (_super) {
         var savePlayer = {
             lastCheckPoint: this.player.lastCheckPoint,
             currentRoom: this.levelNumber,
-            maxhp: this.player.maxHealth,
-            hp: this.player.health,
+            stats: this.player.stats,
             y: this.player.y,
             x: x,
         };
         window.localStorage.setItem("player", JSON.stringify(savePlayer));
     };
     Level1.prototype.closeGate = function () {
+        var _this = this;
         if (!this.interActive.gate1.closed && !this.roomIsClear() && this.player.x > this.interActive.gate1.gate.x + this.interActive.gate1.gate.width * 2) {
             this.interActive.gate1.closed = true;
-            this.interActive.gate1.gate.y += this.interActive.gate1.gate.height;
+            var endX_1 = this.interActive.gate1.gate.x;
+            var endY_1 = this.interActive.gate1.gate.y + this.interActive.gate1.gate.height;
+            this.game.physics.arcade.moveToXY(this.interActive.gate1.gate, this.interActive.gate1.gate.x, this.interActive.gate1.gate.y + this.interActive.gate1.gate.height, 0.2, 500);
+            this.game.time.events.add(500, function () {
+                _this.interActive.gate1.gate.body.velocity.x = 0;
+                _this.interActive.gate1.gate.body.velocity.y = 0;
+                _this.interActive.gate1.gate.body.x = endX_1;
+                _this.interActive.gate1.gate.body.y = endY_1;
+            }, this);
         }
     };
     Level1.prototype.openGate = function () {
+        var _this = this;
         if (this.interActive.gate1.closed && this.roomIsClear()) {
             this.interActive.gate1.closed = false;
-            this.interActive.gate1.gate.y -= this.interActive.gate1.gate.height;
+            var endX_2 = this.interActive.gate1.gate.x;
+            var endY_2 = this.interActive.gate1.gate.y -= this.interActive.gate1.gate.height;
+            this.game.physics.arcade.moveToXY(this.interActive.gate1.gate, endX_2, endY_2, 0.1, 500);
+            this.game.time.events.add(500, function () {
+                _this.interActive.gate1.gate.body.velocity.x = 0;
+                _this.interActive.gate1.gate.body.velocity.y = 0;
+                _this.interActive.gate1.gate.body.x = endX_2;
+                _this.interActive.gate1.gate.body.y = endY_2;
+            }, this);
         }
         if (this.interActive.gate2.closed && this.roomIsClear()) {
             this.interActive.gate2.closed = false;
-            this.interActive.gate2.gate.y -= this.interActive.gate2.gate.height;
+            var endX_3 = this.interActive.gate2.gate.x;
+            var endY_3 = this.interActive.gate2.gate.y -= this.interActive.gate2.gate.height;
+            this.game.physics.arcade.moveToXY(this.interActive.gate2.gate, endX_3, endY_3, 0.1, 500);
+            this.game.time.events.add(500, function () {
+                _this.interActive.gate2.gate.body.velocity.x = 0;
+                _this.interActive.gate2.gate.body.velocity.y = 0;
+                _this.interActive.gate2.gate.body.x = endX_3;
+                _this.interActive.gate2.gate.body.y = endY_3;
+            }, this);
         }
     };
     Level1.prototype.roomIsClear = function () {
+        if (this.enemies.children.length === 0) {
+            return true;
+        }
         return false;
     };
     return Level1;
