@@ -20,6 +20,8 @@ class PlayState extends Phaser.State {
             platform.body.immovable = true;
         });
 
+        this.game.time.advancedTiming = true;
+
         this.game.physics.enable(ground, Phaser.Physics.ARCADE);
     }
         
@@ -49,8 +51,8 @@ class PlayState extends Phaser.State {
 
     savePlayer(x = 0){
         const savePlayer:savePlayerInterface = {
-            //lastCheckPoint: this.player.lastCheckPoint,
-            level:this.levelNumber,
+            lastCheckPoint: this.player.lastCheckPoint,
+            currentRoom:this.levelNumber,
             maxhp:this.player.maxHealth,
             hp:this.player.health,
             y:this.player.y,

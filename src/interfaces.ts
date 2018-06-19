@@ -1,6 +1,6 @@
 interface savePlayerInterface{
-    //lastCheckPoint: this.player.lastCheckPoint,
-    level:number;
+    lastCheckPoint: levelsEnum;
+    currentRoom:number;
     maxhp:number;
     hp:number;
     y:number;

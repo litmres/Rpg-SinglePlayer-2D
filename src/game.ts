@@ -3,7 +3,7 @@ class SimpleGame extends Phaser.Game{
 		super(800, 600, Phaser.AUTO, "content", null);
 		this.state.add("boot", new BootState());
 		this.state.add("preload", new PreloadState());
-        this.state.add("title", new TitleState());
+		this.state.add("title", new TitleState());
 		this.state.add("play", new PlayState());
 		this.state.add("level1", new Level1());
         

@@ -27,6 +27,7 @@ var PlayState = /** @class */ (function (_super) {
         this.platforms.forEach(function (platform) {
             platform.body.immovable = true;
         });
+        this.game.time.advancedTiming = true;
         this.game.physics.enable(ground, Phaser.Physics.ARCADE);
     };
     PlayState.prototype.create = function () {
@@ -53,8 +54,8 @@ var PlayState = /** @class */ (function (_super) {
     PlayState.prototype.savePlayer = function (x) {
         if (x === void 0) { x = 0; }
         var savePlayer = {
-            //lastCheckPoint: this.player.lastCheckPoint,
-            level: this.levelNumber,
+            lastCheckPoint: this.player.lastCheckPoint,
+            currentRoom: this.levelNumber,
             maxhp: this.player.maxHealth,
             hp: this.player.health,
             y: this.player.y,

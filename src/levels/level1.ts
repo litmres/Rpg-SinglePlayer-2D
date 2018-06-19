@@ -65,21 +65,21 @@ class Level1 extends Phaser.State {
     nextLevel(){
         if(!this.interActive.gate2.closed && this.player.x >= this.interActive.gate2.gate.x){
             this.savePlayer();
-            this.game.state.start("level" + (this.levelNumber++), true, false);
+            this.game.state.start("level" + (this.levelNumber+1), true, false);
         }
     }
 
     previousLevel(){
         if(this.player.x <= this.interActive.gate1.gate.x + this.interActive.gate1.gate.width){
             this.savePlayer(this.player.x);
-            this.game.state.start("level" + (this.levelNumber--), true, false);
+            this.game.state.start("level" + (this.levelNumber-1), true, false);
         }
     }
 
     savePlayer(x = 0){
         const savePlayer:savePlayerInterface = {
-            //lastCheckPoint: this.player.lastCheckPoint,
-            level:this.levelNumber,
+            lastCheckPoint: this.player.lastCheckPoint,
+            currentRoom:this.levelNumber,
             maxhp:this.player.maxHealth,
             hp:this.player.health,
             y:this.player.y,

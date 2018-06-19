@@ -62,20 +62,20 @@ var Level1 = /** @class */ (function (_super) {
     Level1.prototype.nextLevel = function () {
         if (!this.interActive.gate2.closed && this.player.x >= this.interActive.gate2.gate.x) {
             this.savePlayer();
-            this.game.state.start("level" + (this.levelNumber++), true, false);
+            this.game.state.start("level" + (this.levelNumber + 1), true, false);
         }
     };
     Level1.prototype.previousLevel = function () {
         if (this.player.x <= this.interActive.gate1.gate.x + this.interActive.gate1.gate.width) {
             this.savePlayer(this.player.x);
-            this.game.state.start("level" + (this.levelNumber--), true, false);
+            this.game.state.start("level" + (this.levelNumber - 1), true, false);
         }
     };
     Level1.prototype.savePlayer = function (x) {
         if (x === void 0) { x = 0; }
         var savePlayer = {
-            //lastCheckPoint: this.player.lastCheckPoint,
-            level: this.levelNumber,
+            lastCheckPoint: this.player.lastCheckPoint,
+            currentRoom: this.levelNumber,
             maxhp: this.player.maxHealth,
             hp: this.player.health,
             y: this.player.y,
