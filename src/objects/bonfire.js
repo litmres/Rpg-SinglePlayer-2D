@@ -18,7 +18,6 @@ var Bonfire = /** @class */ (function (_super) {
             unlit: "Press E to light bonfire",
         };
         _this.canInteract = false;
-        _this.interactRange = 50;
         _this.DialogueStyle = {
             font: "bold 10px Arial",
             fill: "#fff",

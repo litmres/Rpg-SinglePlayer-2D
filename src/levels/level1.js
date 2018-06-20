@@ -72,7 +72,7 @@ var Level1 = /** @class */ (function (_super) {
     };
     Level1.prototype.playerFacingNpc = function () {
         for (var ii = 0; ii < this.npcs.children.length; ii++) {
-            if (this.game.physics.arcade.distanceBetween(this.player, this.npcs.children[ii]) < this.npcs.children[ii].interactRange) {
+            if (this.game.physics.arcade.overlap(this.player, this.npcs.children[ii])) {
                 this.npcs.children[ii].canInteract = true;
                 this.player.facingNpc = this.npcs.children[ii];
             }
@@ -84,7 +84,7 @@ var Level1 = /** @class */ (function (_super) {
     };
     Level1.prototype.playerFacingBonfire = function () {
         for (var ii = 0; ii < this.bonfires.children.length; ii++) {
-            if (this.game.physics.arcade.distanceBetween(this.player, this.bonfires.children[ii]) < this.bonfires.children[ii].interactRange) {
+            if (this.game.physics.arcade.overlap(this.player, this.bonfires.children[ii])) {
                 this.bonfires.children[ii].canInteract = true;
                 this.player.facingBonfire = this.bonfires.children[ii];
             }

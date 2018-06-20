@@ -12,6 +12,7 @@ var __extends = (this && this.__extends) || (function () {
 var Player = /** @class */ (function (_super) {
     __extends(Player, _super);
     function Player(game, x, y) {
+        var _a;
         var _this = _super.call(this, game, x, y, "player", 0) || this;
         _this.playerState = playerStateEnum.idle;
         _this.lastCheckPoint = levelsEnum.level0;
@@ -29,6 +30,18 @@ var Player = /** @class */ (function (_super) {
         _this.playerHealthBar = null;
         _this.playerStaminaBar = null;
         _this.currentRoom = 0;
+        _this.playerAnimations = (_a = {},
+            _a[playerStateEnum.movingWalk] = "walk",
+            _a[playerStateEnum.movingFall] = "fall",
+            _a[playerStateEnum.idle] = "idle",
+            _a[playerStateEnum.attack1] = "attack1",
+            _a[playerStateEnum.attack2] = "attack2",
+            _a[playerStateEnum.attack3] = "attack3",
+            _a[playerStateEnum.death] = "death",
+            _a[playerStateEnum.sit] = "sit",
+            _a[playerStateEnum.sitDown] = "sitdown",
+            _a[playerStateEnum.movingStartWalk] = "startwalk",
+            _a);
         _this.anchor.setTo(0.5, 0);
         game.physics.arcade.enableBody(_this);
         game.add.existing(_this);
@@ -61,12 +74,12 @@ var Player = /** @class */ (function (_super) {
             Phaser.Keyboard.D,
             Phaser.Keyboard.E
         ]);
-        _this.animations.add("idle", [7, 8, 9], 3, true);
+        _this.animations.add("idle", [0], 3, false);
         _this.animations.add("startwalk", [0, 1, 2, 3], 6, false);
         _this.animations.add("walk", [4, 5, 6], 6, true);
-        _this.animations.add("attack1", [30, 31, 32, 33], 3, true);
-        _this.animations.add("attack2", [34, 35, 36], 3, true);
-        _this.animations.add("attack3", [37, 38, 39], 3, true);
+        _this.animations.add("attack1", [30, 31, 32, 33], 3, false);
+        _this.animations.add("attack2", [34, 35, 36], 3, false);
+        _this.animations.add("attack3", [37, 38, 39], 3, false);
         _this.animations.add("sitdown", [7, 8, 9], 3, false);
         _this.animations.add("sit", [9], 3, false);
         _this.animations.add("death", [51, 52, 54], 3, false);
@@ -76,6 +89,15 @@ var Player = /** @class */ (function (_super) {
     }
     Player.prototype.update = function () {
         this.resetVelocity();
+        this.animations.play(this.playerAnimations[this.playerState]);
+        this.handleInput();
+        this.handleNpc();
+        this.handleBonfire();
+        this.updateHealthBar();
+        this.updateStaminaBar();
+        this.fpsCounter.setText("FPS: " + this.game.time.fps);
+    };
+    Player.prototype.handleInput = function () {
         if (this.controls.LEFT.isDown) {
             this.moveLeft();
         }
@@ -88,11 +110,6 @@ var Player = /** @class */ (function (_super) {
         if (this.controls.ESC.isDown || this.controls.P.isDown) {
             this.handlePauseMenu();
         }
-        this.handleNpc();
-        this.handleBonfire();
-        this.updateHealthBar();
-        this.updateStaminaBar();
-        this.fpsCounter.setText("FPS: " + this.game.time.fps);
     };
     Player.prototype.handleNpc = function () {
         if (this.controls.E.justPressed() && this.facingNpc) {
@@ -132,16 +149,17 @@ var Player = /** @class */ (function (_super) {
         this.body.velocity.x = 0;
     };
     Player.prototype.moveLeft = function () {
-        this.playerState = playerStateEnum.movingLeft;
+        this.playerState = playerStateEnum.movingWalk;
+        this.scale.setTo(-1, 1);
         this.body.velocity.x = -this.stats.movespeed;
     };
     Player.prototype.moveRight = function () {
-        this.playerState = playerStateEnum.movingRight;
+        this.playerState = playerStateEnum.movingWalk;
+        this.scale.setTo(1, 1);
         this.body.velocity.x = this.stats.movespeed;
     };
     Player.prototype.idle = function () {
         this.playerState = playerStateEnum.idle;
-        this.animations.play("idle");
     };
     Player.prototype.handlePauseMenu = function () {
         var _this = this;

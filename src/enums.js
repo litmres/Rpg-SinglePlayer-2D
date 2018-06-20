@@ -6,11 +6,16 @@ var gameStateEnum;
 })(gameStateEnum || (gameStateEnum = {}));
 var playerStateEnum;
 (function (playerStateEnum) {
-    playerStateEnum[playerStateEnum["movingLeft"] = 0] = "movingLeft";
-    playerStateEnum[playerStateEnum["movingRight"] = 1] = "movingRight";
-    playerStateEnum[playerStateEnum["movingJump"] = 2] = "movingJump";
-    playerStateEnum[playerStateEnum["movingFall"] = 3] = "movingFall";
-    playerStateEnum[playerStateEnum["idle"] = 4] = "idle";
+    playerStateEnum[playerStateEnum["movingWalk"] = 0] = "movingWalk";
+    playerStateEnum[playerStateEnum["movingFall"] = 1] = "movingFall";
+    playerStateEnum[playerStateEnum["idle"] = 2] = "idle";
+    playerStateEnum[playerStateEnum["attack1"] = 3] = "attack1";
+    playerStateEnum[playerStateEnum["attack2"] = 4] = "attack2";
+    playerStateEnum[playerStateEnum["attack3"] = 5] = "attack3";
+    playerStateEnum[playerStateEnum["death"] = 6] = "death";
+    playerStateEnum[playerStateEnum["sit"] = 7] = "sit";
+    playerStateEnum[playerStateEnum["sitDown"] = 8] = "sitDown";
+    playerStateEnum[playerStateEnum["movingStartWalk"] = 9] = "movingStartWalk";
 })(playerStateEnum || (playerStateEnum = {}));
 var enemyStateEnum;
 (function (enemyStateEnum) {

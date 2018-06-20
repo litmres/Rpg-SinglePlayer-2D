@@ -6,7 +6,6 @@ class Bonfire extends Phaser.Sprite {
     };
     canInteract = false;
     canInteractText!:Phaser.Text|null;
-    interactRange = 50;
     DialogueStyle = {
         font: "bold 10px Arial",
         fill: "#fff",

@@ -4,11 +4,16 @@ enum gameStateEnum {
 }
 
 enum playerStateEnum {
-	movingLeft = 0,
-	movingRight,
-	movingJump,
+	movingWalk = 0,
 	movingFall,
 	idle,
+	attack1,
+	attack2,
+	attack3,
+	death,
+	sit,
+	sitDown,
+	movingStartWalk,
 }
 
 enum enemyStateEnum {

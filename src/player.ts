@@ -19,6 +19,18 @@ class Player extends Phaser.Sprite {
     playerStaminaBar:any = null;
     controls:any;
     currentRoom = 0;
+    playerAnimations:playerAnimationInterface = {
+        [playerStateEnum.movingWalk]:"walk",
+        [playerStateEnum.movingFall]:"fall",
+        [playerStateEnum.idle]:"idle",
+        [playerStateEnum.attack1]:"attack1",
+        [playerStateEnum.attack2]:"attack2",
+        [playerStateEnum.attack3]:"attack3",
+        [playerStateEnum.death]:"death",
+        [playerStateEnum.sit]:"sit",
+        [playerStateEnum.sitDown]:"sitdown",
+        [playerStateEnum.movingStartWalk]:"startwalk",
+    };
     constructor(game: Phaser.Game, x: number, y: number) {
         super(game, x, y, "player", 0);
         this.anchor.setTo(0.5, 0);
@@ -54,12 +66,12 @@ class Player extends Phaser.Sprite {
             Phaser.Keyboard.E
         ]);
 
-        this.animations.add("idle", [7,8,9], 3, true);
+        this.animations.add("idle", [0], 3, false);
         this.animations.add("startwalk", [0,1,2,3], 6, false);
         this.animations.add("walk", [4,5,6], 6, true);
-        this.animations.add("attack1", [30, 31, 32, 33], 3, true);
-        this.animations.add("attack2", [34, 35, 36], 3, true);
-        this.animations.add("attack3", [37, 38, 39], 3, true);
+        this.animations.add("attack1", [30, 31, 32, 33], 3, false);
+        this.animations.add("attack2", [34, 35, 36], 3, false);
+        this.animations.add("attack3", [37, 38, 39], 3, false);
         this.animations.add("sitdown",[7,8,9], 3, false);
         this.animations.add("sit", [9], 3, false);
         this.animations.add("death", [51,52,54], 3, false);
@@ -70,7 +82,22 @@ class Player extends Phaser.Sprite {
 
     update() {
         this.resetVelocity();
-        
+
+        this.animations.play(this.playerAnimations[this.playerState]);
+
+        this.handleInput();
+
+        this.handleNpc();
+
+        this.handleBonfire();
+
+        this.updateHealthBar();
+        this.updateStaminaBar();
+
+        this.fpsCounter.setText("FPS: " + this.game.time.fps);
+    }
+
+    handleInput(){
         if (this.controls.LEFT.isDown) {
             this.moveLeft();
         } else if (this.controls.RIGHT.isDown) {
@@ -82,15 +109,6 @@ class Player extends Phaser.Sprite {
         if(this.controls.ESC.isDown || this.controls.P.isDown){
             this.handlePauseMenu();
         }
-
-        this.handleNpc();
-
-        this.handleBonfire();
-
-        this.updateHealthBar();
-        this.updateStaminaBar();
-
-        this.fpsCounter.setText("FPS: " + this.game.time.fps);
     }
 
     handleNpc(){
@@ -138,18 +156,19 @@ class Player extends Phaser.Sprite {
     }
 
     moveLeft(){
-        this.playerState = playerStateEnum.movingLeft;
+        this.playerState = playerStateEnum.movingWalk;
+        this.scale.setTo(-1, 1);
         this.body.velocity.x = -this.stats.movespeed;
     }
 
     moveRight(){
-        this.playerState = playerStateEnum.movingRight;
+        this.playerState = playerStateEnum.movingWalk;
+        this.scale.setTo(1, 1);
         this.body.velocity.x = this.stats.movespeed;
     }
 
     idle(){
         this.playerState = playerStateEnum.idle;
-        this.animations.play("idle");
     }
 
     handlePauseMenu(){
