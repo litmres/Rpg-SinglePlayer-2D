@@ -6,6 +6,7 @@ class Level0 extends Phaser.State {
     platforms!:Phaser.Group;
     playerStorage:savePlayerInterface = JSON.parse(window.localStorage.getItem("player")!);
     npcs!:Phaser.Group;
+    bonfires!:Phaser.Group;
 
     preload(){
         this.background = 0x49801;
@@ -23,6 +24,8 @@ class Level0 extends Phaser.State {
 
         this.npcs = this.game.add.group();
         this.npcs.add(new RogueNpc(this.game, 600, ground.y - ground.height));
+
+        this.bonfires = this.game.add.group();
 
         this.game.time.advancedTiming = true;
 
@@ -48,6 +51,7 @@ class Level0 extends Phaser.State {
         }
 
         this.playerFacingNpc();
+        this.playerFacingBonfire();
     }
 
     playerFacingNpc(){
@@ -60,7 +64,18 @@ class Level0 extends Phaser.State {
                 this.player.facingNpc = null;
             }
         }
-        
+    }
+
+    playerFacingBonfire(){
+        for(let ii = 0; ii < this.bonfires.children.length; ii++){
+            if(this.game.physics.arcade.distanceBetween(this.player, this.bonfires.children[ii]) < this.bonfires.children[ii].interactRange){
+                this.bonfires.children[ii].canInteract = true;
+                this.player.facingBonfire = this.bonfires.children[ii];
+            }else{
+                this.bonfires.children[ii].canInteract = false;
+                this.player.facingBonfire = null;
+            }
+        }
     }
 
     nextLevel(){

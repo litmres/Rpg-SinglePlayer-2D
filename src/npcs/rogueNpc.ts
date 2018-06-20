@@ -46,24 +46,26 @@ class RogueNpc extends Phaser.Sprite {
     }
 
     interaction(){
-        if(this.canInteract && !this.canInteractText){
-            this.canInteractText = this.game.add.text(this.x - this.width, this.y-this.height, this.npcDialogue[0], this.DialogueStyle);
-        }else if(this.canInteract && this.canInteractText){
-            this.canInteractText.destroy();
-            this.canInteractText = this.game.add.text(this.x - this.width, this.y-this.height, this.npcDialogue[this.npcDialogueLine], this.DialogueStyle);
+        if(!this.canInteractText){
+            this.canInteractText = this.game.add.text(this.x - this.width, this.y - this.height, "", this.DialogueStyle);
             this.canInteractText.setTextBounds(30, 20, 0, 0);
-        }else if(!this.canInteract && this.canInteractText){
-            this.canInteractText.destroy();
-            this.npcDialogueLine = 1;
+        }
+        if(this.canInteract){
+            if(this.npcDialogueLine >= this.npcDialogue.length){
+                this.npcDialogueLine = this.npcDialogue.length-1;
+            }
+            this.canInteractText.setText(this.npcDialogue[this.npcDialogueLine]);
+        }else if(!this.canInteract){
+            this.canInteractText.setText("");
+            if(this.npcDialogueLine > 0){
+                this.npcDialogueLine = 1;
+            }
         }
     }
 
     nextDialogueText(){
         if(this.canInteract){
             this.npcDialogueLine++;
-            if(this.npcDialogueLine > this.npcDialogue.length){
-                this.npcDialogueLine = this.npcDialogue.length-1;
-            }
         }
     }
 

@@ -29,6 +29,7 @@ var Level0 = /** @class */ (function (_super) {
         });
         this.npcs = this.game.add.group();
         this.npcs.add(new RogueNpc(this.game, 600, ground.y - ground.height));
+        this.bonfires = this.game.add.group();
         this.game.time.advancedTiming = true;
         this.game.physics.enable(ground, Phaser.Physics.ARCADE);
     };
@@ -49,6 +50,7 @@ var Level0 = /** @class */ (function (_super) {
             this.nextLevel();
         }
         this.playerFacingNpc();
+        this.playerFacingBonfire();
     };
     Level0.prototype.playerFacingNpc = function () {
         for (var ii = 0; ii < this.npcs.children.length; ii++) {
@@ -59,6 +61,18 @@ var Level0 = /** @class */ (function (_super) {
             else {
                 this.npcs.children[ii].canInteract = false;
                 this.player.facingNpc = null;
+            }
+        }
+    };
+    Level0.prototype.playerFacingBonfire = function () {
+        for (var ii = 0; ii < this.bonfires.children.length; ii++) {
+            if (this.game.physics.arcade.distanceBetween(this.player, this.bonfires.children[ii]) < this.bonfires.children[ii].interactRange) {
+                this.bonfires.children[ii].canInteract = true;
+                this.player.facingBonfire = this.bonfires.children[ii];
+            }
+            else {
+                this.bonfires.children[ii].canInteract = false;
+                this.player.facingBonfire = null;
             }
         }
     };

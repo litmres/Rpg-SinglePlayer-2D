@@ -2,6 +2,7 @@ class Player extends Phaser.Sprite {
     playerState:playerStateEnum = playerStateEnum.idle;
     lastCheckPoint:levelsEnum = levelsEnum.level0;
     facingNpc:any;
+    facingBonfire:any;
     pauseMenu:any = {
         backgroundImage: null,
         continueGame: null,
@@ -72,16 +73,26 @@ class Player extends Phaser.Sprite {
             this.handlePauseMenu();
         }
 
-        if(this.controls.E.justPressed()){
-            if(this.facingNpc){
-                this.facingNpc.nextDialogueText();
-            }
-        }
+        this.handleNpc();
+
+        this.handleBonfire();
 
         this.updateHealthBar();
         this.updateStaminaBar();
 
         this.fpsCounter.setText("FPS: " + this.game.time.fps);
+    }
+
+    handleNpc(){
+        if(this.controls.E.justPressed() && this.facingNpc){
+            this.facingNpc.nextDialogueText();
+        }
+    }
+
+    handleBonfire(){
+        if(this.controls.E.justPressed() && this.facingBonfire){
+            console.log("using bonfire");
+        }
     }
 
     healthBar(){

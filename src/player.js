@@ -79,14 +79,21 @@ var Player = /** @class */ (function (_super) {
         if (this.controls.ESC.isDown || this.controls.P.isDown) {
             this.handlePauseMenu();
         }
-        if (this.controls.E.justPressed()) {
-            if (this.facingNpc) {
-                this.facingNpc.nextDialogueText();
-            }
-        }
+        this.handleNpc();
+        this.handleBonfire();
         this.updateHealthBar();
         this.updateStaminaBar();
         this.fpsCounter.setText("FPS: " + this.game.time.fps);
+    };
+    Player.prototype.handleNpc = function () {
+        if (this.controls.E.justPressed() && this.facingNpc) {
+            this.facingNpc.nextDialogueText();
+        }
+    };
+    Player.prototype.handleBonfire = function () {
+        if (this.controls.E.justPressed() && this.facingBonfire) {
+            console.log("using bonfire");
+        }
     };
     Player.prototype.healthBar = function () {
         if (!this.playerHealthBar) {

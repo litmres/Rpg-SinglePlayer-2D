@@ -7,6 +7,7 @@ class Level1 extends Phaser.State {
     enemies!:Phaser.Group;
     playerStorage:savePlayerInterface = JSON.parse(window.localStorage.getItem("player")!);
     npcs!:Phaser.Group;
+    bonfires!:Phaser.Group;
     interActive:any = {
         gate1: {
             closed:false,
@@ -48,6 +49,11 @@ class Level1 extends Phaser.State {
         this.enemies = this.game.add.group();
         this.enemies.add(new RogueEnemy(this.game, 600, ground.y - ground.height));
 
+        this.npcs = this.game.add.group();
+
+        this.bonfires = this.game.add.group();
+        this.bonfires.add(new Bonfire(this.game, 500, ground.y - ground.height));
+
         this.physics.enable(this.platforms, Phaser.Physics.ARCADE);
     }
         
@@ -62,10 +68,38 @@ class Level1 extends Phaser.State {
     update(){
         this.game.physics.arcade.collide(this.player, this.platforms);
         this.game.physics.arcade.collide(this.enemies, this.platforms);
+        this.game.physics.arcade.collide(this.bonfires, this.platforms);
 
         this.closeGate();
         this.openGate();
         this.nextLevel();
+
+        this.playerFacingBonfire();
+        this.playerFacingNpc();
+    }
+
+    playerFacingNpc(){
+        for(let ii = 0; ii < this.npcs.children.length; ii++){
+            if(this.game.physics.arcade.distanceBetween(this.player, this.npcs.children[ii]) < this.npcs.children[ii].interactRange){
+                this.npcs.children[ii].canInteract = true;
+                this.player.facingNpc = this.npcs.children[ii];
+            }else{
+                this.npcs.children[ii].canInteract = false;
+                this.player.facingNpc = null;
+            }
+        }
+    }
+
+    playerFacingBonfire(){
+        for(let ii = 0; ii < this.bonfires.children.length; ii++){
+            if(this.game.physics.arcade.distanceBetween(this.player, this.bonfires.children[ii]) < this.bonfires.children[ii].interactRange){
+                this.bonfires.children[ii].canInteract = true;
+                this.player.facingBonfire = this.bonfires.children[ii];
+            }else{
+                this.bonfires.children[ii].canInteract = false;
+                this.player.facingBonfire = null;
+            }
+        }
     }
 
     nextLevel(){

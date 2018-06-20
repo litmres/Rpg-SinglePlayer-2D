@@ -48,6 +48,9 @@ var Level1 = /** @class */ (function (_super) {
         });
         this.enemies = this.game.add.group();
         this.enemies.add(new RogueEnemy(this.game, 600, ground.y - ground.height));
+        this.npcs = this.game.add.group();
+        this.bonfires = this.game.add.group();
+        this.bonfires.add(new Bonfire(this.game, 500, ground.y - ground.height));
         this.physics.enable(this.platforms, Phaser.Physics.ARCADE);
     };
     Level1.prototype.create = function () {
@@ -60,9 +63,36 @@ var Level1 = /** @class */ (function (_super) {
     Level1.prototype.update = function () {
         this.game.physics.arcade.collide(this.player, this.platforms);
         this.game.physics.arcade.collide(this.enemies, this.platforms);
+        this.game.physics.arcade.collide(this.bonfires, this.platforms);
         this.closeGate();
         this.openGate();
         this.nextLevel();
+        this.playerFacingBonfire();
+        this.playerFacingNpc();
+    };
+    Level1.prototype.playerFacingNpc = function () {
+        for (var ii = 0; ii < this.npcs.children.length; ii++) {
+            if (this.game.physics.arcade.distanceBetween(this.player, this.npcs.children[ii]) < this.npcs.children[ii].interactRange) {
+                this.npcs.children[ii].canInteract = true;
+                this.player.facingNpc = this.npcs.children[ii];
+            }
+            else {
+                this.npcs.children[ii].canInteract = false;
+                this.player.facingNpc = null;
+            }
+        }
+    };
+    Level1.prototype.playerFacingBonfire = function () {
+        for (var ii = 0; ii < this.bonfires.children.length; ii++) {
+            if (this.game.physics.arcade.distanceBetween(this.player, this.bonfires.children[ii]) < this.bonfires.children[ii].interactRange) {
+                this.bonfires.children[ii].canInteract = true;
+                this.player.facingBonfire = this.bonfires.children[ii];
+            }
+            else {
+                this.bonfires.children[ii].canInteract = false;
+                this.player.facingBonfire = null;
+            }
+        }
     };
     Level1.prototype.nextLevel = function () {
         if (!this.interActive.gate2.closed && this.player.x >= this.interActive.gate2.gate.x) {

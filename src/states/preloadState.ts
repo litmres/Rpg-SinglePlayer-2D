@@ -28,13 +28,21 @@ class PreloadState extends Phaser.State {
         });
         this.game.stage.backgroundColor = 0xB20059;
         this.game.load.spritesheet("player", "assets/player_placeholder.png", 24, 31);
-        this.game.load.image("floor", "assets/floor.png");
-        this.game.load.image("wall", "assets/wall.png");
-        this.game.load.image("gate", "assets/gate.png");
-        this.game.load.image("ceiling", "assets/ceiling.png");
-        this.game.load.spritesheet("rogue", "assets/rogue.png", 32, 32);
-        this.game.load.image("healthbar", "assets/healthbar.png");
-        this.game.load.image("staminabar", "assets/staminabar.png");
+        this.game.load.image("floor", "assets/foundations/floor.png");
+        this.game.load.image("wall", "assets/foundations/wall.png");
+        this.game.load.image("gate", "assets/foundations/gate.png");
+        this.game.load.image("ceiling", "assets/foundations/ceiling.png");
+        this.game.load.spritesheet("rogue", "assets/rogue/rogue.png", 32, 32);
+        this.game.load.image("healthbar", "assets/UI/healthbar.png");
+        this.game.load.image("staminabar", "assets/UI/staminabar.png");
+        this.game.load.spritesheet("bonfire", "assets/bonfire/bonfire.png", 500, 740);
+        this.game.load.spritesheet("chest", "assets/chest/chest.png", 30, 30);
+        this.game.load.spritesheet("explosion", "assets/explosion/explosion.png", 30, 30);
+        this.game.load.spritesheet("skeleton", "assets/skeleton/skeleton.png", 30,30);
+        this.game.load.spritesheet("bloodskeleton", "assets/skeleton/bloodskeleton.png", 30,30);
+        this.game.load.spritesheet("golemattack", "assets/golem/golem-attack.png", 30, 30);
+        this.game.load.spritesheet("golemdie", "assets/golem/golem-die.png", 30, 30);
+        this.game.load.spritesheet("golemwalk", "assets/golem/golem-walk.png", 30, 30);
     }
 
     finishedLoading(this:PreloadState) {
