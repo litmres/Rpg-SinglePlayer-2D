@@ -28,6 +28,7 @@ var Player = /** @class */ (function (_super) {
         });
         _this.playerHealthBar = null;
         _this.playerStaminaBar = null;
+        _this.currentRoom = 0;
         _this.anchor.setTo(0.5, 0);
         game.physics.arcade.enableBody(_this);
         game.add.existing(_this);
@@ -41,7 +42,7 @@ var Player = /** @class */ (function (_super) {
             stamina: _this.maxHealth,
             attack: 1,
             defense: 1,
-            movespeed: 1,
+            movespeed: 150,
             luck: 1,
         };
         _this.controls = {
@@ -116,11 +117,11 @@ var Player = /** @class */ (function (_super) {
     };
     Player.prototype.moveLeft = function () {
         this.playerState = playerStateEnum.movingLeft;
-        this.body.velocity.x = -150;
+        this.body.velocity.x = -this.stats.movespeed;
     };
     Player.prototype.moveRight = function () {
         this.playerState = playerStateEnum.movingRight;
-        this.body.velocity.x = 150;
+        this.body.velocity.x = this.stats.movespeed;
     };
     Player.prototype.idle = function () {
         this.playerState = playerStateEnum.idle;
@@ -138,11 +139,13 @@ var Player = /** @class */ (function (_super) {
             boundsAlignV: "middle"
         };
         this.pauseMenu.continueGame = this.game.add.text(0, 0, "Continue Game", style);
-        this.pauseMenu.loadGame = this.game.add.text(0, 50, "Load Game", style);
-        this.pauseMenu.options = this.game.add.text(0, 100, "Options", style);
+        this.pauseMenu.saveGame = this.game.add.text(0, 50, "Save Game", style);
+        this.pauseMenu.loadGame = this.game.add.text(0, 100, "Load Game", style);
+        this.pauseMenu.options = this.game.add.text(0, 150, "Options", style);
         this.pauseMenu.githubLink = this.game.add.text(0, 300, "Github", style);
         var array = [
             this.pauseMenu.continueGame,
+            this.pauseMenu.saveGame,
             this.pauseMenu.loadGame,
             this.pauseMenu.options,
             this.pauseMenu.githubLink
@@ -161,7 +164,19 @@ var Player = /** @class */ (function (_super) {
             case this.pauseMenu.continueGame:
                 this.continueTheGame();
                 break;
+            case this.pauseMenu.saveGame:
+                this.savePlayer(this.x);
+                this.continueTheGame();
+                break;
             case this.pauseMenu.loadGame:
+                var loadedGame = JSON.parse(window.localStorage.getItem("player"));
+                if (loadedGame) {
+                    this.game.state.start("level" + loadedGame.currentRoom);
+                }
+                else {
+                    alert("no Saved Game Found!");
+                }
+                this.continueTheGame();
                 break;
             case this.pauseMenu.options:
                 break;
@@ -186,6 +201,30 @@ var Player = /** @class */ (function (_super) {
             if (this.pauseMenu[key]) {
                 this.pauseMenu[key].destroy();
             }
+        }
+    };
+    Player.prototype.savePlayer = function (x, levelNumber) {
+        if (x === void 0) { x = 0; }
+        if (levelNumber === void 0) { levelNumber = this.currentRoom; }
+        var savePlayer = {
+            lastCheckPoint: this.lastCheckPoint,
+            currentRoom: levelNumber,
+            stats: this.stats,
+            y: this.y,
+            x: x,
+        };
+        window.localStorage.setItem("player", JSON.stringify(savePlayer));
+    };
+    Player.prototype.loadPlayer = function (playerStorage) {
+        if (playerStorage) {
+            this.stats = playerStorage.stats;
+            this.x = playerStorage.x;
+            this.y = playerStorage.y;
+            this.lastCheckPoint = playerStorage.lastCheckPoint;
+        }
+        else {
+            this.x = 20;
+            this.y = this.game.height - this.height * 2;
         }
     };
     return Player;

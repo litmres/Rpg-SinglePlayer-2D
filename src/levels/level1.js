@@ -54,15 +54,8 @@ var Level1 = /** @class */ (function (_super) {
         this.game.stage.backgroundColor = this.background;
         this.game.world.setBounds(0, 0, this.game.width, this.game.height);
         this.player = new Player(this.game, 0, 0);
-        this.loadPlayer();
-    };
-    Level1.prototype.loadPlayer = function () {
-        if (this.playerStorage) {
-            this.player.stats = this.playerStorage.stats;
-            this.player.x = this.playerStorage.x;
-            this.player.y = this.playerStorage.y;
-            this.player.lastCheckPoint = this.playerStorage.lastCheckPoint;
-        }
+        this.player.currentRoom = this.levelNumber;
+        this.player.loadPlayer(this.playerStorage);
     };
     Level1.prototype.update = function () {
         this.game.physics.arcade.collide(this.player, this.platforms);
@@ -73,26 +66,15 @@ var Level1 = /** @class */ (function (_super) {
     };
     Level1.prototype.nextLevel = function () {
         if (!this.interActive.gate2.closed && this.player.x >= this.interActive.gate2.gate.x) {
-            this.savePlayer();
+            this.player.savePlayer(0, this.levelNumber + 1);
             this.game.state.start("level" + (this.levelNumber + 1), true, false);
         }
     };
     Level1.prototype.previousLevel = function () {
         if (this.player.x <= this.interActive.gate1.gate.x + this.interActive.gate1.gate.width) {
-            this.savePlayer(this.player.x);
+            this.player.savePlayer(this.player.x, this.levelNumber - 1);
             this.game.state.start("level" + (this.levelNumber - 1), true, false);
         }
-    };
-    Level1.prototype.savePlayer = function (x) {
-        if (x === void 0) { x = 0; }
-        var savePlayer = {
-            lastCheckPoint: this.player.lastCheckPoint,
-            currentRoom: this.levelNumber,
-            stats: this.player.stats,
-            y: this.player.y,
-            x: x,
-        };
-        window.localStorage.setItem("player", JSON.stringify(savePlayer));
     };
     Level1.prototype.closeGate = function () {
         var _this = this;

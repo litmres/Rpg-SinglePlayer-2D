@@ -1,4 +1,4 @@
-class PlayState extends Phaser.State {
+class Level0 extends Phaser.State {
     levelNumber = levelsEnum.level0;
     background!: number|Phaser.Image;
     music!: Phaser.Sound;
@@ -35,17 +35,9 @@ class PlayState extends Phaser.State {
         this.player = new Player(this.game, 0, 0);
         this.player.x += this.player.width;
         this.player.y -= this.player.height*2;
-        this.loadPlayer();
+        this.player.currentRoom = this.levelNumber;
+        this.player.loadPlayer(this.playerStorage);
         this.game.physics.startSystem(Phaser.Physics.ARCADE);
-    }
-
-    loadPlayer(){
-        if(this.playerStorage){
-            this.player.stats = this.playerStorage.stats;
-            this.player.x = this.playerStorage.x;
-            this.player.y = this.playerStorage.y;
-            this.player.lastCheckPoint = this.playerStorage.lastCheckPoint;
-        }
     }
 
     update(){
@@ -72,18 +64,7 @@ class PlayState extends Phaser.State {
     }
 
     nextLevel(){
-        this.savePlayer();
+        this.player.savePlayer(0, this.levelNumber+1);
         this.game.state.start("level" + (this.levelNumber+1) , true, false);
-    }
-
-    savePlayer(x = 0){
-        const savePlayer:savePlayerInterface = {
-            lastCheckPoint: this.player.lastCheckPoint,
-            currentRoom:this.levelNumber,
-            stats:this.player.stats,
-            y:this.player.y,
-            x:x,
-        };
-        window.localStorage.setItem("player", JSON.stringify(savePlayer));
     }
 }

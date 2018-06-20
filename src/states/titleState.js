@@ -49,7 +49,8 @@ var TitleState = /** @class */ (function (_super) {
     TitleState.prototype.fadeOut = function (item) {
         switch (item) {
             case this.startGame:
-                this.game.state.start("play", true, false);
+                window.localStorage.setItem("player", "null");
+                this.game.state.start("level" + levelsEnum.level0, true, false);
                 break;
             case this.loadGame:
                 var loadedGame = JSON.parse(window.localStorage.getItem("player"));

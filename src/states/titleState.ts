@@ -41,7 +41,8 @@ class TitleState extends Phaser.State {
         
     fadeOut(item:Phaser.Text) {
         switch(item){
-            case this.startGame: this.game.state.start("play", true, false);
+            case this.startGame: window.localStorage.setItem("player", "null");
+                this.game.state.start("level" + levelsEnum.level0, true, false);
             break;
             case this.loadGame: const loadedGame = JSON.parse(window.localStorage.getItem("player")!);
                 if(loadedGame){

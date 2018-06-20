@@ -9,15 +9,15 @@ var __extends = (this && this.__extends) || (function () {
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
     };
 })();
-var PlayState = /** @class */ (function (_super) {
-    __extends(PlayState, _super);
-    function PlayState() {
+var Level0 = /** @class */ (function (_super) {
+    __extends(Level0, _super);
+    function Level0() {
         var _this = _super !== null && _super.apply(this, arguments) || this;
         _this.levelNumber = levelsEnum.level0;
         _this.playerStorage = JSON.parse(window.localStorage.getItem("player"));
         return _this;
     }
-    PlayState.prototype.preload = function () {
+    Level0.prototype.preload = function () {
         this.background = 0x49801;
         this.platforms = this.game.add.group();
         this.platforms.enableBody = true;
@@ -32,24 +32,17 @@ var PlayState = /** @class */ (function (_super) {
         this.game.time.advancedTiming = true;
         this.game.physics.enable(ground, Phaser.Physics.ARCADE);
     };
-    PlayState.prototype.create = function () {
+    Level0.prototype.create = function () {
         this.game.stage.backgroundColor = this.background;
         this.game.world.setBounds(0, 0, this.game.width, this.game.height);
         this.player = new Player(this.game, 0, 0);
         this.player.x += this.player.width;
         this.player.y -= this.player.height * 2;
-        this.loadPlayer();
+        this.player.currentRoom = this.levelNumber;
+        this.player.loadPlayer(this.playerStorage);
         this.game.physics.startSystem(Phaser.Physics.ARCADE);
     };
-    PlayState.prototype.loadPlayer = function () {
-        if (this.playerStorage) {
-            this.player.stats = this.playerStorage.stats;
-            this.player.x = this.playerStorage.x;
-            this.player.y = this.playerStorage.y;
-            this.player.lastCheckPoint = this.playerStorage.lastCheckPoint;
-        }
-    };
-    PlayState.prototype.update = function () {
+    Level0.prototype.update = function () {
         this.game.physics.arcade.collide(this.player, this.platforms);
         this.game.physics.arcade.collide(this.npcs, this.platforms);
         if (this.player.x >= this.game.width - this.player.width) {
@@ -57,7 +50,7 @@ var PlayState = /** @class */ (function (_super) {
         }
         this.playerFacingNpc();
     };
-    PlayState.prototype.playerFacingNpc = function () {
+    Level0.prototype.playerFacingNpc = function () {
         for (var ii = 0; ii < this.npcs.children.length; ii++) {
             if (this.game.physics.arcade.distanceBetween(this.player, this.npcs.children[ii]) < this.npcs.children[ii].interactRange) {
                 this.npcs.children[ii].canInteract = true;
@@ -69,21 +62,10 @@ var PlayState = /** @class */ (function (_super) {
             }
         }
     };
-    PlayState.prototype.nextLevel = function () {
-        this.savePlayer();
+    Level0.prototype.nextLevel = function () {
+        this.player.savePlayer(0, this.levelNumber + 1);
         this.game.state.start("level" + (this.levelNumber + 1), true, false);
     };
-    PlayState.prototype.savePlayer = function (x) {
-        if (x === void 0) { x = 0; }
-        var savePlayer = {
-            lastCheckPoint: this.player.lastCheckPoint,
-            currentRoom: this.levelNumber,
-            stats: this.player.stats,
-            y: this.player.y,
-            x: x,
-        };
-        window.localStorage.setItem("player", JSON.stringify(savePlayer));
-    };
-    return PlayState;
+    return Level0;
 }(Phaser.State));
-//# sourceMappingURL=playState.js.map
+//# sourceMappingURL=level0.js.map

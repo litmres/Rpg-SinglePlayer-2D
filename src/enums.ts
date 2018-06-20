@@ -1,6 +1,6 @@
 enum gameStateEnum {
 	startMenu = 0,
-	inGame = 1,
+	inGame,
 }
 
 enum playerStateEnum {

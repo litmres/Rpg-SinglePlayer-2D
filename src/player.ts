@@ -17,6 +17,7 @@ class Player extends Phaser.Sprite {
     playerHealthBar:any = null;
     playerStaminaBar:any = null;
     controls:any;
+    currentRoom = 0;
     constructor(game: Phaser.Game, x: number, y: number) {
         super(game, x, y, "player", 0);
         this.anchor.setTo(0.5, 0);
@@ -32,7 +33,7 @@ class Player extends Phaser.Sprite {
             stamina: this.maxHealth,
             attack: 1,
             defense: 1,
-            movespeed: 1,
+            movespeed: 150,
             luck: 1,
         };
         this.controls = {
@@ -117,12 +118,12 @@ class Player extends Phaser.Sprite {
 
     moveLeft(){
         this.playerState = playerStateEnum.movingLeft;
-        this.body.velocity.x = -150;
+        this.body.velocity.x = -this.stats.movespeed;
     }
 
     moveRight(){
         this.playerState = playerStateEnum.movingRight;
-        this.body.velocity.x = 150;
+        this.body.velocity.x = this.stats.movespeed;
     }
 
     idle(){
@@ -141,12 +142,14 @@ class Player extends Phaser.Sprite {
             boundsAlignV: "middle"
         };
         this.pauseMenu.continueGame = this.game.add.text(0, 0, "Continue Game", style);
-        this.pauseMenu.loadGame = this.game.add.text(0, 50, "Load Game", style);
-        this.pauseMenu.options = this.game.add.text(0, 100, "Options", style);
+        this.pauseMenu.saveGame = this.game.add.text(0,50, "Save Game", style);
+        this.pauseMenu.loadGame = this.game.add.text(0, 100, "Load Game", style);
+        this.pauseMenu.options = this.game.add.text(0, 150, "Options", style);
         this.pauseMenu.githubLink = this.game.add.text(0, 300, "Github", style);
 
         const array = [
             this.pauseMenu.continueGame,
+            this.pauseMenu.saveGame,
             this.pauseMenu.loadGame,
             this.pauseMenu.options,
             this.pauseMenu.githubLink
@@ -166,7 +169,16 @@ class Player extends Phaser.Sprite {
         switch(item){
             case this.pauseMenu.continueGame: this.continueTheGame();
             break;
-            case this.pauseMenu.loadGame:
+            case this.pauseMenu.saveGame: this.savePlayer(this.x);
+                this.continueTheGame();
+            break;
+            case this.pauseMenu.loadGame: const loadedGame = JSON.parse(window.localStorage.getItem("player")!);
+                if(loadedGame){
+                    this.game.state.start("level" + loadedGame.currentRoom);
+                }else{
+                    alert("no Saved Game Found!");
+                }
+                this.continueTheGame();
             break;
             case this.pauseMenu.options:
             break;
@@ -194,6 +206,29 @@ class Player extends Phaser.Sprite {
             if(this.pauseMenu[key]){
                 this.pauseMenu[key].destroy();
             }
+        }
+    }
+
+    savePlayer(x = 0, levelNumber = this.currentRoom){
+        const savePlayer:savePlayerInterface = {
+            lastCheckPoint: this.lastCheckPoint,
+            currentRoom:levelNumber,
+            stats:this.stats,
+            y:this.y,
+            x:x,
+        };
+        window.localStorage.setItem("player", JSON.stringify(savePlayer));
+    }
+
+    loadPlayer(playerStorage:savePlayerInterface){
+        if(playerStorage){
+            this.stats = playerStorage.stats;
+            this.x = playerStorage.x;
+            this.y = playerStorage.y;
+            this.lastCheckPoint = playerStorage.lastCheckPoint;
+        }else{
+            this.x = 20;
+            this.y = this.game.height - this.height*2;
         }
     }
 }
