@@ -24,7 +24,6 @@ var RogueNpc = /** @class */ (function (_super) {
             "..."
         ];
         _this.npcDialogueLine = 0;
-        _this.interactRange = 50;
         _this.canInteract = false;
         _this.DialogueStyle = {
             font: "bold 10px Arial",

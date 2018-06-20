@@ -10,7 +10,6 @@ class RogueNpc extends Phaser.Sprite {
         "..."
     ];
     npcDialogueLine = 0;
-    interactRange = 50;
     canInteract = false;
     canInteractText!:Phaser.Text|null;
     DialogueStyle = {

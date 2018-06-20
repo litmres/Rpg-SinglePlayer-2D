@@ -54,6 +54,16 @@ class Player extends Phaser.Sprite {
             Phaser.Keyboard.E
         ]);
 
+        this.animations.add("idle", [7,8,9], 3, true);
+        this.animations.add("startwalk", [0,1,2,3], 6, false);
+        this.animations.add("walk", [4,5,6], 6, true);
+        this.animations.add("attack1", [30, 31, 32, 33], 3, true);
+        this.animations.add("attack2", [34, 35, 36], 3, true);
+        this.animations.add("attack3", [37, 38, 39], 3, true);
+        this.animations.add("sitdown",[7,8,9], 3, false);
+        this.animations.add("sit", [9], 3, false);
+        this.animations.add("death", [51,52,54], 3, false);
+
         this.healthBar();
         this.staminaBar();
     }
@@ -139,6 +149,7 @@ class Player extends Phaser.Sprite {
 
     idle(){
         this.playerState = playerStateEnum.idle;
+        this.animations.play("idle");
     }
 
     handlePauseMenu(){

@@ -16,7 +16,8 @@ var PreloadState = /** @class */ (function (_super) {
     }
     PreloadState.prototype.preload = function () {
         this.game.load.onLoadStart.add(this.assets, this);
-        this.game.load.image("floor", "assets/floor.png");
+        //need one here for it to work apparently
+        this.game.load.spritesheet("player", "assets/skeleton/skeleton.png", 32, 64);
         this.game.load.onFileComplete.add(this.progressBar, this);
         this.game.load.onLoadComplete.add(this.finishedLoading, this);
     };
@@ -35,7 +36,6 @@ var PreloadState = /** @class */ (function (_super) {
             fill: "#ffffff",
         });
         this.game.stage.backgroundColor = 0xB20059;
-        this.game.load.spritesheet("player", "assets/player_placeholder.png", 24, 31);
         this.game.load.image("floor", "assets/foundations/floor.png");
         this.game.load.image("wall", "assets/foundations/wall.png");
         this.game.load.image("gate", "assets/foundations/gate.png");

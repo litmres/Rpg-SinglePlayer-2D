@@ -61,6 +61,15 @@ var Player = /** @class */ (function (_super) {
             Phaser.Keyboard.D,
             Phaser.Keyboard.E
         ]);
+        _this.animations.add("idle", [7, 8, 9], 3, true);
+        _this.animations.add("startwalk", [0, 1, 2, 3], 6, false);
+        _this.animations.add("walk", [4, 5, 6], 6, true);
+        _this.animations.add("attack1", [30, 31, 32, 33], 3, true);
+        _this.animations.add("attack2", [34, 35, 36], 3, true);
+        _this.animations.add("attack3", [37, 38, 39], 3, true);
+        _this.animations.add("sitdown", [7, 8, 9], 3, false);
+        _this.animations.add("sit", [9], 3, false);
+        _this.animations.add("death", [51, 52, 54], 3, false);
         _this.healthBar();
         _this.staminaBar();
         return _this;
@@ -132,6 +141,7 @@ var Player = /** @class */ (function (_super) {
     };
     Player.prototype.idle = function () {
         this.playerState = playerStateEnum.idle;
+        this.animations.play("idle");
     };
     Player.prototype.handlePauseMenu = function () {
         var _this = this;

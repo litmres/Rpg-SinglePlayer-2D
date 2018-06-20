@@ -56,7 +56,7 @@ class Level0 extends Phaser.State {
 
     playerFacingNpc(){
         for(let ii = 0; ii < this.npcs.children.length; ii++){
-            if(this.game.physics.arcade.distanceBetween(this.player, this.npcs.children[ii]) < this.npcs.children[ii].interactRange){
+            if(this.game.physics.arcade.overlap(this.player, this.npcs.children[ii])){
                 this.npcs.children[ii].canInteract = true;
                 this.player.facingNpc = this.npcs.children[ii];
             }else{
@@ -68,7 +68,7 @@ class Level0 extends Phaser.State {
 
     playerFacingBonfire(){
         for(let ii = 0; ii < this.bonfires.children.length; ii++){
-            if(this.game.physics.arcade.distanceBetween(this.player, this.bonfires.children[ii]) < this.bonfires.children[ii].interactRange){
+            if(this.game.physics.arcade.overlap(this.player, this.bonfires.children[ii])){
                 this.bonfires.children[ii].canInteract = true;
                 this.player.facingBonfire = this.bonfires.children[ii];
             }else{
