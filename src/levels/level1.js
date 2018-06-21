@@ -66,7 +66,6 @@ var Level1 = /** @class */ (function (_super) {
         this.game.physics.arcade.collide(this.bonfires, this.platforms);
         this.closeGate();
         this.openGate();
-        this.nextLevel();
         this.playerFacingBonfire();
         this.playerFacingNpc();
     };
@@ -94,18 +93,6 @@ var Level1 = /** @class */ (function (_super) {
             }
         }
     };
-    Level1.prototype.nextLevel = function () {
-        if (!this.interActive.gate2.closed && this.player.x >= this.interActive.gate2.gate.x) {
-            this.player.savePlayer(0, this.levelNumber + 1);
-            this.game.state.start("level" + (this.levelNumber + 1), true, false);
-        }
-    };
-    Level1.prototype.previousLevel = function () {
-        if (this.player.x <= this.interActive.gate1.gate.x + this.interActive.gate1.gate.width) {
-            this.player.savePlayer(this.player.x, this.levelNumber - 1);
-            this.game.state.start("level" + (this.levelNumber - 1), true, false);
-        }
-    };
     Level1.prototype.closeGate = function () {
         var _this = this;
         if (!this.interActive.gate1.closed && !this.roomIsClear() && this.player.x > this.interActive.gate1.gate.x + this.interActive.gate1.gate.width * 2) {
@@ -116,8 +103,8 @@ var Level1 = /** @class */ (function (_super) {
             this.game.time.events.add(500, function () {
                 _this.interActive.gate1.gate.body.velocity.x = 0;
                 _this.interActive.gate1.gate.body.velocity.y = 0;
-                _this.interActive.gate1.gate.body.x = endX_1;
-                _this.interActive.gate1.gate.body.y = endY_1;
+                _this.interActive.gate1.gate.x = endX_1;
+                _this.interActive.gate1.gate.y = endY_1;
             }, this);
         }
     };
@@ -131,8 +118,8 @@ var Level1 = /** @class */ (function (_super) {
             this.game.time.events.add(500, function () {
                 _this.interActive.gate1.gate.body.velocity.x = 0;
                 _this.interActive.gate1.gate.body.velocity.y = 0;
-                _this.interActive.gate1.gate.body.x = endX_2;
-                _this.interActive.gate1.gate.body.y = endY_2;
+                _this.interActive.gate1.gate.x = endX_2;
+                _this.interActive.gate1.gate.y = endY_2;
             }, this);
         }
         if (this.interActive.gate2.closed && this.roomIsClear()) {
@@ -143,8 +130,8 @@ var Level1 = /** @class */ (function (_super) {
             this.game.time.events.add(500, function () {
                 _this.interActive.gate2.gate.body.velocity.x = 0;
                 _this.interActive.gate2.gate.body.velocity.y = 0;
-                _this.interActive.gate2.gate.body.x = endX_3;
-                _this.interActive.gate2.gate.body.y = endY_3;
+                _this.interActive.gate2.gate.x = endX_3;
+                _this.interActive.gate2.gate.y = endY_3;
             }, this);
         }
     };

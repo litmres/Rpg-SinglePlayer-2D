@@ -17,6 +17,7 @@ var playerStateEnum;
     playerStateEnum[playerStateEnum["sitDown"] = 8] = "sitDown";
     playerStateEnum[playerStateEnum["movingStartWalk"] = 9] = "movingStartWalk";
     playerStateEnum[playerStateEnum["standUp"] = 10] = "standUp";
+    playerStateEnum[playerStateEnum["autoWalkTo"] = 11] = "autoWalkTo";
 })(playerStateEnum || (playerStateEnum = {}));
 var enemyStateEnum;
 (function (enemyStateEnum) {

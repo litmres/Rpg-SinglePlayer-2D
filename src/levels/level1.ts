@@ -72,7 +72,6 @@ class Level1 extends Phaser.State {
 
         this.closeGate();
         this.openGate();
-        this.nextLevel();
 
         this.playerFacingBonfire();
         this.playerFacingNpc();
@@ -102,20 +101,6 @@ class Level1 extends Phaser.State {
         }
     }
 
-    nextLevel(){
-        if(!this.interActive.gate2.closed && this.player.x >= this.interActive.gate2.gate.x){
-            this.player.savePlayer(0, this.levelNumber+1);
-            this.game.state.start("level" + (this.levelNumber+1), true, false);
-        }
-    }
-
-    previousLevel(){
-        if(this.player.x <= this.interActive.gate1.gate.x + this.interActive.gate1.gate.width){
-            this.player.savePlayer(this.player.x, this.levelNumber-1);
-            this.game.state.start("level" + (this.levelNumber-1), true, false);
-        }
-    }
-
     closeGate(){
         if(!this.interActive.gate1.closed && !this.roomIsClear() && this.player.x > this.interActive.gate1.gate.x + this.interActive.gate1.gate.width*2){
             this.interActive.gate1.closed = true;
@@ -132,8 +117,8 @@ class Level1 extends Phaser.State {
             this.game.time.events.add(500, () => {
                 this.interActive.gate1.gate.body.velocity.x = 0;
                 this.interActive.gate1.gate.body.velocity.y = 0;
-                this.interActive.gate1.gate.body.x = endX;
-                this.interActive.gate1.gate.body.y = endY;
+                this.interActive.gate1.gate.x = endX;
+                this.interActive.gate1.gate.y = endY;
             }, this);
         }
     }
@@ -154,8 +139,8 @@ class Level1 extends Phaser.State {
             this.game.time.events.add(500, () => {
                 this.interActive.gate1.gate.body.velocity.x = 0;
                 this.interActive.gate1.gate.body.velocity.y = 0;
-                this.interActive.gate1.gate.body.x = endX;
-                this.interActive.gate1.gate.body.y = endY;
+                this.interActive.gate1.gate.x = endX;
+                this.interActive.gate1.gate.y = endY;
             }, this);
         }
 
@@ -174,8 +159,8 @@ class Level1 extends Phaser.State {
             this.game.time.events.add(500, () => {
                 this.interActive.gate2.gate.body.velocity.x = 0;
                 this.interActive.gate2.gate.body.velocity.y = 0;
-                this.interActive.gate2.gate.body.x = endX;
-                this.interActive.gate2.gate.body.y = endY;
+                this.interActive.gate2.gate.x = endX;
+                this.interActive.gate2.gate.y = endY;
             }, this);
         }
     }

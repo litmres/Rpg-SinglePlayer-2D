@@ -28,6 +28,7 @@ var Player = /** @class */ (function (_super) {
             _a[playerStateEnum.sitDown] = false,
             _a[playerStateEnum.standUp] = false,
             _a[playerStateEnum.movingStartWalk] = true,
+            _a[playerStateEnum.autoWalkTo] = false,
             _a);
         _this.canIdle = (_b = {},
             _b[playerStateEnum.movingWalk] = true,
@@ -41,6 +42,7 @@ var Player = /** @class */ (function (_super) {
             _b[playerStateEnum.sitDown] = false,
             _b[playerStateEnum.standUp] = false,
             _b[playerStateEnum.movingStartWalk] = true,
+            _b[playerStateEnum.autoWalkTo] = false,
             _b);
         _this.canAttack = (_c = {},
             _c[playerStateEnum.movingWalk] = true,
@@ -54,6 +56,7 @@ var Player = /** @class */ (function (_super) {
             _c[playerStateEnum.sitDown] = false,
             _c[playerStateEnum.standUp] = false,
             _c[playerStateEnum.movingStartWalk] = true,
+            _c[playerStateEnum.autoWalkTo] = false,
             _c);
         _this.canSitDown = (_d = {},
             _d[playerStateEnum.movingWalk] = true,
@@ -67,6 +70,7 @@ var Player = /** @class */ (function (_super) {
             _d[playerStateEnum.sitDown] = false,
             _d[playerStateEnum.standUp] = false,
             _d[playerStateEnum.movingStartWalk] = true,
+            _d[playerStateEnum.autoWalkTo] = false,
             _d);
         _this.pauseMenu = {
             backgroundImage: null,
@@ -82,6 +86,13 @@ var Player = /** @class */ (function (_super) {
         _this.playerHealthBar = null;
         _this.playerStaminaBar = null;
         _this.currentRoom = 0;
+        _this.EnterLevelHandler = {
+            Next: false,
+            Previous: false,
+            Text: null,
+            EnterText: "Press E to go to Next Level",
+            PreviousText: "Press E to go to Previous Level",
+        };
         _this.playerAnimations = (_e = {},
             _e[playerStateEnum.movingWalk] = "walk",
             _e[playerStateEnum.movingFall] = "fall",
@@ -94,7 +105,14 @@ var Player = /** @class */ (function (_super) {
             _e[playerStateEnum.sitDown] = "sitdown",
             _e[playerStateEnum.standUp] = "standup",
             _e[playerStateEnum.movingStartWalk] = "startwalk",
+            _e[playerStateEnum.autoWalkTo] = "walk",
             _e);
+        _this.DialogueStyle = {
+            font: "bold 10px Arial",
+            fill: "#fff",
+            boundsAlignH: "center",
+            boundsAlignV: "middle"
+        };
         _this.anchor.setTo(0.5, 0);
         game.physics.arcade.enableBody(_this);
         game.add.existing(_this);
@@ -159,6 +177,7 @@ var Player = /** @class */ (function (_super) {
         });
         _this.animations.add("sitdown", [7, 8, 9], 3, false).onComplete.add(function () {
             _this.animations.stop();
+            _this.savePlayer(_this.x);
             _this.playerState = playerStateEnum.sit;
         });
         _this.animations.add("sit", [9], 3, false);
@@ -179,6 +198,7 @@ var Player = /** @class */ (function (_super) {
         this.handleInput();
         this.updateHealthBar();
         this.updateStaminaBar();
+        this.handleEnteringLevel();
         this.fpsCounter.setText("FPS: " + this.game.time.fps);
     };
     // tslint:disable-next-line:cyclomatic-complexity
@@ -205,6 +225,89 @@ var Player = /** @class */ (function (_super) {
             this.handlePauseMenu();
         }
     };
+    // tslint:disable-next-line:cyclomatic-complexity
+    Player.prototype.handleEnteringLevel = function () {
+        if (!this.EnterLevelHandler.Text) {
+            this.EnterLevelHandler.Text = this.game.add.text(this.game.camera.x + (this.game.camera.width / 2), this.game.camera.height, "", this.DialogueStyle);
+            this.EnterLevelHandler.Text.setTextBounds(30, -20, 0, 0);
+        }
+        else {
+            this.EnterLevelHandler.Text.x = this.game.camera.x + (this.game.camera.width / 2);
+            this.EnterLevelHandler.Text.y = this.game.camera.height;
+        }
+        if (this.x < 0 && this.playerState !== playerStateEnum.autoWalkTo) {
+            this.EnterThisFromPreviousLevel();
+        }
+        if (this.x > this.game.width && this.playerState !== playerStateEnum.autoWalkTo) {
+            this.EnterThisFromNextLevel();
+        }
+        if (this.game.physics.arcade.distanceToXY(this, this.game.width, this.y) < this.width) {
+            this.EnterLevelHandler.Next = true;
+        }
+        else {
+            this.EnterLevelHandler.Next = false;
+        }
+        if (this.game.physics.arcade.distanceToXY(this, 0, this.y) < this.width && this.currentRoom > 0) {
+            this.EnterLevelHandler.Previous = true;
+        }
+        else {
+            this.EnterLevelHandler.Previous = false;
+        }
+        if (this.EnterLevelHandler.Next) {
+            this.EnterLevelHandler.Text.setText(this.EnterLevelHandler.EnterText);
+            if (this.controls.E.justPressed()) {
+                this.EnterNextLevel();
+            }
+        }
+        if (this.EnterLevelHandler.Previous) {
+            this.EnterLevelHandler.Text.setText(this.EnterLevelHandler.PreviousText);
+            if (this.controls.E.justPressed()) {
+                this.EnterPreviousLevel();
+            }
+        }
+        if (!this.EnterLevelHandler.Previous && !this.EnterLevelHandler.Next) {
+            this.EnterLevelHandler.Text.setText("");
+        }
+    };
+    Player.prototype.EnterNextLevel = function () {
+        this.scale.setTo(1, 1);
+        this.playerState = playerStateEnum.autoWalkTo;
+        this.movePlayerTo(this.game.width + this.width, this.y, 0.2, 700);
+    };
+    Player.prototype.EnterPreviousLevel = function () {
+        this.scale.setTo(-1, 1);
+        this.playerState = playerStateEnum.autoWalkTo;
+        this.movePlayerTo(-this.width, this.y, 0.2, 700);
+    };
+    Player.prototype.EnterThisFromPreviousLevel = function () {
+        this.scale.setTo(1, 1);
+        this.playerState = playerStateEnum.autoWalkTo;
+        this.movePlayerTo(this.width * 2, this.y, 0.2, 700);
+    };
+    Player.prototype.EnterThisFromNextLevel = function () {
+        this.scale.setTo(-1, 1);
+        this.playerState = playerStateEnum.autoWalkTo;
+        this.movePlayerTo(this.game.width - (this.width * 2), this.y, 0.2, 700);
+    };
+    Player.prototype.movePlayerTo = function (toX, toY, speed, time, nextLevel) {
+        var _this = this;
+        if (time === void 0) { time = 0; }
+        if (nextLevel === void 0) { nextLevel = "nextLevel"; }
+        this.game.physics.arcade.moveToXY(this, toX, toY, speed, time);
+        this.game.time.events.add(time, function () {
+            _this.body.velocity.x = 0;
+            _this.body.velocity.y = 0;
+            _this.x = toX;
+            _this.y = toY;
+            _this.playerState = playerStateEnum.idle;
+            if (nextLevel === "nextLevel") {
+                _this.nextLevel();
+            }
+            else if (nextLevel === "previousLevel") {
+                _this.previousLevel();
+            }
+        }, this);
+    };
     Player.prototype.handleNpc = function () {
         this.facingNpc.nextDialogueText();
     };
@@ -225,7 +328,7 @@ var Player = /** @class */ (function (_super) {
         }
         else if (!this.facingBonfire.isLit) {
             this.facingBonfire.isLit = true;
-            this.lastCheckPoint = this.facingBonfire;
+            this.lastCheckPoint = this.currentRoom;
         }
     };
     Player.prototype.healthBar = function () {
@@ -253,7 +356,9 @@ var Player = /** @class */ (function (_super) {
         }
     };
     Player.prototype.resetVelocity = function () {
-        this.body.velocity.x = 0;
+        if (this.playerState !== playerStateEnum.autoWalkTo) {
+            this.body.velocity.x = 0;
+        }
     };
     Player.prototype.moveLeft = function () {
         this.playerState = playerStateEnum.movingStartWalk;
@@ -365,9 +470,17 @@ var Player = /** @class */ (function (_super) {
             this.lastCheckPoint = playerStorage.lastCheckPoint;
         }
         else {
-            this.x = 20;
+            this.x = -this.width;
             this.y = this.game.height - this.height * 2;
         }
+    };
+    Player.prototype.nextLevel = function () {
+        this.savePlayer(0, this.currentRoom + 1);
+        this.game.state.start("level" + (this.currentRoom + 1), true, false);
+    };
+    Player.prototype.previousLevel = function () {
+        this.savePlayer(this.x, this.currentRoom - 1);
+        this.game.state.start("level" + (this.currentRoom - 1), true, false);
     };
     return Player;
 }(Phaser.Sprite));

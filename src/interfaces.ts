@@ -30,6 +30,7 @@ interface playerAnimationInterface{
 	[playerStateEnum.sitDown]:string;
 	[playerStateEnum.standUp]:string;
 	[playerStateEnum.movingStartWalk]:string;
+	[playerStateEnum.autoWalkTo]:string;
 }
 
 interface npcAnimationInterface{
@@ -70,6 +71,7 @@ interface playerAllowanceInterface{
 	[playerStateEnum.sitDown]:boolean;
 	[playerStateEnum.standUp]:boolean;
 	[playerStateEnum.movingStartWalk]:boolean;
+	[playerStateEnum.autoWalkTo]:boolean;
 }
 
 interface npcAllowanceInterface{

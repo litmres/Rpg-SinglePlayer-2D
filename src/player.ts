@@ -13,6 +13,7 @@ class Player extends Phaser.Sprite {
         [playerStateEnum.sitDown]:false,
         [playerStateEnum.standUp]:false,
         [playerStateEnum.movingStartWalk]:true,
+        [playerStateEnum.autoWalkTo]:false,
     };
     canIdle:playerAllowanceInterface = {
         [playerStateEnum.movingWalk]:true,
@@ -26,6 +27,7 @@ class Player extends Phaser.Sprite {
         [playerStateEnum.sitDown]:false,
         [playerStateEnum.standUp]:false,
         [playerStateEnum.movingStartWalk]:true,
+        [playerStateEnum.autoWalkTo]:false,
     };
     canAttack:playerAllowanceInterface = {
         [playerStateEnum.movingWalk]:true,
@@ -39,6 +41,7 @@ class Player extends Phaser.Sprite {
         [playerStateEnum.sitDown]:false,
         [playerStateEnum.standUp]:false,
         [playerStateEnum.movingStartWalk]:true,
+        [playerStateEnum.autoWalkTo]:false,
     };
     canSitDown:playerAllowanceInterface = {
         [playerStateEnum.movingWalk]:true,
@@ -52,6 +55,7 @@ class Player extends Phaser.Sprite {
         [playerStateEnum.sitDown]:false,
         [playerStateEnum.standUp]:false,
         [playerStateEnum.movingStartWalk]:true,
+        [playerStateEnum.autoWalkTo]:false,
     };
     facingNpc:any;
     facingBonfire:any;
@@ -71,6 +75,13 @@ class Player extends Phaser.Sprite {
     playerStaminaBar:any = null;
     controls:any;
     currentRoom = 0;
+    EnterLevelHandler = {
+        Next: false,
+        Previous: false,
+        Text: null,
+        EnterText:"Press E to go to Next Level",
+        PreviousText: "Press E to go to Previous Level",
+    };
     playerAnimations:playerAnimationInterface = {
         [playerStateEnum.movingWalk]:"walk",
         [playerStateEnum.movingFall]:"fall",
@@ -83,6 +94,13 @@ class Player extends Phaser.Sprite {
         [playerStateEnum.sitDown]:"sitdown",
         [playerStateEnum.standUp]:"standup",
         [playerStateEnum.movingStartWalk]:"startwalk",
+        [playerStateEnum.autoWalkTo]:"walk",
+    };
+    DialogueStyle = {
+        font: "bold 10px Arial",
+        fill: "#fff",
+        boundsAlignH: "center",
+        boundsAlignV: "middle"
     };
     constructor(game: Phaser.Game, x: number, y: number) {
         super(game, x, y, "player", 0);
@@ -154,6 +172,7 @@ class Player extends Phaser.Sprite {
         });
         this.animations.add("sitdown",[7,8,9], 3, false).onComplete.add(()=>{
             this.animations.stop();
+            this.savePlayer(this.x);
             this.playerState = playerStateEnum.sit;
         });
         this.animations.add("sit", [9], 3, false);
@@ -178,6 +197,8 @@ class Player extends Phaser.Sprite {
 
         this.updateHealthBar();
         this.updateStaminaBar();
+
+        this.handleEnteringLevel();
 
         this.fpsCounter.setText("FPS: " + this.game.time.fps);
     }
@@ -205,6 +226,99 @@ class Player extends Phaser.Sprite {
         }
     }
 
+    // tslint:disable-next-line:cyclomatic-complexity
+    handleEnteringLevel(){
+        if(!this.EnterLevelHandler.Text){
+            this.EnterLevelHandler.Text = this.game.add.text(this.game.camera.x+(this.game.camera.width/2), this.game.camera.height, "", this.DialogueStyle);
+            this.EnterLevelHandler.Text.setTextBounds(30, -20, 0, 0);
+        }else{
+            this.EnterLevelHandler.Text.x = this.game.camera.x+(this.game.camera.width/2);
+            this.EnterLevelHandler.Text.y = this.game.camera.height;
+        }
+
+        if(this.x < 0 && this.playerState !== playerStateEnum.autoWalkTo){
+            this.EnterThisFromPreviousLevel();
+        }
+        if(this.x > this.game.width && this.playerState !== playerStateEnum.autoWalkTo){
+            this.EnterThisFromNextLevel();
+        }
+        if(this.game.physics.arcade.distanceToXY(this, this.game.width, this.y) < this.width){
+            this.EnterLevelHandler.Next = true;
+        }else{
+            this.EnterLevelHandler.Next = false;
+        }
+        if(this.game.physics.arcade.distanceToXY(this, 0, this.y) < this.width && this.currentRoom > 0){
+            this.EnterLevelHandler.Previous = true;
+        }else{
+            this.EnterLevelHandler.Previous = false;
+        }
+
+        if(this.EnterLevelHandler.Next){
+            this.EnterLevelHandler.Text.setText(this.EnterLevelHandler.EnterText);
+            if(this.controls.E.justPressed()){
+                this.EnterNextLevel();
+            }
+        }
+
+        if(this.EnterLevelHandler.Previous){
+            this.EnterLevelHandler.Text.setText(this.EnterLevelHandler.PreviousText);
+            if(this.controls.E.justPressed()){
+                this.EnterPreviousLevel();
+            }
+        }
+
+        if(!this.EnterLevelHandler.Previous && !this.EnterLevelHandler.Next){
+            this.EnterLevelHandler.Text.setText("");
+        }
+    }
+
+    EnterNextLevel(){
+        this.scale.setTo(1,1);
+        this.playerState = playerStateEnum.autoWalkTo;
+        this.movePlayerTo(this.game.width+this.width, this.y, 0.2, 700);
+    }
+
+    EnterPreviousLevel(){
+        this.scale.setTo(-1,1);
+        this.playerState = playerStateEnum.autoWalkTo;
+        this.movePlayerTo(-this.width, this.y, 0.2, 700);
+    }
+
+    EnterThisFromPreviousLevel(){
+        this.scale.setTo(1,1);
+        this.playerState = playerStateEnum.autoWalkTo;
+        this.movePlayerTo(this.width*2, this.y, 0.2, 700);
+    }
+
+    EnterThisFromNextLevel(){
+        this.scale.setTo(-1,1);
+        this.playerState = playerStateEnum.autoWalkTo;
+        this.movePlayerTo(this.game.width-(this.width*2), this.y, 0.2, 700);
+    }
+
+    movePlayerTo(toX:number, toY:number, speed:number, time = 0, nextLevel = "nextLevel"){
+        this.game.physics.arcade.moveToXY(
+            this,
+            toX,
+            toY,
+            speed,
+            time
+        );
+
+        this.game.time.events.add(time, () => {
+            this.body.velocity.x = 0;
+            this.body.velocity.y = 0;
+            this.x = toX;
+            this.y = toY;
+            this.playerState = playerStateEnum.idle;
+            if(nextLevel === "nextLevel"){
+                this.nextLevel();
+            }else if(nextLevel === "previousLevel"){
+                this.previousLevel();
+            }
+        }, this);
+    }
+
     handleNpc(){
         this.facingNpc.nextDialogueText();
     }
@@ -226,7 +340,7 @@ class Player extends Phaser.Sprite {
             this.playerState = playerStateEnum.sitDown;
         }else if(!this.facingBonfire.isLit){
             this.facingBonfire.isLit = true;
-            this.lastCheckPoint = this.facingBonfire;
+            this.lastCheckPoint = this.currentRoom;
         }
     }
 
@@ -259,7 +373,9 @@ class Player extends Phaser.Sprite {
     }
 
     resetVelocity(){
-        this.body.velocity.x = 0;
+        if(this.playerState !== playerStateEnum.autoWalkTo){
+            this.body.velocity.x = 0;
+        }
     }
 
     moveLeft(){
@@ -375,8 +491,18 @@ class Player extends Phaser.Sprite {
             this.y = playerStorage.y;
             this.lastCheckPoint = playerStorage.lastCheckPoint;
         }else{
-            this.x = 20;
+            this.x = -this.width;
             this.y = this.game.height - this.height*2;
         }
+    }
+
+    nextLevel(){
+        this.savePlayer(0, this.currentRoom+1);
+        this.game.state.start("level" + (this.currentRoom+1), true, false);
+    }
+
+    previousLevel(){
+        this.savePlayer(this.x, this.currentRoom-1);
+        this.game.state.start("level" + (this.currentRoom-1), true, false);
     }
 }

@@ -36,7 +36,7 @@ class Level0 extends Phaser.State {
         this.game.stage.backgroundColor = this.background;
         this.game.world.setBounds(0, 0, this.game.width, this.game.height);
         this.player = new Player(this.game, 0, 0);
-        this.player.x += this.player.width;
+        this.player.x = -this.player.width;
         this.player.y -= this.player.height*2;
         this.player.currentRoom = this.levelNumber;
         this.player.loadPlayer(this.playerStorage);
@@ -46,10 +46,6 @@ class Level0 extends Phaser.State {
     update(){
         this.game.physics.arcade.collide(this.player, this.platforms);
         this.game.physics.arcade.collide(this.npcs, this.platforms);
-        if(this.player.x >= this.game.width - this.player.width){
-            this.nextLevel();
-        }
-
         this.playerFacingNpc();
         this.playerFacingBonfire();
     }
