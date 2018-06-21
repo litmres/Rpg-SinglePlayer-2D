@@ -27,12 +27,12 @@ class RogueEnemy extends Phaser.Sprite {
     }
 
     moveLeft(){
-        this.enemyState = enemyStateEnum.movingLeft;
+        this.enemyState = enemyStateEnum.movingWalk;
         this.body.velocity.x = -150;
     }
 
     moveRight(){
-        this.enemyState = enemyStateEnum.movingRight;
+        this.enemyState = enemyStateEnum.movingWalk;
         this.body.velocity.x = 150;
     }
 

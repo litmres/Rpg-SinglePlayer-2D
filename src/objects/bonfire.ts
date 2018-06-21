@@ -22,7 +22,7 @@ class Bonfire extends Phaser.Sprite {
         game.physics.enable(this, Phaser.Physics.ARCADE);
         this.animations.add("bonfire_not_lit", [0]);
         this.animations.add("bonfire_lit", [0,1,2,3,4,5,6,7,8,9], 5, true);
-        this.isLit = true;
+        this.isLit = false;
     }
     
     update() {
@@ -43,7 +43,7 @@ class Bonfire extends Phaser.Sprite {
         if(this.canInteract && this.isLit){
             this.canInteractText.setText(this.bonfireDialogue.lit);
         }else if(this.canInteract && !this.isLit){
-            this.canInteractText.setText(this.bonfireDialogue.lit);
+            this.canInteractText.setText(this.bonfireDialogue.unlit);
         }else if(!this.canInteract){
             this.canInteractText.setText("");
         }

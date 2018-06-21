@@ -36,11 +36,11 @@ var RogueEnemy = /** @class */ (function (_super) {
         this.body.velocity.x = 0;
     };
     RogueEnemy.prototype.moveLeft = function () {
-        this.enemyState = enemyStateEnum.movingLeft;
+        this.enemyState = enemyStateEnum.movingWalk;
         this.body.velocity.x = -150;
     };
     RogueEnemy.prototype.moveRight = function () {
-        this.enemyState = enemyStateEnum.movingRight;
+        this.enemyState = enemyStateEnum.movingWalk;
         this.body.velocity.x = 150;
     };
     RogueEnemy.prototype.idle = function () {

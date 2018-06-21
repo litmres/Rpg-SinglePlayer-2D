@@ -11,6 +11,7 @@ class Player extends Phaser.Sprite {
         [playerStateEnum.death]:false,
         [playerStateEnum.sit]:false,
         [playerStateEnum.sitDown]:false,
+        [playerStateEnum.standUp]:false,
         [playerStateEnum.movingStartWalk]:true,
     };
     canIdle:playerAllowanceInterface = {
@@ -23,6 +24,7 @@ class Player extends Phaser.Sprite {
         [playerStateEnum.death]:false,
         [playerStateEnum.sit]:false,
         [playerStateEnum.sitDown]:false,
+        [playerStateEnum.standUp]:false,
         [playerStateEnum.movingStartWalk]:true,
     };
     canAttack:playerAllowanceInterface = {
@@ -35,6 +37,7 @@ class Player extends Phaser.Sprite {
         [playerStateEnum.death]:false,
         [playerStateEnum.sit]:false,
         [playerStateEnum.sitDown]:false,
+        [playerStateEnum.standUp]:false,
         [playerStateEnum.movingStartWalk]:true,
     };
     canSitDown:playerAllowanceInterface = {
@@ -47,6 +50,7 @@ class Player extends Phaser.Sprite {
         [playerStateEnum.death]:false,
         [playerStateEnum.sit]:false,
         [playerStateEnum.sitDown]:false,
+        [playerStateEnum.standUp]:false,
         [playerStateEnum.movingStartWalk]:true,
     };
     facingNpc:any;
@@ -77,6 +81,7 @@ class Player extends Phaser.Sprite {
         [playerStateEnum.death]:"death",
         [playerStateEnum.sit]:"sit",
         [playerStateEnum.sitDown]:"sitdown",
+        [playerStateEnum.standUp]:"standup",
         [playerStateEnum.movingStartWalk]:"startwalk",
     };
     constructor(game: Phaser.Game, x: number, y: number) {
@@ -88,6 +93,7 @@ class Player extends Phaser.Sprite {
         this.body.collideWorldBounds = true;
         game.physics.enable(this, Phaser.Physics.ARCADE);
         this.stats = {
+            level: 1,
             maxHealth: this.maxHealth,
             health: this.maxHealth,
             maxStamina: this.maxHealth,
@@ -151,6 +157,10 @@ class Player extends Phaser.Sprite {
             this.playerState = playerStateEnum.sit;
         });
         this.animations.add("sit", [9], 3, false);
+        this.animations.add("standup",[9,8,7], 3, false).onComplete.add(()=>{
+            this.animations.stop();
+            this.playerState = playerStateEnum.idle;
+        });
         this.animations.add("death", [51,52,54], 3, false).onComplete.add(() => {
             //kill player and respawn
         });
@@ -186,6 +196,10 @@ class Player extends Phaser.Sprite {
             this.idle();
         }
 
+        if((this.controls.LEFT.justPressed() || this.controls.RIGHT.justPressed()) && this.playerState === playerStateEnum.sit){
+            this.playerState = playerStateEnum.standUp;
+        }
+
         if(this.controls.ESC.isDown || this.controls.P.isDown){
             this.handlePauseMenu();
         }
@@ -196,15 +210,24 @@ class Player extends Phaser.Sprite {
     }
 
     handleAttack(){
-        if(this.controls.LMB.justPressed() && this.canAttack){
+        if(this.controls.LMB.justPressed() && this.canAttack[this.playerState]){
             this.playerState = playerStateEnum.attack1;
-        }else if(this.controls.RMB.justPressed() && this.canAttack){
+        }else if(this.controls.RMB.justPressed() && this.canAttack[this.playerState]){
             console.log("right mouse button");
+        }
+
+        if((this.controls.LMB.justPressed() || this.controls.RMB.justPressed()) && this.playerState === playerStateEnum.sit){
+            this.playerState = playerStateEnum.standUp;
         }
     }
 
     handleBonfire(){
-        console.log("using bonfire");
+        if(this.facingBonfire.isLit){
+            this.playerState = playerStateEnum.sitDown;
+        }else if(!this.facingBonfire.isLit){
+            this.facingBonfire.isLit = true;
+            this.lastCheckPoint = this.facingBonfire;
+        }
     }
 
     healthBar(){

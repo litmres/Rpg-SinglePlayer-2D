@@ -26,6 +26,7 @@ var Player = /** @class */ (function (_super) {
             _a[playerStateEnum.death] = false,
             _a[playerStateEnum.sit] = false,
             _a[playerStateEnum.sitDown] = false,
+            _a[playerStateEnum.standUp] = false,
             _a[playerStateEnum.movingStartWalk] = true,
             _a);
         _this.canIdle = (_b = {},
@@ -38,6 +39,7 @@ var Player = /** @class */ (function (_super) {
             _b[playerStateEnum.death] = false,
             _b[playerStateEnum.sit] = false,
             _b[playerStateEnum.sitDown] = false,
+            _b[playerStateEnum.standUp] = false,
             _b[playerStateEnum.movingStartWalk] = true,
             _b);
         _this.canAttack = (_c = {},
@@ -50,6 +52,7 @@ var Player = /** @class */ (function (_super) {
             _c[playerStateEnum.death] = false,
             _c[playerStateEnum.sit] = false,
             _c[playerStateEnum.sitDown] = false,
+            _c[playerStateEnum.standUp] = false,
             _c[playerStateEnum.movingStartWalk] = true,
             _c);
         _this.canSitDown = (_d = {},
@@ -62,6 +65,7 @@ var Player = /** @class */ (function (_super) {
             _d[playerStateEnum.death] = false,
             _d[playerStateEnum.sit] = false,
             _d[playerStateEnum.sitDown] = false,
+            _d[playerStateEnum.standUp] = false,
             _d[playerStateEnum.movingStartWalk] = true,
             _d);
         _this.pauseMenu = {
@@ -88,6 +92,7 @@ var Player = /** @class */ (function (_super) {
             _e[playerStateEnum.death] = "death",
             _e[playerStateEnum.sit] = "sit",
             _e[playerStateEnum.sitDown] = "sitdown",
+            _e[playerStateEnum.standUp] = "standup",
             _e[playerStateEnum.movingStartWalk] = "startwalk",
             _e);
         _this.anchor.setTo(0.5, 0);
@@ -97,6 +102,7 @@ var Player = /** @class */ (function (_super) {
         _this.body.collideWorldBounds = true;
         game.physics.enable(_this, Phaser.Physics.ARCADE);
         _this.stats = {
+            level: 1,
             maxHealth: _this.maxHealth,
             health: _this.maxHealth,
             maxStamina: _this.maxHealth,
@@ -156,6 +162,10 @@ var Player = /** @class */ (function (_super) {
             _this.playerState = playerStateEnum.sit;
         });
         _this.animations.add("sit", [9], 3, false);
+        _this.animations.add("standup", [9, 8, 7], 3, false).onComplete.add(function () {
+            _this.animations.stop();
+            _this.playerState = playerStateEnum.idle;
+        });
         _this.animations.add("death", [51, 52, 54], 3, false).onComplete.add(function () {
             //kill player and respawn
         });
@@ -188,6 +198,9 @@ var Player = /** @class */ (function (_super) {
         else if (this.canIdle[this.playerState]) {
             this.idle();
         }
+        if ((this.controls.LEFT.justPressed() || this.controls.RIGHT.justPressed()) && this.playerState === playerStateEnum.sit) {
+            this.playerState = playerStateEnum.standUp;
+        }
         if (this.controls.ESC.isDown || this.controls.P.isDown) {
             this.handlePauseMenu();
         }
@@ -196,15 +209,24 @@ var Player = /** @class */ (function (_super) {
         this.facingNpc.nextDialogueText();
     };
     Player.prototype.handleAttack = function () {
-        if (this.controls.LMB.justPressed() && this.canAttack) {
+        if (this.controls.LMB.justPressed() && this.canAttack[this.playerState]) {
             this.playerState = playerStateEnum.attack1;
         }
-        else if (this.controls.RMB.justPressed() && this.canAttack) {
+        else if (this.controls.RMB.justPressed() && this.canAttack[this.playerState]) {
             console.log("right mouse button");
+        }
+        if ((this.controls.LMB.justPressed() || this.controls.RMB.justPressed()) && this.playerState === playerStateEnum.sit) {
+            this.playerState = playerStateEnum.standUp;
         }
     };
     Player.prototype.handleBonfire = function () {
-        console.log("using bonfire");
+        if (this.facingBonfire.isLit) {
+            this.playerState = playerStateEnum.sitDown;
+        }
+        else if (!this.facingBonfire.isLit) {
+            this.facingBonfire.isLit = true;
+            this.lastCheckPoint = this.facingBonfire;
+        }
     };
     Player.prototype.healthBar = function () {
         if (!this.playerHealthBar) {

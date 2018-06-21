@@ -32,7 +32,7 @@ var Bonfire = /** @class */ (function (_super) {
         game.physics.enable(_this, Phaser.Physics.ARCADE);
         _this.animations.add("bonfire_not_lit", [0]);
         _this.animations.add("bonfire_lit", [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], 5, true);
-        _this.isLit = true;
+        _this.isLit = false;
         return _this;
     }
     Bonfire.prototype.update = function () {
@@ -53,7 +53,7 @@ var Bonfire = /** @class */ (function (_super) {
             this.canInteractText.setText(this.bonfireDialogue.lit);
         }
         else if (this.canInteract && !this.isLit) {
-            this.canInteractText.setText(this.bonfireDialogue.lit);
+            this.canInteractText.setText(this.bonfireDialogue.unlit);
         }
         else if (!this.canInteract) {
             this.canInteractText.setText("");
