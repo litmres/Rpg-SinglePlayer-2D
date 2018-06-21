@@ -118,7 +118,9 @@ var Player = /** @class */ (function (_super) {
             RMB: _this.game.input.activePointer.rightButton,
         };
         _this.game.input.onDown.add(function (pointer, event) {
-            _this.handleAttack();
+            if (!_this.game.paused) {
+                _this.handleAttack();
+            }
         });
         //stop rightclick from opening a menu
         _this.game.canvas.oncontextmenu = function (e) {
@@ -284,17 +286,17 @@ var Player = /** @class */ (function (_super) {
                 break;
             case this.pauseMenu.saveGame:
                 this.savePlayer(this.x);
-                this.continueTheGame();
+                alert("Game Saved");
                 break;
             case this.pauseMenu.loadGame:
                 var loadedGame = JSON.parse(window.localStorage.getItem("player"));
                 if (loadedGame) {
                     this.game.state.start("level" + loadedGame.currentRoom);
+                    this.continueTheGame();
                 }
                 else {
                     alert("no Saved Game Found!");
                 }
-                this.continueTheGame();
                 break;
             case this.pauseMenu.options:
                 break;

@@ -110,7 +110,9 @@ class Player extends Phaser.Sprite {
         };
 
         this.game.input.onDown.add((pointer:Phaser.Pointer, event:PointerEvent) => {
-            this.handleAttack();
+            if(!this.game.paused){
+                this.handleAttack();
+            }
         });
 
         //stop rightclick from opening a menu
@@ -293,15 +295,15 @@ class Player extends Phaser.Sprite {
             case this.pauseMenu.continueGame: this.continueTheGame();
             break;
             case this.pauseMenu.saveGame: this.savePlayer(this.x);
-                this.continueTheGame();
+                alert("Game Saved");
             break;
             case this.pauseMenu.loadGame: const loadedGame = JSON.parse(window.localStorage.getItem("player")!);
                 if(loadedGame){
                     this.game.state.start("level" + loadedGame.currentRoom);
+                    this.continueTheGame();
                 }else{
                     alert("no Saved Game Found!");
                 }
-                this.continueTheGame();
             break;
             case this.pauseMenu.options:
             break;
