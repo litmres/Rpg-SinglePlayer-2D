@@ -137,15 +137,15 @@ var Player = /** @class */ (function (_super) {
             _this.playerState = playerStateEnum.movingWalk;
         });
         _this.animations.add("walk", [4, 5, 6], 6, true);
-        _this.animations.add("attack1", [20, 21, 22, 23], 6, false).onComplete.add(function () {
+        _this.animations.add("attack1", [20, 21, 22, 23], 10, false).onComplete.add(function () {
             _this.animations.stop();
             _this.playerState = playerStateEnum.idle;
         });
-        _this.animations.add("attack2", [24, 25, 26], 6, false).onComplete.add(function () {
+        _this.animations.add("attack2", [24, 25, 26], 10, false).onComplete.add(function () {
             _this.animations.stop();
             _this.playerState = playerStateEnum.idle;
         });
-        _this.animations.add("attack3", [27, 28, 29], 6, false).onComplete.add(function () {
+        _this.animations.add("attack3", [27, 28, 29], 10, false).onComplete.add(function () {
             _this.animations.stop();
             _this.playerState = playerStateEnum.idle;
         });

@@ -132,15 +132,15 @@ class Player extends Phaser.Sprite {
             this.playerState = playerStateEnum.movingWalk;
         });
         this.animations.add("walk", [4,5,6], 6, true);
-        this.animations.add("attack1", [20, 21, 22, 23], 6, false).onComplete.add(()=>{
+        this.animations.add("attack1", [20, 21, 22, 23], 10, false).onComplete.add(()=>{
             this.animations.stop();
             this.playerState = playerStateEnum.idle;
         });
-        this.animations.add("attack2", [24, 25, 26], 6, false).onComplete.add(()=>{
+        this.animations.add("attack2", [24, 25, 26], 10, false).onComplete.add(()=>{
             this.animations.stop();
             this.playerState = playerStateEnum.idle;
         });
-        this.animations.add("attack3", [27, 28, 29], 6, false).onComplete.add(()=>{
+        this.animations.add("attack3", [27, 28, 29], 10, false).onComplete.add(()=>{
             this.animations.stop();
             this.playerState = playerStateEnum.idle;
         });
