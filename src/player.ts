@@ -235,13 +235,14 @@ class Player extends Phaser.Sprite {
             this.EnterLevelHandler.Text.x = this.game.camera.x+(this.game.camera.width/2);
             this.EnterLevelHandler.Text.y = this.game.camera.height;
         }
-
+        /*
         if(this.x < 0 && this.playerState !== playerStateEnum.autoWalkTo){
             this.EnterThisFromPreviousLevel();
         }
         if(this.x > this.game.width && this.playerState !== playerStateEnum.autoWalkTo){
             this.EnterThisFromNextLevel();
         }
+        */
         if(this.game.physics.arcade.distanceToXY(this, this.game.width, this.y) < this.width){
             this.EnterLevelHandler.Next = true;
         }else{
@@ -275,28 +276,29 @@ class Player extends Phaser.Sprite {
     EnterNextLevel(){
         this.scale.setTo(1,1);
         this.playerState = playerStateEnum.autoWalkTo;
-        this.movePlayerTo(this.game.width+this.width, this.y, 0.2, 700);
+        this.movePlayerTo(this.game.width+this.width, this.y, 0.2, 700, "nextLevel");
     }
 
     EnterPreviousLevel(){
         this.scale.setTo(-1,1);
         this.playerState = playerStateEnum.autoWalkTo;
-        this.movePlayerTo(-this.width, this.y, 0.2, 700);
+        this.movePlayerTo(-this.width, this.y, 0.2, 700, "previousLevel");
     }
-
+    /*
     EnterThisFromPreviousLevel(){
         this.scale.setTo(1,1);
         this.playerState = playerStateEnum.autoWalkTo;
         this.movePlayerTo(this.width*2, this.y, 0.2, 700);
     }
-
+    
     EnterThisFromNextLevel(){
         this.scale.setTo(-1,1);
         this.playerState = playerStateEnum.autoWalkTo;
         this.movePlayerTo(this.game.width-(this.width*2), this.y, 0.2, 700);
     }
+    */
 
-    movePlayerTo(toX:number, toY:number, speed:number, time = 0, nextLevel = "nextLevel"){
+    movePlayerTo(toX:number, toY:number, speed:number, time = 0, nextLevel = ""){
         this.game.physics.arcade.moveToXY(
             this,
             toX,

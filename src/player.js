@@ -235,12 +235,14 @@ var Player = /** @class */ (function (_super) {
             this.EnterLevelHandler.Text.x = this.game.camera.x + (this.game.camera.width / 2);
             this.EnterLevelHandler.Text.y = this.game.camera.height;
         }
-        if (this.x < 0 && this.playerState !== playerStateEnum.autoWalkTo) {
+        /*
+        if(this.x < 0 && this.playerState !== playerStateEnum.autoWalkTo){
             this.EnterThisFromPreviousLevel();
         }
-        if (this.x > this.game.width && this.playerState !== playerStateEnum.autoWalkTo) {
+        if(this.x > this.game.width && this.playerState !== playerStateEnum.autoWalkTo){
             this.EnterThisFromNextLevel();
         }
+        */
         if (this.game.physics.arcade.distanceToXY(this, this.game.width, this.y) < this.width) {
             this.EnterLevelHandler.Next = true;
         }
@@ -272,27 +274,30 @@ var Player = /** @class */ (function (_super) {
     Player.prototype.EnterNextLevel = function () {
         this.scale.setTo(1, 1);
         this.playerState = playerStateEnum.autoWalkTo;
-        this.movePlayerTo(this.game.width + this.width, this.y, 0.2, 700);
+        this.movePlayerTo(this.game.width + this.width, this.y, 0.2, 700, "nextLevel");
     };
     Player.prototype.EnterPreviousLevel = function () {
         this.scale.setTo(-1, 1);
         this.playerState = playerStateEnum.autoWalkTo;
-        this.movePlayerTo(-this.width, this.y, 0.2, 700);
+        this.movePlayerTo(-this.width, this.y, 0.2, 700, "previousLevel");
     };
-    Player.prototype.EnterThisFromPreviousLevel = function () {
-        this.scale.setTo(1, 1);
+    /*
+    EnterThisFromPreviousLevel(){
+        this.scale.setTo(1,1);
         this.playerState = playerStateEnum.autoWalkTo;
-        this.movePlayerTo(this.width * 2, this.y, 0.2, 700);
-    };
-    Player.prototype.EnterThisFromNextLevel = function () {
-        this.scale.setTo(-1, 1);
+        this.movePlayerTo(this.width*2, this.y, 0.2, 700);
+    }
+    
+    EnterThisFromNextLevel(){
+        this.scale.setTo(-1,1);
         this.playerState = playerStateEnum.autoWalkTo;
-        this.movePlayerTo(this.game.width - (this.width * 2), this.y, 0.2, 700);
-    };
+        this.movePlayerTo(this.game.width-(this.width*2), this.y, 0.2, 700);
+    }
+    */
     Player.prototype.movePlayerTo = function (toX, toY, speed, time, nextLevel) {
         var _this = this;
         if (time === void 0) { time = 0; }
-        if (nextLevel === void 0) { nextLevel = "nextLevel"; }
+        if (nextLevel === void 0) { nextLevel = ""; }
         this.game.physics.arcade.moveToXY(this, toX, toY, speed, time);
         this.game.time.events.add(time, function () {
             _this.body.velocity.x = 0;

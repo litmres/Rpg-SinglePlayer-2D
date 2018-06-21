@@ -36,7 +36,6 @@ class Level0 extends Phaser.State {
         this.game.stage.backgroundColor = this.background;
         this.game.world.setBounds(0, 0, this.game.width, this.game.height);
         this.player = new Player(this.game, 0, 0);
-        this.player.x = -this.player.width;
         this.player.y -= this.player.height*2;
         this.player.currentRoom = this.levelNumber;
         this.player.loadPlayer(this.playerStorage);
@@ -72,10 +71,5 @@ class Level0 extends Phaser.State {
                 this.player.facingBonfire = null;
             }
         }
-    }
-
-    nextLevel(){
-        this.player.savePlayer(0, this.levelNumber+1);
-        this.game.state.start("level" + (this.levelNumber+1) , true, false);
     }
 }
