@@ -12,10 +12,58 @@ var __extends = (this && this.__extends) || (function () {
 var Player = /** @class */ (function (_super) {
     __extends(Player, _super);
     function Player(game, x, y) {
-        var _a;
+        var _a, _b, _c, _d, _e;
         var _this = _super.call(this, game, x, y, "player", 0) || this;
         _this.playerState = playerStateEnum.idle;
         _this.lastCheckPoint = levelsEnum.level0;
+        _this.canWalk = (_a = {},
+            _a[playerStateEnum.movingWalk] = true,
+            _a[playerStateEnum.movingFall] = false,
+            _a[playerStateEnum.idle] = true,
+            _a[playerStateEnum.attack1] = false,
+            _a[playerStateEnum.attack2] = false,
+            _a[playerStateEnum.attack3] = false,
+            _a[playerStateEnum.death] = false,
+            _a[playerStateEnum.sit] = false,
+            _a[playerStateEnum.sitDown] = false,
+            _a[playerStateEnum.movingStartWalk] = true,
+            _a);
+        _this.canIdle = (_b = {},
+            _b[playerStateEnum.movingWalk] = true,
+            _b[playerStateEnum.movingFall] = false,
+            _b[playerStateEnum.idle] = false,
+            _b[playerStateEnum.attack1] = false,
+            _b[playerStateEnum.attack2] = false,
+            _b[playerStateEnum.attack3] = false,
+            _b[playerStateEnum.death] = false,
+            _b[playerStateEnum.sit] = false,
+            _b[playerStateEnum.sitDown] = false,
+            _b[playerStateEnum.movingStartWalk] = true,
+            _b);
+        _this.canAttack = (_c = {},
+            _c[playerStateEnum.movingWalk] = true,
+            _c[playerStateEnum.movingFall] = false,
+            _c[playerStateEnum.idle] = true,
+            _c[playerStateEnum.attack1] = false,
+            _c[playerStateEnum.attack2] = false,
+            _c[playerStateEnum.attack3] = false,
+            _c[playerStateEnum.death] = false,
+            _c[playerStateEnum.sit] = false,
+            _c[playerStateEnum.sitDown] = false,
+            _c[playerStateEnum.movingStartWalk] = true,
+            _c);
+        _this.canSitDown = (_d = {},
+            _d[playerStateEnum.movingWalk] = true,
+            _d[playerStateEnum.movingFall] = false,
+            _d[playerStateEnum.idle] = true,
+            _d[playerStateEnum.attack1] = false,
+            _d[playerStateEnum.attack2] = false,
+            _d[playerStateEnum.attack3] = false,
+            _d[playerStateEnum.death] = false,
+            _d[playerStateEnum.sit] = false,
+            _d[playerStateEnum.sitDown] = false,
+            _d[playerStateEnum.movingStartWalk] = true,
+            _d);
         _this.pauseMenu = {
             backgroundImage: null,
             continueGame: null,
@@ -30,18 +78,18 @@ var Player = /** @class */ (function (_super) {
         _this.playerHealthBar = null;
         _this.playerStaminaBar = null;
         _this.currentRoom = 0;
-        _this.playerAnimations = (_a = {},
-            _a[playerStateEnum.movingWalk] = "walk",
-            _a[playerStateEnum.movingFall] = "fall",
-            _a[playerStateEnum.idle] = "idle",
-            _a[playerStateEnum.attack1] = "attack1",
-            _a[playerStateEnum.attack2] = "attack2",
-            _a[playerStateEnum.attack3] = "attack3",
-            _a[playerStateEnum.death] = "death",
-            _a[playerStateEnum.sit] = "sit",
-            _a[playerStateEnum.sitDown] = "sitdown",
-            _a[playerStateEnum.movingStartWalk] = "startwalk",
-            _a);
+        _this.playerAnimations = (_e = {},
+            _e[playerStateEnum.movingWalk] = "walk",
+            _e[playerStateEnum.movingFall] = "fall",
+            _e[playerStateEnum.idle] = "idle",
+            _e[playerStateEnum.attack1] = "attack1",
+            _e[playerStateEnum.attack2] = "attack2",
+            _e[playerStateEnum.attack3] = "attack3",
+            _e[playerStateEnum.death] = "death",
+            _e[playerStateEnum.sit] = "sit",
+            _e[playerStateEnum.sitDown] = "sitdown",
+            _e[playerStateEnum.movingStartWalk] = "startwalk",
+            _e);
         _this.anchor.setTo(0.5, 0);
         game.physics.arcade.enableBody(_this);
         game.add.existing(_this);
@@ -59,15 +107,24 @@ var Player = /** @class */ (function (_super) {
             luck: 1,
         };
         _this.controls = {
-            UP: game.input.keyboard.addKey(Phaser.Keyboard.W),
-            DOWN: game.input.keyboard.addKey(Phaser.Keyboard.S),
-            LEFT: game.input.keyboard.addKey(Phaser.Keyboard.A),
-            RIGHT: game.input.keyboard.addKey(Phaser.Keyboard.D),
-            E: game.input.keyboard.addKey(Phaser.Keyboard.E),
-            ESC: game.input.keyboard.addKey(Phaser.Keyboard.ESC),
-            P: game.input.keyboard.addKey(Phaser.Keyboard.P)
+            UP: _this.game.input.keyboard.addKey(Phaser.Keyboard.W),
+            DOWN: _this.game.input.keyboard.addKey(Phaser.Keyboard.S),
+            LEFT: _this.game.input.keyboard.addKey(Phaser.Keyboard.A),
+            RIGHT: _this.game.input.keyboard.addKey(Phaser.Keyboard.D),
+            E: _this.game.input.keyboard.addKey(Phaser.Keyboard.E),
+            ESC: _this.game.input.keyboard.addKey(Phaser.Keyboard.ESC),
+            P: _this.game.input.keyboard.addKey(Phaser.Keyboard.P),
+            LMB: _this.game.input.activePointer.leftButton,
+            RMB: _this.game.input.activePointer.rightButton,
         };
-        game.input.keyboard.addKeyCapture([
+        _this.game.input.onDown.add(function (pointer, event) {
+            _this.handleAttack();
+        });
+        //stop rightclick from opening a menu
+        _this.game.canvas.oncontextmenu = function (e) {
+            e.preventDefault();
+        };
+        _this.game.input.keyboard.addKeyCapture([
             Phaser.Keyboard.W,
             Phaser.Keyboard.A,
             Phaser.Keyboard.S,
@@ -75,14 +132,31 @@ var Player = /** @class */ (function (_super) {
             Phaser.Keyboard.E
         ]);
         _this.animations.add("idle", [0], 3, false);
-        _this.animations.add("startwalk", [0, 1, 2, 3], 6, false);
+        _this.animations.add("startwalk", [1, 2, 3], 6, false).onComplete.add(function () {
+            _this.animations.stop();
+            _this.playerState = playerStateEnum.movingWalk;
+        });
         _this.animations.add("walk", [4, 5, 6], 6, true);
-        _this.animations.add("attack1", [30, 31, 32, 33], 3, false);
-        _this.animations.add("attack2", [34, 35, 36], 3, false);
-        _this.animations.add("attack3", [37, 38, 39], 3, false);
-        _this.animations.add("sitdown", [7, 8, 9], 3, false);
+        _this.animations.add("attack1", [20, 21, 22, 23], 6, false).onComplete.add(function () {
+            _this.animations.stop();
+            _this.playerState = playerStateEnum.idle;
+        });
+        _this.animations.add("attack2", [24, 25, 26], 6, false).onComplete.add(function () {
+            _this.animations.stop();
+            _this.playerState = playerStateEnum.idle;
+        });
+        _this.animations.add("attack3", [27, 28, 29], 6, false).onComplete.add(function () {
+            _this.animations.stop();
+            _this.playerState = playerStateEnum.idle;
+        });
+        _this.animations.add("sitdown", [7, 8, 9], 3, false).onComplete.add(function () {
+            _this.animations.stop();
+            _this.playerState = playerStateEnum.sit;
+        });
         _this.animations.add("sit", [9], 3, false);
-        _this.animations.add("death", [51, 52, 54], 3, false);
+        _this.animations.add("death", [51, 52, 54], 3, false).onComplete.add(function () {
+            //kill player and respawn
+        });
         _this.healthBar();
         _this.staminaBar();
         return _this;
@@ -91,20 +165,25 @@ var Player = /** @class */ (function (_super) {
         this.resetVelocity();
         this.animations.play(this.playerAnimations[this.playerState]);
         this.handleInput();
-        this.handleNpc();
-        this.handleBonfire();
         this.updateHealthBar();
         this.updateStaminaBar();
         this.fpsCounter.setText("FPS: " + this.game.time.fps);
     };
+    // tslint:disable-next-line:cyclomatic-complexity
     Player.prototype.handleInput = function () {
-        if (this.controls.LEFT.isDown) {
+        if (this.controls.LEFT.isDown && this.canWalk[this.playerState]) {
             this.moveLeft();
         }
-        else if (this.controls.RIGHT.isDown) {
+        else if (this.controls.RIGHT.isDown && this.canWalk[this.playerState]) {
             this.moveRight();
         }
-        else {
+        else if (this.controls.E.justPressed() && this.facingBonfire && this.canSitDown[this.playerState]) {
+            this.handleBonfire();
+        }
+        else if (this.controls.E.justPressed() && this.facingNpc) {
+            this.handleNpc();
+        }
+        else if (this.canIdle[this.playerState]) {
             this.idle();
         }
         if (this.controls.ESC.isDown || this.controls.P.isDown) {
@@ -112,14 +191,18 @@ var Player = /** @class */ (function (_super) {
         }
     };
     Player.prototype.handleNpc = function () {
-        if (this.controls.E.justPressed() && this.facingNpc) {
-            this.facingNpc.nextDialogueText();
+        this.facingNpc.nextDialogueText();
+    };
+    Player.prototype.handleAttack = function () {
+        if (this.controls.LMB.justPressed() && this.canAttack) {
+            this.playerState = playerStateEnum.attack1;
+        }
+        else if (this.controls.RMB.justPressed() && this.canAttack) {
+            console.log("right mouse button");
         }
     };
     Player.prototype.handleBonfire = function () {
-        if (this.controls.E.justPressed() && this.facingBonfire) {
-            console.log("using bonfire");
-        }
+        console.log("using bonfire");
     };
     Player.prototype.healthBar = function () {
         if (!this.playerHealthBar) {
@@ -149,12 +232,12 @@ var Player = /** @class */ (function (_super) {
         this.body.velocity.x = 0;
     };
     Player.prototype.moveLeft = function () {
-        this.playerState = playerStateEnum.movingWalk;
+        this.playerState = playerStateEnum.movingStartWalk;
         this.scale.setTo(-1, 1);
         this.body.velocity.x = -this.stats.movespeed;
     };
     Player.prototype.moveRight = function () {
-        this.playerState = playerStateEnum.movingWalk;
+        this.playerState = playerStateEnum.movingStartWalk;
         this.scale.setTo(1, 1);
         this.body.velocity.x = this.stats.movespeed;
     };

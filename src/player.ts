@@ -1,6 +1,54 @@
 class Player extends Phaser.Sprite {
     playerState:playerStateEnum = playerStateEnum.idle;
     lastCheckPoint:levelsEnum = levelsEnum.level0;
+    canWalk:playerAllowanceInterface = {
+        [playerStateEnum.movingWalk]:true,
+        [playerStateEnum.movingFall]:false,
+        [playerStateEnum.idle]:true,
+        [playerStateEnum.attack1]:false,
+        [playerStateEnum.attack2]:false,
+        [playerStateEnum.attack3]:false,
+        [playerStateEnum.death]:false,
+        [playerStateEnum.sit]:false,
+        [playerStateEnum.sitDown]:false,
+        [playerStateEnum.movingStartWalk]:true,
+    };
+    canIdle:playerAllowanceInterface = {
+        [playerStateEnum.movingWalk]:true,
+        [playerStateEnum.movingFall]:false,
+        [playerStateEnum.idle]:false,
+        [playerStateEnum.attack1]:false,
+        [playerStateEnum.attack2]:false,
+        [playerStateEnum.attack3]:false,
+        [playerStateEnum.death]:false,
+        [playerStateEnum.sit]:false,
+        [playerStateEnum.sitDown]:false,
+        [playerStateEnum.movingStartWalk]:true,
+    };
+    canAttack:playerAllowanceInterface = {
+        [playerStateEnum.movingWalk]:true,
+        [playerStateEnum.movingFall]:false,
+        [playerStateEnum.idle]:true,
+        [playerStateEnum.attack1]:false,
+        [playerStateEnum.attack2]:false,
+        [playerStateEnum.attack3]:false,
+        [playerStateEnum.death]:false,
+        [playerStateEnum.sit]:false,
+        [playerStateEnum.sitDown]:false,
+        [playerStateEnum.movingStartWalk]:true,
+    };
+    canSitDown:playerAllowanceInterface = {
+        [playerStateEnum.movingWalk]:true,
+        [playerStateEnum.movingFall]:false,
+        [playerStateEnum.idle]:true,
+        [playerStateEnum.attack1]:false,
+        [playerStateEnum.attack2]:false,
+        [playerStateEnum.attack3]:false,
+        [playerStateEnum.death]:false,
+        [playerStateEnum.sit]:false,
+        [playerStateEnum.sitDown]:false,
+        [playerStateEnum.movingStartWalk]:true,
+    };
     facingNpc:any;
     facingBonfire:any;
     pauseMenu:any = {
@@ -50,15 +98,27 @@ class Player extends Phaser.Sprite {
             luck: 1,
         };
         this.controls = {
-            UP:game.input.keyboard.addKey(Phaser.Keyboard.W),
-            DOWN:game.input.keyboard.addKey(Phaser.Keyboard.S),
-            LEFT:game.input.keyboard.addKey(Phaser.Keyboard.A),
-            RIGHT:game.input.keyboard.addKey(Phaser.Keyboard.D),
-            E:game.input.keyboard.addKey(Phaser.Keyboard.E),
-            ESC:game.input.keyboard.addKey(Phaser.Keyboard.ESC),
-            P:game.input.keyboard.addKey(Phaser.Keyboard.P)
+            UP:this.game.input.keyboard.addKey(Phaser.Keyboard.W),
+            DOWN:this.game.input.keyboard.addKey(Phaser.Keyboard.S),
+            LEFT:this.game.input.keyboard.addKey(Phaser.Keyboard.A),
+            RIGHT:this.game.input.keyboard.addKey(Phaser.Keyboard.D),
+            E:this.game.input.keyboard.addKey(Phaser.Keyboard.E),
+            ESC:this.game.input.keyboard.addKey(Phaser.Keyboard.ESC),
+            P:this.game.input.keyboard.addKey(Phaser.Keyboard.P),
+            LMB:this.game.input.activePointer.leftButton,
+            RMB:this.game.input.activePointer.rightButton,
         };
-        game.input.keyboard.addKeyCapture([
+
+        this.game.input.onDown.add((pointer:Phaser.Pointer, event:PointerEvent) => {
+            this.handleAttack();
+        });
+
+        //stop rightclick from opening a menu
+        this.game.canvas.oncontextmenu = function (e) {
+            e.preventDefault();
+        };
+
+        this.game.input.keyboard.addKeyCapture([
             Phaser.Keyboard.W,
             Phaser.Keyboard.A,
             Phaser.Keyboard.S,
@@ -67,14 +127,31 @@ class Player extends Phaser.Sprite {
         ]);
 
         this.animations.add("idle", [0], 3, false);
-        this.animations.add("startwalk", [0,1,2,3], 6, false);
+        this.animations.add("startwalk", [1,2,3], 6, false).onComplete.add(()=>{
+            this.animations.stop();
+            this.playerState = playerStateEnum.movingWalk;
+        });
         this.animations.add("walk", [4,5,6], 6, true);
-        this.animations.add("attack1", [30, 31, 32, 33], 3, false);
-        this.animations.add("attack2", [34, 35, 36], 3, false);
-        this.animations.add("attack3", [37, 38, 39], 3, false);
-        this.animations.add("sitdown",[7,8,9], 3, false);
+        this.animations.add("attack1", [20, 21, 22, 23], 6, false).onComplete.add(()=>{
+            this.animations.stop();
+            this.playerState = playerStateEnum.idle;
+        });
+        this.animations.add("attack2", [24, 25, 26], 6, false).onComplete.add(()=>{
+            this.animations.stop();
+            this.playerState = playerStateEnum.idle;
+        });
+        this.animations.add("attack3", [27, 28, 29], 6, false).onComplete.add(()=>{
+            this.animations.stop();
+            this.playerState = playerStateEnum.idle;
+        });
+        this.animations.add("sitdown",[7,8,9], 3, false).onComplete.add(()=>{
+            this.animations.stop();
+            this.playerState = playerStateEnum.sit;
+        });
         this.animations.add("sit", [9], 3, false);
-        this.animations.add("death", [51,52,54], 3, false);
+        this.animations.add("death", [51,52,54], 3, false).onComplete.add(() => {
+            //kill player and respawn
+        });
 
         this.healthBar();
         this.staminaBar();
@@ -87,22 +164,23 @@ class Player extends Phaser.Sprite {
 
         this.handleInput();
 
-        this.handleNpc();
-
-        this.handleBonfire();
-
         this.updateHealthBar();
         this.updateStaminaBar();
 
         this.fpsCounter.setText("FPS: " + this.game.time.fps);
     }
 
+    // tslint:disable-next-line:cyclomatic-complexity
     handleInput(){
-        if (this.controls.LEFT.isDown) {
+        if (this.controls.LEFT.isDown && this.canWalk[this.playerState]) {
             this.moveLeft();
-        } else if (this.controls.RIGHT.isDown) {
+        } else if (this.controls.RIGHT.isDown && this.canWalk[this.playerState]) {
             this.moveRight();
-        }else{
+        }else if(this.controls.E.justPressed() && this.facingBonfire && this.canSitDown[this.playerState]){
+            this.handleBonfire();
+        }else if(this.controls.E.justPressed() && this.facingNpc){
+            this.handleNpc();
+        }else if(this.canIdle[this.playerState]){
             this.idle();
         }
 
@@ -112,15 +190,19 @@ class Player extends Phaser.Sprite {
     }
 
     handleNpc(){
-        if(this.controls.E.justPressed() && this.facingNpc){
-            this.facingNpc.nextDialogueText();
+        this.facingNpc.nextDialogueText();
+    }
+
+    handleAttack(){
+        if(this.controls.LMB.justPressed() && this.canAttack){
+            this.playerState = playerStateEnum.attack1;
+        }else if(this.controls.RMB.justPressed() && this.canAttack){
+            console.log("right mouse button");
         }
     }
 
     handleBonfire(){
-        if(this.controls.E.justPressed() && this.facingBonfire){
-            console.log("using bonfire");
-        }
+        console.log("using bonfire");
     }
 
     healthBar(){
@@ -156,13 +238,13 @@ class Player extends Phaser.Sprite {
     }
 
     moveLeft(){
-        this.playerState = playerStateEnum.movingWalk;
+        this.playerState = playerStateEnum.movingStartWalk;
         this.scale.setTo(-1, 1);
         this.body.velocity.x = -this.stats.movespeed;
     }
 
     moveRight(){
-        this.playerState = playerStateEnum.movingWalk;
+        this.playerState = playerStateEnum.movingStartWalk;
         this.scale.setTo(1, 1);
         this.body.velocity.x = this.stats.movespeed;
     }

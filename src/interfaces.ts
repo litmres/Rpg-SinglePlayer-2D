@@ -30,6 +30,19 @@ interface playerAnimationInterface{
 	[playerStateEnum.movingStartWalk]:string;
 }
 
+interface playerAllowanceInterface{
+    [playerStateEnum.movingWalk]:boolean;
+	[playerStateEnum.movingFall]:boolean;
+	[playerStateEnum.idle]:boolean;
+	[playerStateEnum.attack1]:boolean;
+	[playerStateEnum.attack2]:boolean;
+	[playerStateEnum.attack3]:boolean;
+	[playerStateEnum.death]:boolean;
+	[playerStateEnum.sit]:boolean;
+	[playerStateEnum.sitDown]:boolean;
+	[playerStateEnum.movingStartWalk]:boolean;
+}
+
 interface gateInterface{
     closed:boolean;
     gate:Phaser.Image;
