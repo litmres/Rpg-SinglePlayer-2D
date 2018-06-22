@@ -2,14 +2,29 @@ class RogueNpc extends Phaser.Sprite {
     npcState:npcStateEnum = npcStateEnum.idle;
     npcDialogue = [
         "Press E to Talk",
-        "hello there wanderer",
+        "hello there traveler",
+        "i am A",
+        "*Cough*",
+        "Aron",
+        "it's tough out here you know",
+        "hmmm...",
         "it looks like you're new to this place",
-        "this place is dangerous",
+        "this place is quite dangerous",
+        "heh hehe he",
         "you should be careful",
         "here take this",
         "..."
     ];
     npcDialogueLine = 0;
+    player:Player;
+    wanderTimer:Phaser.TimerEvent;
+    targetX = 0;
+    targetY = 0;
+    maxWanderRange = 100;
+    attackRange = 5;
+    spawnPositionX:number;
+    spawnPositionY:number;
+    aggroRange = 100;
     canInteract = false;
     canInteractText!:Phaser.Text|null;
     DialogueStyle = {
@@ -19,41 +34,57 @@ class RogueNpc extends Phaser.Sprite {
         boundsAlignV: "middle"
     };
     friendly = true;
+    canWalk:npcAllowanceInterface = {
+        [npcStateEnum.movingWalk]:true,
+        [npcStateEnum.movingFall]:false,
+        [npcStateEnum.idle]:true,
+        [npcStateEnum.idleSpecial]:true,
+        [npcStateEnum.attack1]:false,
+        [npcStateEnum.attack2]:false,
+        [npcStateEnum.attack3]:false,
+        [npcStateEnum.death]:false,
+        [npcStateEnum.sit]:false,
+        [npcStateEnum.sitDown]:false,
+        [npcStateEnum.movingChase]:false,
+    };
     canIdle:npcAllowanceInterface = {
-        [playerStateEnum.movingWalk]:true,
-        [playerStateEnum.movingFall]:false,
-        [playerStateEnum.idle]:false,
-        [playerStateEnum.attack1]:false,
-        [playerStateEnum.attack2]:false,
-        [playerStateEnum.attack3]:false,
-        [playerStateEnum.death]:false,
-        [playerStateEnum.sit]:false,
-        [playerStateEnum.sitDown]:false,
-        [playerStateEnum.movingStartWalk]:true,
+        [npcStateEnum.movingWalk]:false,
+        [npcStateEnum.movingFall]:false,
+        [npcStateEnum.idle]:false,
+        [npcStateEnum.idleSpecial]:false,
+        [npcStateEnum.attack1]:false,
+        [npcStateEnum.attack2]:false,
+        [npcStateEnum.attack3]:false,
+        [npcStateEnum.death]:false,
+        [npcStateEnum.sit]:false,
+        [npcStateEnum.sitDown]:false,
+        [npcStateEnum.movingChase]:false,
+    };
+    canChase:npcAllowanceInterface = {
+        [npcStateEnum.movingWalk]:true,
+        [npcStateEnum.movingFall]:false,
+        [npcStateEnum.idle]:true,
+        [npcStateEnum.idleSpecial]:true,
+        [npcStateEnum.attack1]:false,
+        [npcStateEnum.attack2]:false,
+        [npcStateEnum.attack3]:false,
+        [npcStateEnum.death]:false,
+        [npcStateEnum.sit]:false,
+        [npcStateEnum.sitDown]:false,
+        [npcStateEnum.movingChase]:true,
     };
     canAttack:npcAllowanceInterface = {
-        [playerStateEnum.movingWalk]:true,
-        [playerStateEnum.movingFall]:false,
-        [playerStateEnum.idle]:true,
-        [playerStateEnum.attack1]:false,
-        [playerStateEnum.attack2]:false,
-        [playerStateEnum.attack3]:false,
-        [playerStateEnum.death]:false,
-        [playerStateEnum.sit]:false,
-        [playerStateEnum.sitDown]:false,
-        [playerStateEnum.movingStartWalk]:true,
-    };
-    canSitDown:npcAllowanceInterface = {
-        [playerStateEnum.movingWalk]:true,
-        [playerStateEnum.movingFall]:false,
-        [playerStateEnum.idle]:true,
-        [playerStateEnum.attack1]:false,
-        [playerStateEnum.attack2]:false,
-        [playerStateEnum.attack3]:false,
-        [playerStateEnum.death]:false,
-        [playerStateEnum.sit]:false,
-        [playerStateEnum.sitDown]:false,
-        [playerStateEnum.movingStartWalk]:true,
+        [npcStateEnum.movingWalk]:true,
+        [npcStateEnum.movingFall]:false,
+        [npcStateEnum.idle]:true,
+        [npcStateEnum.idleSpecial]:true,
+        [npcStateEnum.attack1]:false,
+        [npcStateEnum.attack2]:false,
+        [npcStateEnum.attack3]:false,
+        [npcStateEnum.death]:false,
+        [npcStateEnum.sit]:false,
+        [npcStateEnum.sitDown]:false,
+        [npcStateEnum.movingChase]:true,
     };
     stats:playerStatsInterface;
     npcAnimations:npcAnimationInterface = {
@@ -66,7 +97,8 @@ class RogueNpc extends Phaser.Sprite {
         [npcStateEnum.death]:"death",
         [npcStateEnum.sit]:"sit",
         [npcStateEnum.sitDown]:"sitdown",
-        [npcStateEnum.movingStartWalk]:"startwalk",
+        [npcStateEnum.movingChase]:"walk",
+        [npcStateEnum.idleSpecial]:"butterfly",
     };
     constructor(game: Phaser.Game, x: number, y: number) {
         super(game, x, y, "rogue", 0);
@@ -76,6 +108,8 @@ class RogueNpc extends Phaser.Sprite {
         this.body.gravity.y = 1000;
         this.body.collideWorldBounds = true;
         game.physics.enable(this, Phaser.Physics.ARCADE);
+        this.spawnPositionX = x;
+        this.spawnPositionY = y;
         this.stats = {
             level: 1,
             maxHealth: this.maxHealth,
@@ -84,22 +118,23 @@ class RogueNpc extends Phaser.Sprite {
             stamina: this.maxHealth,
             attack: 1,
             defense: 1,
-            movespeed: 150,
+            movespeed: 120,
             luck: 1,
         };
         this.animations.add("idle", [0,1,2,3,4,5,6,7,8,9], 3, false).onComplete.add(() => {
-            //if(randomchance){
-            //    this.animation.play("butterfly");
-            //}else{
-                this.animations.play("idle");
-            //}
+            const rndNumber = this.game.rnd.integerInRange(1, 100);
+            if(rndNumber > 90){
+                this.npcState = npcStateEnum.idleSpecial;
+            }else if(!this.friendly && rndNumber > 20 && rndNumber < 90){
+                this.wander();
+            }
         });
         this.animations.add("butterfly", [10,11,12,13,14,15,16,17,18,19], 3, false).onComplete.add(() => {
             this.animations.stop();
-            this.animations.play("idle");
+            this.npcState = npcStateEnum.idle;
         });
         this.animations.add("walk", [20,21,22,23,24,25,26,27,28,29], 3, true);
-        this.animations.add("attack", [30, 31, 32, 33, 34, 35, 36 ,37, 38,39], 3, false).onComplete.add(() => {
+        this.animations.add("attack1", [30, 31, 32, 33, 34, 35, 36 ,37, 38,39], 6, false).onComplete.add(() => {
             this.animations.stop();
             this.npcState = npcStateEnum.idle;
         });
@@ -114,39 +149,105 @@ class RogueNpc extends Phaser.Sprite {
 
         this.animations.play(this.npcAnimations[this.npcState]);
         
-        this.handleInput();
-
-        this.handleAnimation();
-
+        if(!this.friendly){
+            this.handleInput();
+        }
+        
+        if(!this.friendly){
+            this.canInteract = false;
+        }
+        
         this.interaction();
     }
 
     // tslint:disable-next-line:cyclomatic-complexity
     handleInput(){
-        /*
-        if (this.controls.LEFT.isDown && this.canWalk[this.playerState]) {
-            this.moveLeft();
-        } else if (this.controls.RIGHT.isDown && this.canWalk[this.playerState]) {
-            this.moveRight();
-        }else if(this.controls.E.justPressed() && this.facingBonfire && this.canSitDown[this.playerState]){
-            this.handleBonfire();
-        }else if(this.controls.E.justPressed() && this.facingNpc){
-            this.handleNpc();
-        }else if(this.canIdle[this.playerState]){
+        if(this.npcState === npcStateEnum.movingWalk){
+            if(this.game.physics.arcade.distanceToXY(this, this.targetX, this.targetY) < 5){
+                this.x = this.targetX;
+                this.y = this.targetY;
+                this.body.velocity.setTo(0,0);
+                this.npcState = npcStateEnum.idle;
+            }
+        }
+    
+        if(this.player){
+            const distance = this.game.physics.arcade.distanceBetween(this, this.player);
+            let fullAttackRange = this.attackRange;
+            if(this.width < 0){
+                fullAttackRange += (this.width/2)*-1;
+            }else{
+                fullAttackRange += this.width/2;
+            }
+            if(this.player.width < 0){
+                fullAttackRange += (this.player.width/2)*-1;
+            }else{
+                fullAttackRange += this.player.width/2;
+            }
+            if(distance < fullAttackRange && this.canAttack[this.npcState]){
+                this.attack();
+            }else if (distance < this.aggroRange && this.canChase[this.npcState]) {
+                this.chase();
+            }
+        }
+        
+        if(this.canIdle[this.npcState]){
             this.idle();
         }
-        */
     }
 
-    // tslint:disable-next-line:cyclomatic-complexity
-    interaction(){
-        if(!this.friendly && this.canInteractText){
-            this.canInteractText.setText("");
-            return;
-        }else if(!this.friendly){
+    attack(){
+        if(this.player.x > this.x){
+            this.scale.setTo(1, 1);
+        }else {
+            this.scale.setTo(-1, 1);
+        }
+        this.npcState = npcStateEnum.attack1;
+    }
+
+    chase(){
+        this.npcState = npcStateEnum.movingChase;
+        if(this.player.x > this.x){
+            this.scale.setTo(1, 1);
+        }else {
+            this.scale.setTo(-1, 1);
+        }
+        this.game.physics.arcade.moveToXY(this, this.player.x, this.y, this.stats.movespeed);
+    }
+
+    wander(){
+        if(this.game.physics.arcade.distanceToXY(this, this.spawnPositionX, this.spawnPositionY) > this.maxWanderRange){
+            this.moveNpcTo(this.spawnPositionX, this.spawnPositionY, this.stats.movespeed);
             return;
         }
+        const direction = this.game.rnd.integerInRange(0,1);
+        const distance = this.game.rnd.integerInRange(10, this.maxWanderRange);
+        if(direction){
+            this.moveLeft(distance);
+        }else{
+            this.moveRight(distance);
+        }
+    }
 
+    moveNpcTo(toX:number, toY:number, speed:number){
+        this.npcState = npcStateEnum.movingWalk;
+        this.game.physics.arcade.moveToXY(
+            this,
+            toX,
+            toY,
+            speed
+        );
+        this.targetX = toX;
+        this.targetY = toY;
+
+        if(this.targetX > this.x){
+            this.scale.setTo(1, 1);
+        }else{
+            this.scale.setTo(-1, 1);
+        }
+    }
+
+    interaction(){
         if(!this.canInteractText){
             this.canInteractText = this.game.add.text(this.x - this.width, this.y - this.height, "", this.DialogueStyle);
             this.canInteractText.setTextBounds(30, 20, 0, 0);
@@ -156,6 +257,9 @@ class RogueNpc extends Phaser.Sprite {
                 this.npcDialogueLine = this.npcDialogue.length-1;
             }
             this.canInteractText.setText(this.npcDialogue[this.npcDialogueLine]);
+            if(this.npcDialogueLine >= this.npcDialogue.length-1){
+                this.friendly = false;
+            }
         }else if(!this.canInteract){
             this.canInteractText.setText("");
             if(this.npcDialogueLine > 0){
@@ -165,36 +269,34 @@ class RogueNpc extends Phaser.Sprite {
     }
 
     nextDialogueText(){
-        if(this.canInteract){
+        if(this.canInteract && this.friendly){
             this.npcDialogueLine++;
         }
     }
 
     resetVelocity(){
-        this.body.velocity.x = 0;
+        if(this.npcState !== npcStateEnum.movingWalk){
+            this.body.velocity.x = 0;
+        }
     }
 
-    moveLeft(){
-        this.npcState = npcStateEnum.movingWalk;
-        this.scale.setTo(-1, 1);
-        this.body.velocity.x = -150;
+    moveLeft(distance:number){
+        if(this.x - distance < this.spawnPositionX - this.maxWanderRange){
+            this.moveNpcTo(this.spawnPositionX - this.maxWanderRange, this.y, this.stats.movespeed);
+        }else{
+            this.moveNpcTo(this.x - distance, this.y, this.stats.movespeed);
+        }
     }
 
-    moveRight(){
-        this.npcState = npcStateEnum.movingWalk;
-        this.scale.setTo(1, 1);
-        this.body.velocity.x = 150;
+    moveRight(distance:number){
+        if(this.x + distance > this.spawnPositionX + this.maxWanderRange){
+            this.moveNpcTo(this.spawnPositionX + this.maxWanderRange, this.y, this.stats.movespeed);
+        }else{
+            this.moveNpcTo(this.x + distance, this.y, this.stats.movespeed);
+        }
     }
 
     idle(){
         this.npcState = npcStateEnum.idle;
-    }
-
-    handleAnimation(){
-        switch(this.npcState){
-            case npcStateEnum.idle: this.play("idle");
-            break;
-            default:
-        }
     }
 }

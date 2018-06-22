@@ -14,6 +14,7 @@ class TitleState extends Phaser.State {
         
     preload(){
         this.background = 0x055550;
+        this.game.add.text(0,0, "Everything you see is a Placeholder", this.style);
         this.startGame = this.game.add.text(0, 0, "Start New Game", this.style);
         this.loadGame = this.game.add.text(0, 50, "Load Game", this.style);
         this.Options = this.game.add.text(0, 100, "Options", this.style);

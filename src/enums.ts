@@ -35,13 +35,14 @@ enum npcStateEnum {
 	movingWalk = 0,
 	movingFall,
 	idle,
+	idleSpecial,
 	attack1,
 	attack2,
 	attack3,
 	death,
 	sit,
 	sitDown,
-	movingStartWalk,
+	movingChase,
 }
 
 enum levelsEnum {

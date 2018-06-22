@@ -37,13 +37,14 @@ interface npcAnimationInterface{
     [npcStateEnum.movingWalk]:string;
 	[npcStateEnum.movingFall]:string;
 	[npcStateEnum.idle]:string;
+	[npcStateEnum.idleSpecial]:string;
 	[npcStateEnum.attack1]:string;
 	[npcStateEnum.attack2]:string;
 	[npcStateEnum.attack3]:string;
 	[npcStateEnum.death]:string;
 	[npcStateEnum.sit]:string;
 	[npcStateEnum.sitDown]:string;
-	[npcStateEnum.movingStartWalk]:string;
+	[npcStateEnum.movingChase]:string;
 }
 
 interface enemyAnimationInterface{
@@ -78,13 +79,14 @@ interface npcAllowanceInterface{
     [npcStateEnum.movingWalk]:boolean;
 	[npcStateEnum.movingFall]:boolean;
 	[npcStateEnum.idle]:boolean;
+	[npcStateEnum.idleSpecial]:boolean;
 	[npcStateEnum.attack1]:boolean;
 	[npcStateEnum.attack2]:boolean;
 	[npcStateEnum.attack3]:boolean;
 	[npcStateEnum.death]:boolean;
 	[npcStateEnum.sit]:boolean;
 	[npcStateEnum.sitDown]:boolean;
-	[npcStateEnum.movingStartWalk]:boolean;
+	[npcStateEnum.movingChase]:boolean;
 }
 
 interface enemyAllowanceInterface{

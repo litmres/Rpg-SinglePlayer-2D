@@ -60,7 +60,7 @@ class Level1 extends Phaser.State {
     create() {
         this.game.stage.backgroundColor = this.background;
         this.game.world.setBounds(0, 0, this.game.width, this.game.height);
-        this.player = new Player(this.game, 0, 0);
+        this.player = new Player(this.game, 20, 0);
         this.player.currentRoom = this.levelNumber;
         this.player.loadPlayer(this.playerStorage);
     }
