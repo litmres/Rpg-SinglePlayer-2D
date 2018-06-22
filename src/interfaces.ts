@@ -48,16 +48,17 @@ interface npcAnimationInterface{
 }
 
 interface enemyAnimationInterface{
-    [enemyStateEnum.movingWalk]:string;
-	[enemyStateEnum.movingFall]:string;
-	[enemyStateEnum.idle]:string;
-	[enemyStateEnum.attack1]:string;
-	[enemyStateEnum.attack2]:string;
-	[enemyStateEnum.attack3]:string;
-	[enemyStateEnum.death]:string;
-	[enemyStateEnum.sit]:string;
-	[enemyStateEnum.sitDown]:string;
-	[enemyStateEnum.movingStartWalk]:string;
+    [npcStateEnum.movingWalk]:string;
+	[npcStateEnum.movingFall]:string;
+	[npcStateEnum.idle]:string;
+	[npcStateEnum.idleSpecial]:string;
+	[npcStateEnum.attack1]:string;
+	[npcStateEnum.attack2]:string;
+	[npcStateEnum.attack3]:string;
+	[npcStateEnum.death]:string;
+	[npcStateEnum.sit]:string;
+	[npcStateEnum.sitDown]:string;
+	[npcStateEnum.movingChase]:string;
 }
 
 interface playerAllowanceInterface{
@@ -90,16 +91,17 @@ interface npcAllowanceInterface{
 }
 
 interface enemyAllowanceInterface{
-    [enemyStateEnum.movingWalk]:boolean;
-	[enemyStateEnum.movingFall]:boolean;
-	[enemyStateEnum.idle]:boolean;
-	[enemyStateEnum.attack1]:boolean;
-	[enemyStateEnum.attack2]:boolean;
-	[enemyStateEnum.attack3]:boolean;
-	[enemyStateEnum.death]:boolean;
-	[enemyStateEnum.sit]:boolean;
-	[enemyStateEnum.sitDown]:boolean;
-	[enemyStateEnum.movingStartWalk]:boolean;
+    [npcStateEnum.movingWalk]:boolean;
+	[npcStateEnum.movingFall]:boolean;
+	[npcStateEnum.idle]:boolean;
+	[npcStateEnum.idleSpecial]:boolean;
+	[npcStateEnum.attack1]:boolean;
+	[npcStateEnum.attack2]:boolean;
+	[npcStateEnum.attack3]:boolean;
+	[npcStateEnum.death]:boolean;
+	[npcStateEnum.sit]:boolean;
+	[npcStateEnum.sitDown]:boolean;
+	[npcStateEnum.movingChase]:boolean;
 }
 
 interface gateInterface{

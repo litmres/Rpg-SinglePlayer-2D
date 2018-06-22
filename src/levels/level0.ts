@@ -5,6 +5,7 @@ class Level0 extends Phaser.State {
     player!: Player;
     platforms!:Phaser.Group;
     playerStorage:savePlayerInterface = JSON.parse(window.localStorage.getItem("player")!);
+    enemies!:Phaser.Group;
     npcs!:Phaser.Group;
     bonfires!:Phaser.Group;
 
@@ -21,6 +22,8 @@ class Level0 extends Phaser.State {
         this.platforms.forEach(function(platform:Phaser.Sprite){
             platform.body.immovable = true;
         });
+
+        this.enemies = this.game.add.group();
 
         this.npcs = this.game.add.group();
         this.npcs.add(new RogueNpc(this.game, 600, ground.y - ground.height));
@@ -40,6 +43,7 @@ class Level0 extends Phaser.State {
         this.player.currentRoom = this.levelNumber;
         this.player.loadPlayer(this.playerStorage);
         this.addPlayerToNpcs();
+        this.addPlayerToEnemies();
         this.game.physics.startSystem(Phaser.Physics.ARCADE);
     }
 
@@ -53,6 +57,12 @@ class Level0 extends Phaser.State {
     addPlayerToNpcs(){
         for(let ii = 0; ii < this.npcs.children.length; ii++){
             this.npcs.children[ii].player = this.player;
+        }
+    }
+
+    addPlayerToEnemies(){
+        for(let ii = 0; ii < this.enemies.children.length; ii++){
+            this.enemies.children[ii].player = this.player;
         }
     }
 

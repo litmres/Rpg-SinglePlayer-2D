@@ -59,6 +59,8 @@ var Level1 = /** @class */ (function (_super) {
         this.player = new Player(this.game, 20, 0);
         this.player.currentRoom = this.levelNumber;
         this.player.loadPlayer(this.playerStorage);
+        this.addPlayerToEnemies();
+        this.addPlayerToNpcs();
     };
     Level1.prototype.update = function () {
         this.game.physics.arcade.collide(this.player, this.platforms);
@@ -68,6 +70,16 @@ var Level1 = /** @class */ (function (_super) {
         this.openGate();
         this.playerFacingBonfire();
         this.playerFacingNpc();
+    };
+    Level1.prototype.addPlayerToNpcs = function () {
+        for (var ii = 0; ii < this.npcs.children.length; ii++) {
+            this.npcs.children[ii].player = this.player;
+        }
+    };
+    Level1.prototype.addPlayerToEnemies = function () {
+        for (var ii = 0; ii < this.enemies.children.length; ii++) {
+            this.enemies.children[ii].player = this.player;
+        }
     };
     Level1.prototype.playerFacingNpc = function () {
         for (var ii = 0; ii < this.npcs.children.length; ii++) {

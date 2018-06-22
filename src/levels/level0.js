@@ -27,6 +27,7 @@ var Level0 = /** @class */ (function (_super) {
         this.platforms.forEach(function (platform) {
             platform.body.immovable = true;
         });
+        this.enemies = this.game.add.group();
         this.npcs = this.game.add.group();
         this.npcs.add(new RogueNpc(this.game, 600, ground.y - ground.height));
         this.bonfires = this.game.add.group();
@@ -41,6 +42,7 @@ var Level0 = /** @class */ (function (_super) {
         this.player.currentRoom = this.levelNumber;
         this.player.loadPlayer(this.playerStorage);
         this.addPlayerToNpcs();
+        this.addPlayerToEnemies();
         this.game.physics.startSystem(Phaser.Physics.ARCADE);
     };
     Level0.prototype.update = function () {
@@ -52,6 +54,11 @@ var Level0 = /** @class */ (function (_super) {
     Level0.prototype.addPlayerToNpcs = function () {
         for (var ii = 0; ii < this.npcs.children.length; ii++) {
             this.npcs.children[ii].player = this.player;
+        }
+    };
+    Level0.prototype.addPlayerToEnemies = function () {
+        for (var ii = 0; ii < this.enemies.children.length; ii++) {
+            this.enemies.children[ii].player = this.player;
         }
     };
     Level0.prototype.playerFacingNpc = function () {

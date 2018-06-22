@@ -63,6 +63,8 @@ class Level1 extends Phaser.State {
         this.player = new Player(this.game, 20, 0);
         this.player.currentRoom = this.levelNumber;
         this.player.loadPlayer(this.playerStorage);
+        this.addPlayerToEnemies();
+        this.addPlayerToNpcs();
     }
 
     update(){
@@ -75,6 +77,18 @@ class Level1 extends Phaser.State {
 
         this.playerFacingBonfire();
         this.playerFacingNpc();
+    }
+
+    addPlayerToNpcs(){
+        for(let ii = 0; ii < this.npcs.children.length; ii++){
+            this.npcs.children[ii].player = this.player;
+        }
+    }
+
+    addPlayerToEnemies(){
+        for(let ii = 0; ii < this.enemies.children.length; ii++){
+            this.enemies.children[ii].player = this.player;
+        }
     }
 
     playerFacingNpc(){

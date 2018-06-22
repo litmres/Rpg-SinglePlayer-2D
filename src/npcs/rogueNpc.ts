@@ -17,7 +17,6 @@ class RogueNpc extends Phaser.Sprite {
     ];
     npcDialogueLine = 0;
     player:Player;
-    wanderTimer:Phaser.TimerEvent;
     targetX = 0;
     targetY = 0;
     maxWanderRange = 100;
@@ -156,7 +155,7 @@ class RogueNpc extends Phaser.Sprite {
         if(!this.friendly){
             this.canInteract = false;
         }
-        
+
         this.interaction();
     }
 
