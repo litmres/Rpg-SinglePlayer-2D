@@ -475,7 +475,7 @@ class Player extends Phaser.Sprite {
         }
     }
 
-    savePlayer(x = 0, levelNumber = this.currentRoom){
+    savePlayer(x = 20, levelNumber = this.currentRoom){
         const savePlayer:savePlayerInterface = {
             lastCheckPoint: this.lastCheckPoint,
             currentRoom:levelNumber,
@@ -499,7 +499,7 @@ class Player extends Phaser.Sprite {
     }
 
     nextLevel(){
-        this.savePlayer(0, this.currentRoom+1);
+        this.savePlayer(50, this.currentRoom+1);
         this.game.state.start("level" + (this.currentRoom+1), true, false);
     }
 

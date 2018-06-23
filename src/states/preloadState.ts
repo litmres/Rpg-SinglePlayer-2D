@@ -9,7 +9,7 @@ class PreloadState extends Phaser.State {
 		this.game.load.onFileComplete.add(this.progressBar, this);
 		this.game.load.onLoadComplete.add(this.finishedLoading, this);
     }
-        
+    
     create() {
         this.loadingText.destroy();
         this.startTitleMenu();
