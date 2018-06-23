@@ -3,3 +3,9 @@
 
 #tsDefinitions
 tsDefinitions/
+
+#tslint
+tslint.json
+
+#tsconfig
+tsconfig.json
