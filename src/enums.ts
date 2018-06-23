@@ -16,6 +16,7 @@ enum playerStateEnum {
 	movingStartWalk,
 	standUp,
 	autoWalkTo,
+	knockBack,
 }
 
 enum enemyStateEnum {

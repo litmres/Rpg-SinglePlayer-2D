@@ -28,6 +28,7 @@ var playerStateEnum;
     playerStateEnum[playerStateEnum["movingStartWalk"] = 9] = "movingStartWalk";
     playerStateEnum[playerStateEnum["standUp"] = 10] = "standUp";
     playerStateEnum[playerStateEnum["autoWalkTo"] = 11] = "autoWalkTo";
+    playerStateEnum[playerStateEnum["knockBack"] = 12] = "knockBack";
 })(playerStateEnum || (playerStateEnum = {}));
 var enemyStateEnum;
 (function (enemyStateEnum) {
@@ -88,6 +89,7 @@ var Player = /** @class */ (function (_super) {
         var _this = _super.call(this, game, x, y, "player", 0) || this;
         _this.playerState = playerStateEnum.idle;
         _this.lastCheckPoint = levelsEnum.level0;
+        _this.invincible = false;
         _this.canWalk = (_a = {},
             _a[playerStateEnum.movingWalk] = true,
             _a[playerStateEnum.movingFall] = false,
@@ -101,6 +103,7 @@ var Player = /** @class */ (function (_super) {
             _a[playerStateEnum.standUp] = false,
             _a[playerStateEnum.movingStartWalk] = true,
             _a[playerStateEnum.autoWalkTo] = false,
+            _a[playerStateEnum.knockBack] = false,
             _a);
         _this.canIdle = (_b = {},
             _b[playerStateEnum.movingWalk] = true,
@@ -115,6 +118,7 @@ var Player = /** @class */ (function (_super) {
             _b[playerStateEnum.standUp] = false,
             _b[playerStateEnum.movingStartWalk] = true,
             _b[playerStateEnum.autoWalkTo] = false,
+            _b[playerStateEnum.knockBack] = false,
             _b);
         _this.canAttack = (_c = {},
             _c[playerStateEnum.movingWalk] = true,
@@ -129,6 +133,7 @@ var Player = /** @class */ (function (_super) {
             _c[playerStateEnum.standUp] = false,
             _c[playerStateEnum.movingStartWalk] = true,
             _c[playerStateEnum.autoWalkTo] = false,
+            _c[playerStateEnum.knockBack] = false,
             _c);
         _this.canSitDown = (_d = {},
             _d[playerStateEnum.movingWalk] = true,
@@ -143,6 +148,7 @@ var Player = /** @class */ (function (_super) {
             _d[playerStateEnum.standUp] = false,
             _d[playerStateEnum.movingStartWalk] = true,
             _d[playerStateEnum.autoWalkTo] = false,
+            _d[playerStateEnum.knockBack] = false,
             _d);
         _this.pauseMenu = {
             backgroundImage: null,
@@ -178,6 +184,7 @@ var Player = /** @class */ (function (_super) {
             _e[playerStateEnum.standUp] = "standup",
             _e[playerStateEnum.movingStartWalk] = "startwalk",
             _e[playerStateEnum.autoWalkTo] = "walk",
+            _e[playerStateEnum.knockBack] = "knockback",
             _e);
         _this.DialogueStyle = {
             font: "bold 10px Arial",
@@ -186,11 +193,11 @@ var Player = /** @class */ (function (_super) {
             boundsAlignV: "middle"
         };
         _this.anchor.setTo(0.5, 0);
-        game.physics.arcade.enableBody(_this);
-        game.add.existing(_this);
+        _this.game.physics.arcade.enableBody(_this);
+        _this.game.add.existing(_this);
         _this.body.gravity.y = 1000;
         _this.body.collideWorldBounds = true;
-        game.physics.enable(_this, Phaser.Physics.ARCADE);
+        _this.game.physics.enable(_this, Phaser.Physics.ARCADE);
         _this.stats = {
             level: 1,
             maxHealth: _this.maxHealth,
@@ -258,8 +265,9 @@ var Player = /** @class */ (function (_super) {
             _this.playerState = playerStateEnum.idle;
         });
         _this.animations.add("death", [51, 52, 54], 3, false).onComplete.add(function () {
-            //kill player and respawn
+            _this.game.state.start("title");
         });
+        _this.animations.add("knockback", [54], 3, true);
         _this.healthBar();
         _this.staminaBar();
         return _this;
@@ -271,7 +279,48 @@ var Player = /** @class */ (function (_super) {
         this.updateHealthBar();
         this.updateStaminaBar();
         this.handleEnteringLevel();
+        this.handleDeath();
         this.fpsCounter.setText("FPS: " + this.game.time.fps);
+    };
+    Player.prototype.handleDeath = function () {
+        if (this.stats.health <= 0 && this.playerState !== playerStateEnum.death) {
+            this.invincible = true;
+            this.playerState = playerStateEnum.death;
+        }
+    };
+    Player.prototype.takeDamage = function (damage, objPositionX) {
+        if (this.canTakeDamage()) {
+            this.stats.health -= this.calculateDamage(damage);
+            this.invincible = true;
+            this.game.time.events.add(1000, this.resetInvincable, this);
+            this.knockBack(objPositionX);
+        }
+    };
+    Player.prototype.knockBack = function (objPositionX) {
+        this.playerState = playerStateEnum.knockBack;
+        if (this.x > objPositionX) {
+            this.scale.setTo(-1, 1);
+            this.movePlayerTo(this.x - this.width, this.y, 0.2, 700, playerStateEnum.idle);
+        }
+        else {
+            this.scale.setTo(1, 1);
+            this.movePlayerTo(this.x - this.width, this.y, 0.2, 700, playerStateEnum.idle);
+        }
+    };
+    Player.prototype.resetInvincable = function () {
+        this.invincible = false;
+    };
+    Player.prototype.calculateDamage = function (damage) {
+        if (this.stats.health - damage < 0) {
+            return 0;
+        }
+        return damage;
+    };
+    Player.prototype.canTakeDamage = function () {
+        if (this.invincible || this.playerState === playerStateEnum.death) {
+            return false;
+        }
+        return true;
     };
     // tslint:disable-next-line:cyclomatic-complexity
     Player.prototype.handleInput = function () {
@@ -346,12 +395,12 @@ var Player = /** @class */ (function (_super) {
     Player.prototype.EnterNextLevel = function () {
         this.scale.setTo(1, 1);
         this.playerState = playerStateEnum.autoWalkTo;
-        this.movePlayerTo(this.game.width + this.width, this.y, 0.2, 700, "nextLevel");
+        this.movePlayerTo(this.game.width + this.width, this.y, 0.2, 700, playerStateEnum.idle, "nextLevel");
     };
     Player.prototype.EnterPreviousLevel = function () {
         this.scale.setTo(-1, 1);
         this.playerState = playerStateEnum.autoWalkTo;
-        this.movePlayerTo(this.width, this.y, 0.2, 700, "previousLevel");
+        this.movePlayerTo(this.width, this.y, 0.2, 700, playerStateEnum.idle, "previousLevel");
     };
     /*
     EnterThisFromPreviousLevel(){
@@ -359,16 +408,17 @@ var Player = /** @class */ (function (_super) {
         this.playerState = playerStateEnum.autoWalkTo;
         this.movePlayerTo(this.width*2, this.y, 0.2, 700);
     }
-    
+
     EnterThisFromNextLevel(){
         this.scale.setTo(-1,1);
         this.playerState = playerStateEnum.autoWalkTo;
         this.movePlayerTo(this.game.width-(this.width*2), this.y, 0.2, 700);
     }
     */
-    Player.prototype.movePlayerTo = function (toX, toY, speed, time, nextLevel) {
+    Player.prototype.movePlayerTo = function (toX, toY, speed, time, endState, nextLevel) {
         var _this = this;
         if (time === void 0) { time = 0; }
+        if (endState === void 0) { endState = playerStateEnum.idle; }
         if (nextLevel === void 0) { nextLevel = ""; }
         this.game.physics.arcade.moveToXY(this, toX, toY, speed, time);
         this.game.time.events.add(time, function () {
@@ -376,7 +426,7 @@ var Player = /** @class */ (function (_super) {
             _this.body.velocity.y = 0;
             _this.x = toX;
             _this.y = toY;
-            _this.playerState = playerStateEnum.idle;
+            _this.playerState = endState;
             if (nextLevel === "nextLevel") {
                 _this.nextLevel();
             }
@@ -433,7 +483,8 @@ var Player = /** @class */ (function (_super) {
         }
     };
     Player.prototype.resetVelocity = function () {
-        if (this.playerState !== playerStateEnum.autoWalkTo) {
+        if (this.playerState !== playerStateEnum.autoWalkTo &&
+            this.playerState !== playerStateEnum.knockBack) {
             this.body.velocity.x = 0;
         }
     };
@@ -478,9 +529,19 @@ var Player = /** @class */ (function (_super) {
             text.setShadow(3, 3, "rgba(0,0,0,0.5)", 2);
             text.setTextBounds(0, 200, 800, 100);
             text.inputEnabled = true;
-            text.events.onInputOver.add(_this.pauseMenuGlow, _this);
-            text.events.onInputOut.add(_this.pauseMenuStopGlow, _this);
-            text.events.onInputUp.add(_this.pauseMenuFadeOut, _this);
+            text.events.onInputOver.addOnce(_this.pauseMenuGlow, _this);
+            text.events.onInputOut.addOnce(_this.pauseMenuStopGlow, _this);
+            text.events.onInputUp.addOnce(_this.pauseMenuFadeOut, _this);
+        });
+        this.game.input.keyboard.addKey(Phaser.Keyboard.ESC).onDown.addOnce(function () {
+            if (_this.game.paused) {
+                _this.pauseMenuFadeOut(_this.pauseMenu.continueGame);
+            }
+        });
+        this.game.input.keyboard.addKey(Phaser.Keyboard.P).onDown.addOnce(function () {
+            if (_this.game.paused) {
+                _this.pauseMenuFadeOut(_this.pauseMenu.continueGame);
+            }
         });
     };
     Player.prototype.pauseMenuFadeOut = function (item) {
@@ -687,6 +748,15 @@ var RogueEnemy = /** @class */ (function (_super) {
         this.animations.play(this.enemyAnimations[this.enemyState]);
         if (!this.friendly) {
             this.handleInput();
+        }
+        this.checkForHit();
+    };
+    RogueEnemy.prototype.checkForHit = function () {
+        if (this.animations.currentAnim.name === "attack1" &&
+            this.animations.frame > 30 &&
+            this.animations.frame < 39 &&
+            this.game.physics.arcade.overlap(this, this.player)) {
+            this.player.takeDamage(this.stats.attack * 20, this.x);
         }
     };
     RogueEnemy.prototype.resetVelocity = function () {
@@ -1136,6 +1206,15 @@ var RogueNpc = /** @class */ (function (_super) {
             this.canInteract = false;
         }
         this.interaction();
+        this.checkForHit();
+    };
+    RogueNpc.prototype.checkForHit = function () {
+        if (this.animations.currentAnim.name === "attack1" &&
+            this.animations.frame > 30 &&
+            this.animations.frame < 39 &&
+            this.game.physics.arcade.overlap(this, this.player)) {
+            this.player.takeDamage(this.stats.attack * 50, this.x);
+        }
     };
     // tslint:disable-next-line:cyclomatic-complexity
     RogueNpc.prototype.handleInput = function () {
