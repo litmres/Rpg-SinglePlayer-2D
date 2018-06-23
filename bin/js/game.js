@@ -1384,7 +1384,7 @@ var PreloadState = /** @class */ (function (_super) {
     PreloadState.prototype.preload = function () {
         this.game.load.onLoadStart.add(this.assets, this);
         //need one here for it to work apparently
-        this.game.load.spritesheet("player", "assets/skeleton/skeleton.png", 32, 64);
+        this.game.load.spritesheet("player", "bin/assets/skeleton/skeleton.png", 32, 64);
         this.game.load.onFileComplete.add(this.progressBar, this);
         this.game.load.onLoadComplete.add(this.finishedLoading, this);
     };
@@ -1403,21 +1403,21 @@ var PreloadState = /** @class */ (function (_super) {
             fill: "#ffffff",
         });
         this.game.stage.backgroundColor = 0xB20059;
-        this.game.load.image("floor", "assets/foundations/floor.png");
-        this.game.load.image("wall", "assets/foundations/wall.png");
-        this.game.load.image("gate", "assets/foundations/gate.png");
-        this.game.load.image("ceiling", "assets/foundations/ceiling.png");
-        this.game.load.spritesheet("rogue", "assets/rogue/rogue.png", 32, 32);
-        this.game.load.image("healthbar", "assets/UI/healthbar.png");
-        this.game.load.image("staminabar", "assets/UI/staminabar.png");
-        this.game.load.spritesheet("bonfire", "assets/bonfire/bonfire.png", 500, 740);
-        this.game.load.spritesheet("chest", "assets/chest/chest.png", 30, 30);
-        this.game.load.spritesheet("explosion", "assets/explosion/explosion.png", 30, 30);
-        this.game.load.spritesheet("skeleton", "assets/skeleton/skeleton.png", 30, 30);
-        this.game.load.spritesheet("bloodskeleton", "assets/skeleton/bloodskeleton.png", 30, 30);
-        this.game.load.spritesheet("golemattack", "assets/golem/golem-attack.png", 30, 30);
-        this.game.load.spritesheet("golemdie", "assets/golem/golem-die.png", 30, 30);
-        this.game.load.spritesheet("golemwalk", "assets/golem/golem-walk.png", 30, 30);
+        this.game.load.image("floor", "bin/assets/foundations/floor.png");
+        this.game.load.image("wall", "bin/assets/foundations/wall.png");
+        this.game.load.image("gate", "bin/assets/foundations/gate.png");
+        this.game.load.image("ceiling", "bin/assets/foundations/ceiling.png");
+        this.game.load.spritesheet("rogue", "bin/assets/rogue/rogue.png", 32, 32);
+        this.game.load.image("healthbar", "bin/assets/UI/healthbar.png");
+        this.game.load.image("staminabar", "bin/assets/UI/staminabar.png");
+        this.game.load.spritesheet("bonfire", "bin/assets/bonfire/bonfire.png", 500, 740);
+        this.game.load.spritesheet("chest", "bin/assets/chest/chest.png", 30, 30);
+        this.game.load.spritesheet("explosion", "bin/assets/explosion/explosion.png", 30, 30);
+        this.game.load.spritesheet("skeleton", "bin/assets/skeleton/skeleton.png", 30, 30);
+        this.game.load.spritesheet("bloodskeleton", "bin/assets/skeleton/bloodskeleton.png", 30, 30);
+        this.game.load.spritesheet("golemattack", "bin/assets/golem/golem-attack.png", 30, 30);
+        this.game.load.spritesheet("golemdie", "bin/assets/golem/golem-die.png", 30, 30);
+        this.game.load.spritesheet("golemwalk", "bin/assets/golem/golem-walk.png", 30, 30);
     };
     PreloadState.prototype.finishedLoading = function () {
         this.loadingText.setText("Load Complete");
