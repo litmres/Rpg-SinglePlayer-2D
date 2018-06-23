@@ -42,22 +42,38 @@ class TitleState extends Phaser.State {
         
     fadeOut(item:Phaser.Text) {
         switch(item){
-            case this.startGame: window.localStorage.setItem("player", "null");
-                this.game.state.start("level" + levelsEnum.level0, true, false);
+            case this.startGame: this.startTheGame();
             break;
-            case this.loadGame: const loadedGame = JSON.parse(window.localStorage.getItem("player")!);
-                if(loadedGame){
-                    this.game.state.start("level" + loadedGame.currentRoom);
-                }else{
-                    alert("no Saved Game Found!");
-                }
+            case this.loadGame: this.loadTheGame();
             break;
-            case this.Options:
+            case this.Options: this.optionsMenu();
             break;
-            case this.githubLink: window.open("http://www.github.com/twofist");
+            case this.githubLink: this.openGithubLink();
             break;
             default:
         }
+    }
+
+    startTheGame(){
+        window.localStorage.setItem("player", "null");
+        this.switchState("level" + levelsEnum.level0);
+    }
+
+    loadTheGame(){
+        const loadedGame = JSON.parse(window.localStorage.getItem("player")!);
+        if(loadedGame){
+            this.switchState("level" + loadedGame.currentRoom);
+        }else{
+            alert("no Saved Game Found!");
+        }
+    }
+
+    optionsMenu(){
+
+    }
+
+    openGithubLink(){
+        window.open("http://www.github.com/twofist");
     }
 
     glow(item:Phaser.Text){
@@ -66,5 +82,9 @@ class TitleState extends Phaser.State {
 
     stopGlow(item:Phaser.Text){
         item.fill = "#fff";
+    }
+
+    switchState(state:string){
+        this.game.state.start(state);
     }
 }

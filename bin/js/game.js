@@ -528,7 +528,7 @@ var Player = /** @class */ (function (_super) {
         }
     };
     Player.prototype.savePlayer = function (x, levelNumber) {
-        if (x === void 0) { x = 0; }
+        if (x === void 0) { x = 20; }
         if (levelNumber === void 0) { levelNumber = this.currentRoom; }
         var savePlayer = {
             lastCheckPoint: this.lastCheckPoint,
@@ -552,7 +552,7 @@ var Player = /** @class */ (function (_super) {
         }
     };
     Player.prototype.nextLevel = function () {
-        this.savePlayer(0, this.currentRoom + 1);
+        this.savePlayer(50, this.currentRoom + 1);
         this.game.state.start("level" + (this.currentRoom + 1), true, false);
     };
     Player.prototype.previousLevel = function () {
@@ -816,7 +816,9 @@ var Level0 = /** @class */ (function (_super) {
         });
         this.enemies = this.game.add.group();
         this.npcs = this.game.add.group();
-        this.npcs.add(new RogueNpc(this.game, 600, ground.y - ground.height));
+        for (var ii = 0; ii < 2000; ii++) {
+            this.npcs.add(new RogueNpc(this.game, 600, ground.y - ground.height));
+        }
         this.bonfires = this.game.add.group();
         this.game.time.advancedTiming = true;
         this.game.physics.enable(ground, Phaser.Physics.ARCADE);
@@ -1465,31 +1467,47 @@ var TitleState = /** @class */ (function (_super) {
     TitleState.prototype.fadeOut = function (item) {
         switch (item) {
             case this.startGame:
-                window.localStorage.setItem("player", "null");
-                this.game.state.start("level" + levelsEnum.level0, true, false);
+                this.startTheGame();
                 break;
             case this.loadGame:
-                var loadedGame = JSON.parse(window.localStorage.getItem("player"));
-                if (loadedGame) {
-                    this.game.state.start("level" + loadedGame.currentRoom);
-                }
-                else {
-                    alert("no Saved Game Found!");
-                }
+                this.loadTheGame();
                 break;
             case this.Options:
+                this.optionsMenu();
                 break;
             case this.githubLink:
-                window.open("http://www.github.com/twofist");
+                this.openGithubLink();
                 break;
             default:
         }
+    };
+    TitleState.prototype.startTheGame = function () {
+        window.localStorage.setItem("player", "null");
+        this.switchState("level" + levelsEnum.level0);
+    };
+    TitleState.prototype.loadTheGame = function () {
+        var loadedGame = JSON.parse(window.localStorage.getItem("player"));
+        if (loadedGame) {
+            this.switchState("level" + loadedGame.currentRoom);
+        }
+        else {
+            alert("no Saved Game Found!");
+        }
+    };
+    TitleState.prototype.optionsMenu = function () {
+    };
+    TitleState.prototype.openGithubLink = function () {
+        window.open("http://www.github.com/twofist");
     };
     TitleState.prototype.glow = function (item) {
         item.fill = "#ffff44";
     };
     TitleState.prototype.stopGlow = function (item) {
         item.fill = "#fff";
+    };
+    TitleState.prototype.switchState = function (state) {
+        this.game.add.text(0, 50, "Loading Level...", this.style);
+        this.game.state.start(state);
     };
     return TitleState;
 }(Phaser.State));
