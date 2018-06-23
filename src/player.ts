@@ -1,6 +1,7 @@
 class Player extends Phaser.Sprite {
     playerState:playerStateEnum = playerStateEnum.idle;
     lastCheckPoint:levelsEnum = levelsEnum.level0;
+    invincible = false;
     canWalk:playerAllowanceInterface = {
         [playerStateEnum.movingWalk]:true,
         [playerStateEnum.movingFall]:false,
@@ -14,6 +15,7 @@ class Player extends Phaser.Sprite {
         [playerStateEnum.standUp]:false,
         [playerStateEnum.movingStartWalk]:true,
         [playerStateEnum.autoWalkTo]:false,
+        [playerStateEnum.knockBack]:false,
     };
     canIdle:playerAllowanceInterface = {
         [playerStateEnum.movingWalk]:true,
@@ -28,6 +30,7 @@ class Player extends Phaser.Sprite {
         [playerStateEnum.standUp]:false,
         [playerStateEnum.movingStartWalk]:true,
         [playerStateEnum.autoWalkTo]:false,
+        [playerStateEnum.knockBack]:false,
     };
     canAttack:playerAllowanceInterface = {
         [playerStateEnum.movingWalk]:true,
@@ -42,6 +45,7 @@ class Player extends Phaser.Sprite {
         [playerStateEnum.standUp]:false,
         [playerStateEnum.movingStartWalk]:true,
         [playerStateEnum.autoWalkTo]:false,
+        [playerStateEnum.knockBack]:false,
     };
     canSitDown:playerAllowanceInterface = {
         [playerStateEnum.movingWalk]:true,
@@ -56,6 +60,7 @@ class Player extends Phaser.Sprite {
         [playerStateEnum.standUp]:false,
         [playerStateEnum.movingStartWalk]:true,
         [playerStateEnum.autoWalkTo]:false,
+        [playerStateEnum.knockBack]:false,
     };
     facingNpc:any;
     facingBonfire:any;
@@ -95,6 +100,7 @@ class Player extends Phaser.Sprite {
         [playerStateEnum.standUp]:"standup",
         [playerStateEnum.movingStartWalk]:"startwalk",
         [playerStateEnum.autoWalkTo]:"walk",
+        [playerStateEnum.knockBack]:"knockback",
     };
     DialogueStyle = {
         font: "bold 10px Arial",
@@ -105,11 +111,11 @@ class Player extends Phaser.Sprite {
     constructor(game: Phaser.Game, x: number, y: number) {
         super(game, x, y, "player", 0);
         this.anchor.setTo(0.5, 0);
-        game.physics.arcade.enableBody(this);
-        game.add.existing(this);
+        this.game.physics.arcade.enableBody(this);
+        this.game.add.existing(this);
         this.body.gravity.y = 1000;
         this.body.collideWorldBounds = true;
-        game.physics.enable(this, Phaser.Physics.ARCADE);
+        this.game.physics.enable(this, Phaser.Physics.ARCADE);
         this.stats = {
             level: 1,
             maxHealth: this.maxHealth,
@@ -181,8 +187,9 @@ class Player extends Phaser.Sprite {
             this.playerState = playerStateEnum.idle;
         });
         this.animations.add("death", [51,52,54], 3, false).onComplete.add(() => {
-            //kill player and respawn
+            this.game.state.start("title");
         });
+        this.animations.add("knockback",[54], 3, true);
 
         this.healthBar();
         this.staminaBar();
@@ -200,7 +207,54 @@ class Player extends Phaser.Sprite {
 
         this.handleEnteringLevel();
 
+        this.handleDeath();
+
         this.fpsCounter.setText("FPS: " + this.game.time.fps);
+    }
+
+    handleDeath(){
+        if(this.stats.health <= 0 && this.playerState !== playerStateEnum.death){
+            this.invincible = true;
+            this.playerState = playerStateEnum.death;
+        }
+    }
+
+    takeDamage(damage:number, objPositionX:number){
+        if(this.canTakeDamage()){
+            this.stats.health -= this.calculateDamage(damage);
+            this.invincible = true;
+            this.game.time.events.add(1000, this.resetInvincable, this);
+            this.knockBack(objPositionX);
+        }
+    }
+
+    knockBack(objPositionX:number){
+        this.playerState = playerStateEnum.knockBack;
+        if(this.x > objPositionX){
+            this.scale.setTo(-1,1);
+            this.movePlayerTo(this.x - this.width, this.y, 0.2, 700, playerStateEnum.idle);
+        }else{
+            this.scale.setTo(1,1);
+            this.movePlayerTo(this.x - this.width, this.y, 0.2, 700, playerStateEnum.idle);
+        }
+    }
+
+    resetInvincable(){
+        this.invincible = false;
+    }
+
+    calculateDamage(damage:number){
+        if(this.stats.health - damage < 0){
+            return 0;
+        }
+        return damage;
+    }
+
+    canTakeDamage(){
+        if(this.invincible || this.playerState === playerStateEnum.death){
+            return false;
+        }
+        return true;
     }
 
     // tslint:disable-next-line:cyclomatic-complexity
@@ -276,13 +330,13 @@ class Player extends Phaser.Sprite {
     EnterNextLevel(){
         this.scale.setTo(1,1);
         this.playerState = playerStateEnum.autoWalkTo;
-        this.movePlayerTo(this.game.width+this.width, this.y, 0.2, 700, "nextLevel");
+        this.movePlayerTo(this.game.width+this.width, this.y, 0.2, 700, playerStateEnum.idle, "nextLevel");
     }
 
     EnterPreviousLevel(){
         this.scale.setTo(-1,1);
         this.playerState = playerStateEnum.autoWalkTo;
-        this.movePlayerTo(this.width, this.y, 0.2, 700, "previousLevel");
+        this.movePlayerTo(this.width, this.y, 0.2, 700, playerStateEnum.idle, "previousLevel");
     }
     /*
     EnterThisFromPreviousLevel(){
@@ -290,7 +344,7 @@ class Player extends Phaser.Sprite {
         this.playerState = playerStateEnum.autoWalkTo;
         this.movePlayerTo(this.width*2, this.y, 0.2, 700);
     }
-    
+
     EnterThisFromNextLevel(){
         this.scale.setTo(-1,1);
         this.playerState = playerStateEnum.autoWalkTo;
@@ -298,7 +352,7 @@ class Player extends Phaser.Sprite {
     }
     */
 
-    movePlayerTo(toX:number, toY:number, speed:number, time = 0, nextLevel = ""){
+    movePlayerTo(toX:number, toY:number, speed:number, time = 0, endState = playerStateEnum.idle, nextLevel = ""){
         this.game.physics.arcade.moveToXY(
             this,
             toX,
@@ -312,7 +366,7 @@ class Player extends Phaser.Sprite {
             this.body.velocity.y = 0;
             this.x = toX;
             this.y = toY;
-            this.playerState = playerStateEnum.idle;
+            this.playerState = endState;
             if(nextLevel === "nextLevel"){
                 this.nextLevel();
             }else if(nextLevel === "previousLevel"){
@@ -375,7 +429,9 @@ class Player extends Phaser.Sprite {
     }
 
     resetVelocity(){
-        if(this.playerState !== playerStateEnum.autoWalkTo){
+        if(this.playerState !== playerStateEnum.autoWalkTo &&
+        this.playerState !== playerStateEnum.knockBack
+        ){
             this.body.velocity.x = 0;
         }
     }
@@ -425,9 +481,21 @@ class Player extends Phaser.Sprite {
             text.setShadow(3, 3, "rgba(0,0,0,0.5)", 2);
             text.setTextBounds(0, 200, 800, 100);
             text.inputEnabled = true;
-            text.events.onInputOver.add(this.pauseMenuGlow, this);
-            text.events.onInputOut.add(this.pauseMenuStopGlow, this);
-            text.events.onInputUp.add(this.pauseMenuFadeOut, this);
+            text.events.onInputOver.addOnce(this.pauseMenuGlow, this);
+            text.events.onInputOut.addOnce(this.pauseMenuStopGlow, this);
+            text.events.onInputUp.addOnce(this.pauseMenuFadeOut, this);
+        });
+
+        this.game.input.keyboard.addKey(Phaser.Keyboard.ESC).onDown.addOnce(() => {
+            if(this.game.paused){
+                this.pauseMenuFadeOut(this.pauseMenu.continueGame);
+            }
+        });
+
+        this.game.input.keyboard.addKey(Phaser.Keyboard.P).onDown.addOnce(() => {
+            if(this.game.paused){
+                this.pauseMenuFadeOut(this.pauseMenu.continueGame);
+            }
         });
     }
 

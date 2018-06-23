@@ -142,21 +142,33 @@ class RogueNpc extends Phaser.Sprite {
         });
         this.health = this.maxHealth;
     }
-    
+
     update() {
         this.resetVelocity();
 
         this.animations.play(this.npcAnimations[this.npcState]);
-        
+
         if(!this.friendly){
             this.handleInput();
         }
-        
+
         if(!this.friendly){
             this.canInteract = false;
         }
 
         this.interaction();
+
+        this.checkForHit();
+    }
+
+    checkForHit(){
+        if(this.animations.currentAnim.name === "attack1" &&
+        this.animations.frame > 30 &&
+        this.animations.frame < 39 &&
+        this.game.physics.arcade.overlap(this, this.player)
+        ){
+            this.player.takeDamage(this.stats.attack*50, this.x);
+        }
     }
 
     // tslint:disable-next-line:cyclomatic-complexity
@@ -169,7 +181,7 @@ class RogueNpc extends Phaser.Sprite {
                 this.npcState = npcStateEnum.idle;
             }
         }
-    
+
         if(this.player){
             const distance = this.game.physics.arcade.distanceBetween(this, this.player);
             let fullAttackRange = this.attackRange;
@@ -189,7 +201,7 @@ class RogueNpc extends Phaser.Sprite {
                 this.chase();
             }
         }
-        
+
         if(this.canIdle[this.npcState]){
             this.idle();
         }

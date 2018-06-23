@@ -119,7 +119,7 @@ class RogueEnemy extends Phaser.Sprite {
         });
         this.health = this.maxHealth;
     }
-    
+
     update() {
         this.resetVelocity();
 
@@ -127,6 +127,18 @@ class RogueEnemy extends Phaser.Sprite {
 
         if(!this.friendly){
             this.handleInput();
+        }
+
+        this.checkForHit();
+    }
+
+    checkForHit(){
+        if(this.animations.currentAnim.name === "attack1" &&
+        this.animations.frame > 30 &&
+        this.animations.frame < 39 &&
+        this.game.physics.arcade.overlap(this, this.player)
+        ){
+            this.player.takeDamage(this.stats.attack*20, this.x);
         }
     }
 
@@ -146,7 +158,7 @@ class RogueEnemy extends Phaser.Sprite {
                 this.enemyState = enemyStateEnum.idle;
             }
         }
-    
+
         if(this.player){
             const distance = this.game.physics.arcade.distanceBetween(this, this.player);
             let fullAttackRange = this.attackRange;
@@ -166,7 +178,7 @@ class RogueEnemy extends Phaser.Sprite {
                 this.chase();
             }
         }
-        
+
         if(this.canIdle[this.enemyState]){
             this.idle();
         }
