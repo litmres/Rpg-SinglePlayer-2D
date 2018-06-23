@@ -321,7 +321,7 @@ var Player = /** @class */ (function (_super) {
         else {
             this.EnterLevelHandler.Next = false;
         }
-        if (this.game.physics.arcade.distanceToXY(this, 0, this.y) < this.width && this.currentRoom > 0) {
+        if (this.game.physics.arcade.distanceToXY(this, 0, this.y) < -this.width && this.currentRoom > 0) {
             this.EnterLevelHandler.Previous = true;
         }
         else {
@@ -351,7 +351,7 @@ var Player = /** @class */ (function (_super) {
     Player.prototype.EnterPreviousLevel = function () {
         this.scale.setTo(-1, 1);
         this.playerState = playerStateEnum.autoWalkTo;
-        this.movePlayerTo(-this.width, this.y, 0.2, 700, "previousLevel");
+        this.movePlayerTo(this.width, this.y, 0.2, 700, "previousLevel");
     };
     /*
     EnterThisFromPreviousLevel(){
@@ -528,7 +528,7 @@ var Player = /** @class */ (function (_super) {
         }
     };
     Player.prototype.savePlayer = function (x, levelNumber) {
-        if (x === void 0) { x = 20; }
+        if (x === void 0) { x = 0; }
         if (levelNumber === void 0) { levelNumber = this.currentRoom; }
         var savePlayer = {
             lastCheckPoint: this.lastCheckPoint,
@@ -552,7 +552,7 @@ var Player = /** @class */ (function (_super) {
         }
     };
     Player.prototype.nextLevel = function () {
-        this.savePlayer(50, this.currentRoom + 1);
+        this.savePlayer(0, this.currentRoom + 1);
         this.game.state.start("level" + (this.currentRoom + 1), true, false);
     };
     Player.prototype.previousLevel = function () {
@@ -806,6 +806,7 @@ var Level0 = /** @class */ (function (_super) {
     }
     Level0.prototype.preload = function () {
         this.background = 0x49801;
+        this.game.add.text(100, 0, "Everything you see is a Placeholder");
         this.platforms = this.game.add.group();
         this.platforms.enableBody = true;
         var ground = this.platforms.create(0, this.game.height, "floor");
@@ -824,7 +825,7 @@ var Level0 = /** @class */ (function (_super) {
     Level0.prototype.create = function () {
         this.game.stage.backgroundColor = this.background;
         this.game.world.setBounds(0, 0, this.game.width, this.game.height);
-        this.player = new Player(this.game, 20, 0);
+        this.player = new Player(this.game, 0, 0);
         this.player.y -= this.player.height * 2;
         this.player.currentRoom = this.levelNumber;
         this.player.loadPlayer(this.playerStorage);
@@ -880,16 +881,6 @@ var Level1 = /** @class */ (function (_super) {
         var _this = _super !== null && _super.apply(this, arguments) || this;
         _this.levelNumber = levelsEnum.level1;
         _this.playerStorage = JSON.parse(window.localStorage.getItem("player"));
-        _this.interActive = {
-            gate1: {
-                closed: false,
-                gate: null,
-            },
-            gate2: {
-                closed: true,
-                gate: null,
-            },
-        };
         return _this;
     }
     Level1.prototype.preload = function () {
@@ -902,13 +893,17 @@ var Level1 = /** @class */ (function (_super) {
         var ceiling = this.platforms.create(0, 0, "ceiling");
         ceiling.width = this.game.width;
         var wall = this.platforms.create(0, ceiling.height, "wall");
-        wall.height = this.game.height - wall.height * 2 - ceiling.height;
+        wall.height = this.game.height - wall.height * 2 - ceiling.height * 2;
         var wall2 = this.platforms.create(this.game.width - wall.width, ceiling.height, "wall");
-        wall2.height = this.game.height - wall2.height * 2 - ceiling.height;
-        this.interActive.gate1.gate = this.platforms.create(0, wall.height, "gate");
-        this.interActive.gate2.gate = this.platforms.create(this.game.width - this.interActive.gate1.gate.width, wall2.height, "gate");
-        this.interActive.gate2.gate.y += this.interActive.gate2.gate.height;
+        wall2.height = this.game.height - wall2.height * 2 - ceiling.height * 2;
+        this.gates = this.game.add.group();
+        this.gates.enableBody = true;
+        this.gates.add(new Gate(this.game, wall.x, wall.height));
+        this.gates.add(new Gate(this.game, wall2.x, wall2.height));
         this.platforms.forEach(function (platform) {
+            platform.body.immovable = true;
+        });
+        this.gates.forEach(function (platform) {
             platform.body.immovable = true;
         });
         this.enemies = this.game.add.group();
@@ -917,28 +912,35 @@ var Level1 = /** @class */ (function (_super) {
         this.bonfires = this.game.add.group();
         this.bonfires.add(new Bonfire(this.game, 500, ground.y - ground.height));
         this.physics.enable(this.platforms, Phaser.Physics.ARCADE);
+        this.physics.enable(this.gates, Phaser.Physics.ARCADE);
     };
     Level1.prototype.create = function () {
         this.game.stage.backgroundColor = this.background;
         this.game.world.setBounds(0, 0, this.game.width, this.game.height);
-        this.player = new Player(this.game, 20, 0);
+        this.player = new Player(this.game, 0, 0);
         this.player.currentRoom = this.levelNumber;
         this.player.loadPlayer(this.playerStorage);
         this.addPlayerToEnemies();
         this.addPlayerToNpcs();
+        this.addPlayerToGates();
     };
     Level1.prototype.update = function () {
         this.game.physics.arcade.collide(this.player, this.platforms);
         this.game.physics.arcade.collide(this.enemies, this.platforms);
         this.game.physics.arcade.collide(this.bonfires, this.platforms);
-        this.closeGate();
-        this.openGate();
+        this.game.physics.arcade.collide(this.player, this.gates);
+        this.game.physics.arcade.collide(this.enemies, this.gates);
         this.playerFacingBonfire();
         this.playerFacingNpc();
     };
     Level1.prototype.addPlayerToNpcs = function () {
         for (var ii = 0; ii < this.npcs.children.length; ii++) {
             this.npcs.children[ii].player = this.player;
+        }
+    };
+    Level1.prototype.addPlayerToGates = function () {
+        for (var ii = 0; ii < this.gates.children.length; ii++) {
+            this.gates.children[ii].player = this.player;
         }
     };
     Level1.prototype.addPlayerToEnemies = function () {
@@ -970,50 +972,11 @@ var Level1 = /** @class */ (function (_super) {
             }
         }
     };
-    Level1.prototype.closeGate = function () {
-        var _this = this;
-        if (!this.interActive.gate1.closed && !this.roomIsClear() && this.player.x > this.interActive.gate1.gate.x + this.interActive.gate1.gate.width * 2) {
-            this.interActive.gate1.closed = true;
-            var endX_1 = this.interActive.gate1.gate.x;
-            var endY_1 = this.interActive.gate1.gate.y + this.interActive.gate1.gate.height;
-            this.game.physics.arcade.moveToXY(this.interActive.gate1.gate, this.interActive.gate1.gate.x, this.interActive.gate1.gate.y + this.interActive.gate1.gate.height, 0.2, 500);
-            this.game.time.events.add(500, function () {
-                _this.interActive.gate1.gate.body.velocity.x = 0;
-                _this.interActive.gate1.gate.body.velocity.y = 0;
-                _this.interActive.gate1.gate.x = endX_1;
-                _this.interActive.gate1.gate.y = endY_1;
-            }, this);
-        }
-    };
-    Level1.prototype.openGate = function () {
-        var _this = this;
-        if (this.interActive.gate1.closed && this.roomIsClear()) {
-            this.interActive.gate1.closed = false;
-            var endX_2 = this.interActive.gate1.gate.x;
-            var endY_2 = this.interActive.gate1.gate.y -= this.interActive.gate1.gate.height;
-            this.game.physics.arcade.moveToXY(this.interActive.gate1.gate, endX_2, endY_2, 0.1, 500);
-            this.game.time.events.add(500, function () {
-                _this.interActive.gate1.gate.body.velocity.x = 0;
-                _this.interActive.gate1.gate.body.velocity.y = 0;
-                _this.interActive.gate1.gate.x = endX_2;
-                _this.interActive.gate1.gate.y = endY_2;
-            }, this);
-        }
-        if (this.interActive.gate2.closed && this.roomIsClear()) {
-            this.interActive.gate2.closed = false;
-            var endX_3 = this.interActive.gate2.gate.x;
-            var endY_3 = this.interActive.gate2.gate.y -= this.interActive.gate2.gate.height;
-            this.game.physics.arcade.moveToXY(this.interActive.gate2.gate, endX_3, endY_3, 0.1, 500);
-            this.game.time.events.add(500, function () {
-                _this.interActive.gate2.gate.body.velocity.x = 0;
-                _this.interActive.gate2.gate.body.velocity.y = 0;
-                _this.interActive.gate2.gate.x = endX_3;
-                _this.interActive.gate2.gate.y = endY_3;
-            }, this);
-        }
-    };
     Level1.prototype.roomIsClear = function () {
         if (this.enemies.children.length === 0) {
+            for (var ii = 0; ii < this.gates.children.length; ii++) {
+                this.gates.children[ii].roomIsClear = true;
+            }
             return true;
         }
         return false;
@@ -1359,6 +1322,58 @@ var Bonfire = /** @class */ (function (_super) {
     };
     return Bonfire;
 }(Phaser.Sprite));
+var Gate = /** @class */ (function (_super) {
+    __extends(Gate, _super);
+    function Gate(game, x, y) {
+        var _this = _super.call(this, game, x, y, "gate", 0) || this;
+        _this.roomIsClear = false;
+        _this.isClosed = false;
+        _this.height = _this.height * 2;
+        _this.y -= (_this.height / 2);
+        return _this;
+    }
+    Gate.prototype.update = function () {
+        if (this.player) {
+            this.closeGate();
+            this.openGate();
+        }
+    };
+    Gate.prototype.openGate = function () {
+        var _this = this;
+        if (this.isClosed && this.roomIsClear) {
+            this.isClosed = false;
+            var endX_1 = this.x;
+            var endY_1 = this.y -= this.height;
+            this.game.physics.arcade.moveToXY(this, endX_1, endY_1, 0.1, 500);
+            this.game.time.events.add(500, function () {
+                _this.body.velocity.x = 0;
+                _this.body.velocity.y = 0;
+                _this.x = endX_1;
+                _this.y = endY_1;
+            }, this);
+        }
+    };
+    Gate.prototype.closeGate = function () {
+        var _this = this;
+        var distance = this.x - this.player.x;
+        if (distance < 0) {
+            distance *= -1;
+        }
+        if (!this.isClosed && !this.roomIsClear && distance > this.width * 2) {
+            this.isClosed = true;
+            var endX_2 = this.x;
+            var endY_2 = this.y + this.height;
+            this.game.physics.arcade.moveToXY(this, endX_2, endY_2, 0.2, 500);
+            this.game.time.events.add(500, function () {
+                _this.body.velocity.x = 0;
+                _this.body.velocity.y = 0;
+                _this.x = endX_2;
+                _this.y = endY_2;
+            }, this);
+        }
+    };
+    return Gate;
+}(Phaser.Sprite));
 var BootState = /** @class */ (function (_super) {
     __extends(BootState, _super);
     function BootState() {
@@ -1438,7 +1453,6 @@ var TitleState = /** @class */ (function (_super) {
     }
     TitleState.prototype.preload = function () {
         this.background = 0x055550;
-        this.game.add.text(0, 0, "Everything you see is a Placeholder", this.style);
         this.startGame = this.game.add.text(0, 0, "Start New Game", this.style);
         this.loadGame = this.game.add.text(0, 50, "Load Game", this.style);
         this.Options = this.game.add.text(0, 100, "Options", this.style);
