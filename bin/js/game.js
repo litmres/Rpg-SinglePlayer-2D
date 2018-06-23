@@ -816,9 +816,7 @@ var Level0 = /** @class */ (function (_super) {
         });
         this.enemies = this.game.add.group();
         this.npcs = this.game.add.group();
-        for (var ii = 0; ii < 2000; ii++) {
-            this.npcs.add(new RogueNpc(this.game, 600, ground.y - ground.height));
-        }
+        this.npcs.add(new RogueNpc(this.game, 600, ground.y - ground.height));
         this.bonfires = this.game.add.group();
         this.game.time.advancedTiming = true;
         this.game.physics.enable(ground, Phaser.Physics.ARCADE);
@@ -1506,7 +1504,6 @@ var TitleState = /** @class */ (function (_super) {
         item.fill = "#fff";
     };
     TitleState.prototype.switchState = function (state) {
-        this.game.add.text(0, 50, "Loading Level...", this.style);
         this.game.state.start(state);
     };
     return TitleState;
