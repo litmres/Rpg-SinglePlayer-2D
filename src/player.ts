@@ -248,7 +248,7 @@ class Player extends Phaser.Sprite {
         }else{
             this.EnterLevelHandler.Next = false;
         }
-        if(this.game.physics.arcade.distanceToXY(this, 0, this.y) < this.width && this.currentRoom > 0){
+        if(this.game.physics.arcade.distanceToXY(this, 0, this.y) < -this.width && this.currentRoom > 0){
             this.EnterLevelHandler.Previous = true;
         }else{
             this.EnterLevelHandler.Previous = false;
@@ -282,7 +282,7 @@ class Player extends Phaser.Sprite {
     EnterPreviousLevel(){
         this.scale.setTo(-1,1);
         this.playerState = playerStateEnum.autoWalkTo;
-        this.movePlayerTo(-this.width, this.y, 0.2, 700, "previousLevel");
+        this.movePlayerTo(this.width, this.y, 0.2, 700, "previousLevel");
     }
     /*
     EnterThisFromPreviousLevel(){
@@ -475,7 +475,7 @@ class Player extends Phaser.Sprite {
         }
     }
 
-    savePlayer(x = 20, levelNumber = this.currentRoom){
+    savePlayer(x = 0, levelNumber = this.currentRoom){
         const savePlayer:savePlayerInterface = {
             lastCheckPoint: this.lastCheckPoint,
             currentRoom:levelNumber,
@@ -499,7 +499,7 @@ class Player extends Phaser.Sprite {
     }
 
     nextLevel(){
-        this.savePlayer(50, this.currentRoom+1);
+        this.savePlayer(0, this.currentRoom+1);
         this.game.state.start("level" + (this.currentRoom+1), true, false);
     }
 

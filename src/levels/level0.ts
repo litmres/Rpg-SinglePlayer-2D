@@ -12,6 +12,8 @@ class Level0 extends Phaser.State {
     preload(){
         this.background = 0x49801;
 
+        this.game.add.text(100,0, "Everything you see is a Placeholder");
+
         this.platforms = this.game.add.group();
         this.platforms.enableBody = true;
 
@@ -38,7 +40,7 @@ class Level0 extends Phaser.State {
     create() {
         this.game.stage.backgroundColor = this.background;
         this.game.world.setBounds(0, 0, this.game.width, this.game.height);
-        this.player = new Player(this.game, 20, 0);
+        this.player = new Player(this.game, 0, 0);
         this.player.y -= this.player.height*2;
         this.player.currentRoom = this.levelNumber;
         this.player.loadPlayer(this.playerStorage);
