@@ -6,9 +6,11 @@ class AdventurerEnemy extends Phaser.Sprite {
     targetX = 0;
     targetY = 0;
     maxWanderRange = 100;
-    attackRange = 0;
+    attackRange = 15;
     spawnPositionX: number;
     spawnPositionY: number;
+    bodyWidth: number;
+    bodyHeight: number;
     aggroRange = 100;
     canWalk: enemyAllowanceInterface = {
         [enemyStateEnum.movingWalk]: true,
@@ -84,7 +86,9 @@ class AdventurerEnemy extends Phaser.Sprite {
         this.body.gravity.y = 1000;
         this.body.collideWorldBounds = true;
         game.physics.enable(this, Phaser.Physics.ARCADE);
-        this.body.setSize(10 / this.scale.x, 30 / this.scale.y, 30, 5);
+        this.bodyWidth = 10;
+        this.bodyHeight = 30;
+        this.body.setSize(this.bodyWidth / this.scale.x, this.bodyHeight / this.scale.y, (this.width - this.bodyWidth) / 2, 5);
         this.spawnPositionX = x;
         this.spawnPositionY = y;
         this.stats = {
@@ -162,7 +166,8 @@ class AdventurerEnemy extends Phaser.Sprite {
 
         if (this.player) {
             const distance = this.game.physics.arcade.distanceBetween(this, this.player);
-            let fullAttackRange = this.attackRange;
+            const fullAttackRange = this.attackRange + this.bodyWidth / 2 + this.player.bodyWidth;
+            /*
             if (this.width < 0) {
                 fullAttackRange += (this.width / 2) * -1;
             } else {
@@ -172,7 +177,7 @@ class AdventurerEnemy extends Phaser.Sprite {
                 fullAttackRange += (this.player.width / 2) * -1;
             } else {
                 fullAttackRange += this.player.width / 2;
-            }
+            }*/
             if (distance < fullAttackRange && this.canAttack[this.enemyState]) {
                 this.attack();
             } else if (distance < this.aggroRange && this.canChase[this.enemyState]) {

@@ -39,10 +39,7 @@ class Gate extends Phaser.Sprite {
     }
 
     closeGate() {
-        let distance = this.x - this.player.x;
-        if (distance < 0) {
-            distance *= -1;
-        }
+        const distance = this.game.physics.arcade.distanceToXY(this, this.player.x, this.y);
         if (!this.isClosed && !this.roomIsClear && distance > this.width * 2) {
             this.isClosed = true;
             const endX = this.x;

@@ -199,7 +199,9 @@ var Player = /** @class */ (function (_super) {
         _this.body.gravity.y = 1000;
         _this.body.collideWorldBounds = true;
         _this.game.physics.enable(_this, Phaser.Physics.ARCADE);
-        _this.body.setSize(12 / _this.scale.x, 24 / _this.scale.y, 24, 32);
+        _this.bodyWidth = 12;
+        _this.bodyHeight = 24;
+        _this.body.setSize(_this.bodyWidth / _this.scale.x, _this.bodyHeight / _this.scale.y, (_this.width - _this.bodyWidth) / 2, 32);
         _this.stats = {
             level: 1,
             maxHealth: _this.maxHealth,
@@ -635,7 +637,7 @@ var AdventurerEnemy = /** @class */ (function (_super) {
         _this.targetX = 0;
         _this.targetY = 0;
         _this.maxWanderRange = 100;
-        _this.attackRange = 0;
+        _this.attackRange = 15;
         _this.aggroRange = 100;
         _this.canWalk = (_a = {},
             _a[enemyStateEnum.movingWalk] = true,
@@ -708,7 +710,9 @@ var AdventurerEnemy = /** @class */ (function (_super) {
         _this.body.gravity.y = 1000;
         _this.body.collideWorldBounds = true;
         game.physics.enable(_this, Phaser.Physics.ARCADE);
-        _this.body.setSize(10 / _this.scale.x, 30 / _this.scale.y, 30, 5);
+        _this.bodyWidth = 10;
+        _this.bodyHeight = 30;
+        _this.body.setSize(_this.bodyWidth / _this.scale.x, _this.bodyHeight / _this.scale.y, (_this.width - _this.bodyWidth) / 2, 5);
         _this.spawnPositionX = x;
         _this.spawnPositionY = y;
         _this.stats = {
@@ -779,19 +783,18 @@ var AdventurerEnemy = /** @class */ (function (_super) {
         }
         if (this.player) {
             var distance = this.game.physics.arcade.distanceBetween(this, this.player);
-            var fullAttackRange = this.attackRange;
+            var fullAttackRange = this.attackRange + this.bodyWidth / 2 + this.player.bodyWidth;
+            /*
             if (this.width < 0) {
                 fullAttackRange += (this.width / 2) * -1;
-            }
-            else {
+            } else {
                 fullAttackRange += this.width / 2;
             }
             if (this.player.width < 0) {
                 fullAttackRange += (this.player.width / 2) * -1;
-            }
-            else {
+            } else {
                 fullAttackRange += this.player.width / 2;
-            }
+            }*/
             if (distance < fullAttackRange && this.canAttack[this.enemyState]) {
                 this.attack();
             }
@@ -945,7 +948,7 @@ var RogueEnemy = /** @class */ (function (_super) {
             _e[enemyStateEnum.sit] = "sit",
             _e[enemyStateEnum.sitDown] = "sitdown",
             _e[enemyStateEnum.movingChase] = "walk",
-            _e[enemyStateEnum.idleSpecial] = "butterfly",
+            _e[enemyStateEnum.idleSpecial] = "idlespecial",
             _e);
         _this.anchor.setTo(0.5, 0);
         game.physics.arcade.enableBody(_this);
@@ -953,7 +956,9 @@ var RogueEnemy = /** @class */ (function (_super) {
         _this.body.gravity.y = 1000;
         _this.body.collideWorldBounds = true;
         game.physics.enable(_this, Phaser.Physics.ARCADE);
-        _this.body.setSize(26 / _this.scale.x, 32 / _this.scale.y, 6, 0);
+        _this.bodyWidth = 26;
+        _this.bodyHeight = 32;
+        _this.body.setSize(_this.bodyWidth / _this.scale.x, _this.bodyHeight / _this.scale.y, (_this.width - _this.bodyWidth) / 2, _this.height - _this.bodyHeight);
         _this.spawnPositionX = x;
         _this.spawnPositionY = y;
         _this.stats = {
@@ -976,7 +981,7 @@ var RogueEnemy = /** @class */ (function (_super) {
                 _this.wander();
             }
         });
-        _this.animations.add("butterfly", [10, 11, 12, 13, 14, 15, 16, 17, 18, 19], 3, false).onComplete.add(function () {
+        _this.animations.add("idlespecial", [10, 11, 12, 13, 14, 15, 16, 17, 18, 19], 3, false).onComplete.add(function () {
             _this.animations.stop();
             _this.enemyState = enemyStateEnum.idle;
         });
@@ -1024,19 +1029,18 @@ var RogueEnemy = /** @class */ (function (_super) {
         }
         if (this.player) {
             var distance = this.game.physics.arcade.distanceBetween(this, this.player);
-            var fullAttackRange = this.attackRange;
+            var fullAttackRange = this.attackRange + this.bodyWidth / 2 + this.player.bodyWidth;
+            /*
             if (this.width < 0) {
                 fullAttackRange += (this.width / 2) * -1;
-            }
-            else {
+            } else {
                 fullAttackRange += this.width / 2;
             }
             if (this.player.width < 0) {
                 fullAttackRange += (this.player.width / 2) * -1;
-            }
-            else {
+            } else {
                 fullAttackRange += this.player.width / 2;
-            }
+            }*/
             if (distance < fullAttackRange && this.canAttack[this.enemyState]) {
                 this.attack();
             }
@@ -1123,7 +1127,9 @@ var Level0 = /** @class */ (function (_super) {
         return _this;
     }
     Level0.prototype.preload = function () {
-        this.background = 0x49801;
+        this.background = this.game.add.image(0, 0, "darkbackground");
+        this.background.height = this.game.height;
+        this.background.width = this.game.width;
         this.game.add.text(100, 0, "Everything you see is a Placeholder");
         this.platforms = this.game.add.group();
         this.platforms.enableBody = true;
@@ -1402,7 +1408,7 @@ var RogueNpc = /** @class */ (function (_super) {
             _e[npcStateEnum.sit] = "sit",
             _e[npcStateEnum.sitDown] = "sitdown",
             _e[npcStateEnum.movingChase] = "walk",
-            _e[npcStateEnum.idleSpecial] = "butterfly",
+            _e[npcStateEnum.idleSpecial] = "idlespecial",
             _e);
         _this.anchor.setTo(0.5, 0);
         game.physics.arcade.enableBody(_this);
@@ -1410,7 +1416,9 @@ var RogueNpc = /** @class */ (function (_super) {
         _this.body.gravity.y = 1000;
         _this.body.collideWorldBounds = true;
         game.physics.enable(_this, Phaser.Physics.ARCADE);
-        _this.body.setSize(26 / _this.scale.x, 32 / _this.scale.y, 6, 0);
+        _this.bodyWidth = 26;
+        _this.bodyHeight = 32;
+        _this.body.setSize(_this.bodyWidth / _this.scale.x, _this.bodyHeight / _this.scale.y, (_this.width - _this.bodyWidth) / 2, _this.height - _this.bodyHeight);
         _this.spawnPositionX = x;
         _this.spawnPositionY = y;
         _this.stats = {
@@ -1433,7 +1441,7 @@ var RogueNpc = /** @class */ (function (_super) {
                 _this.wander();
             }
         });
-        _this.animations.add("butterfly", [10, 11, 12, 13, 14, 15, 16, 17, 18, 19], 3, false).onComplete.add(function () {
+        _this.animations.add("idlespecial", [10, 11, 12, 13, 14, 15, 16, 17, 18, 19], 3, false).onComplete.add(function () {
             _this.animations.stop();
             _this.npcState = npcStateEnum.idle;
         });
@@ -1480,19 +1488,18 @@ var RogueNpc = /** @class */ (function (_super) {
         }
         if (this.player) {
             var distance = this.game.physics.arcade.distanceBetween(this, this.player);
-            var fullAttackRange = this.attackRange;
-            if (this.width < 0) {
-                fullAttackRange += (this.width / 2) * -1;
-            }
-            else {
-                fullAttackRange += this.width / 2;
+            var fullAttackRange = this.attackRange + this.bodyWidth / 2 + this.player.bodyWidth;
+            /*
+            if (this.bodyWidth < 0) {
+                fullAttackRange += (this.bodyWidth / 2) * -1;
+            } else {
+                fullAttackRange += this.bodyWidth / 2;
             }
             if (this.player.width < 0) {
-                fullAttackRange += (this.player.width / 2) * -1;
-            }
-            else {
-                fullAttackRange += this.player.width / 2;
-            }
+                fullAttackRange += (this.player.bodyWidth / 2) * -1;
+            } else {
+                fullAttackRange += this.player.bodyWidth / 2;
+            }*/
             if (distance < fullAttackRange && this.canAttack[this.npcState]) {
                 this.attack();
             }
@@ -1686,10 +1693,7 @@ var Gate = /** @class */ (function (_super) {
     };
     Gate.prototype.closeGate = function () {
         var _this = this;
-        var distance = this.x - this.player.x;
-        if (distance < 0) {
-            distance *= -1;
-        }
+        var distance = this.game.physics.arcade.distanceToXY(this, this.player.x, this.y);
         if (!this.isClosed && !this.roomIsClear && distance > this.width * 2) {
             this.isClosed = true;
             var endX_2 = this.x;
@@ -1760,6 +1764,7 @@ var PreloadState = /** @class */ (function (_super) {
         this.game.load.spritesheet("chest", "bin/assets/chest/chest.png", 30, 30);
         this.game.load.spritesheet("explosion", "bin/assets/explosion/explosion.png", 30, 30);
         this.game.load.spritesheet("adventurer", "bin/assets/adventurer/adventurer.png", 50, 37);
+        this.game.load.image("darkbackground", "bin/assets/backgrounds/background.png");
     };
     PreloadState.prototype.finishedLoading = function () {
         this.loadingText.setText("Load Complete");

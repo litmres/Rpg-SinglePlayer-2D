@@ -10,7 +10,9 @@ class Level0 extends Phaser.State {
     bonfires!: Phaser.Group;
 
     preload() {
-        this.background = 0x49801;
+        this.background = this.game.add.image(0, 0, "darkbackground");
+        this.background.height = this.game.height;
+        this.background.width = this.game.width;
 
         this.game.add.text(100, 0, "Everything you see is a Placeholder");
 

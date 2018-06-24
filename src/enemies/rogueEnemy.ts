@@ -5,6 +5,8 @@ class RogueEnemy extends Phaser.Sprite {
     player: Player;
     targetX = 0;
     targetY = 0;
+    bodyWidth: number;
+    bodyHeight: number;
     maxWanderRange = 100;
     attackRange = 0;
     spawnPositionX: number;
@@ -74,7 +76,7 @@ class RogueEnemy extends Phaser.Sprite {
         [enemyStateEnum.sit]: "sit",
         [enemyStateEnum.sitDown]: "sitdown",
         [enemyStateEnum.movingChase]: "walk",
-        [enemyStateEnum.idleSpecial]: "butterfly",
+        [enemyStateEnum.idleSpecial]: "idlespecial",
     };
     constructor(game: Phaser.Game, x: number, y: number) {
         super(game, x, y, "rogue", 0);
@@ -84,7 +86,9 @@ class RogueEnemy extends Phaser.Sprite {
         this.body.gravity.y = 1000;
         this.body.collideWorldBounds = true;
         game.physics.enable(this, Phaser.Physics.ARCADE);
-        this.body.setSize(26 / this.scale.x, 32 / this.scale.y, 6, 0);
+        this.bodyWidth = 26;
+        this.bodyHeight = 32;
+        this.body.setSize(this.bodyWidth / this.scale.x, this.bodyHeight / this.scale.y, (this.width - this.bodyWidth) / 2, this.height - this.bodyHeight);
         this.spawnPositionX = x;
         this.spawnPositionY = y;
         this.stats = {
@@ -106,7 +110,7 @@ class RogueEnemy extends Phaser.Sprite {
                 this.wander();
             }
         });
-        this.animations.add("butterfly", [10, 11, 12, 13, 14, 15, 16, 17, 18, 19], 3, false).onComplete.add(() => {
+        this.animations.add("idlespecial", [10, 11, 12, 13, 14, 15, 16, 17, 18, 19], 3, false).onComplete.add(() => {
             this.animations.stop();
             this.enemyState = enemyStateEnum.idle;
         });
@@ -162,8 +166,8 @@ class RogueEnemy extends Phaser.Sprite {
 
         if (this.player) {
             const distance = this.game.physics.arcade.distanceBetween(this, this.player);
-            let fullAttackRange = this.attackRange;
-
+            const fullAttackRange = this.attackRange + this.bodyWidth / 2 + this.player.bodyWidth;
+            /*
             if (this.width < 0) {
                 fullAttackRange += (this.width / 2) * -1;
             } else {
@@ -173,7 +177,7 @@ class RogueEnemy extends Phaser.Sprite {
                 fullAttackRange += (this.player.width / 2) * -1;
             } else {
                 fullAttackRange += this.player.width / 2;
-            }
+            }*/
             if (distance < fullAttackRange && this.canAttack[this.enemyState]) {
                 this.attack();
             } else if (distance < this.aggroRange && this.canChase[this.enemyState]) {

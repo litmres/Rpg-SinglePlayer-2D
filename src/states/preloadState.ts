@@ -39,6 +39,7 @@ class PreloadState extends Phaser.State {
         this.game.load.spritesheet("chest", "bin/assets/chest/chest.png", 30, 30);
         this.game.load.spritesheet("explosion", "bin/assets/explosion/explosion.png", 30, 30);
         this.game.load.spritesheet("adventurer", "bin/assets/adventurer/adventurer.png", 50, 37);
+        this.game.load.image("darkbackground", "bin/assets/backgrounds/background.png");
     }
 
     finishedLoading(this: PreloadState) {

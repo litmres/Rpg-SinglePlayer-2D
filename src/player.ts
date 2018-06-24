@@ -78,6 +78,8 @@ class Player extends Phaser.Sprite {
     stats: playerStatsInterface;
     playerHealthBar: any = null;
     playerStaminaBar: any = null;
+    bodyWidth: number;
+    bodyHeight: number;
     controls: any;
     currentRoom = 0;
     EnterLevelHandler = {
@@ -117,7 +119,9 @@ class Player extends Phaser.Sprite {
         this.body.gravity.y = 1000;
         this.body.collideWorldBounds = true;
         this.game.physics.enable(this, Phaser.Physics.ARCADE);
-        this.body.setSize(12 / this.scale.x, 24 / this.scale.y, 24, 32);
+        this.bodyWidth = 12;
+        this.bodyHeight = 24;
+        this.body.setSize(this.bodyWidth / this.scale.x, this.bodyHeight / this.scale.y, (this.width - this.bodyWidth) / 2, 32);
         this.stats = {
             level: 1,
             maxHealth: this.maxHealth,
