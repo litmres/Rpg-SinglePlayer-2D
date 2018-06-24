@@ -1,4 +1,4 @@
-class RogueEnemy extends Phaser.Sprite {
+class AdventurerEnemy extends Phaser.Sprite {
     enemyState: enemyStateEnum = enemyStateEnum.idle;
     friendly = false;
     wanderRange = 100;
@@ -74,17 +74,17 @@ class RogueEnemy extends Phaser.Sprite {
         [enemyStateEnum.sit]: "sit",
         [enemyStateEnum.sitDown]: "sitdown",
         [enemyStateEnum.movingChase]: "walk",
-        [enemyStateEnum.idleSpecial]: "butterfly",
+        [enemyStateEnum.idleSpecial]: "idlespecial",
     };
     constructor(game: Phaser.Game, x: number, y: number) {
-        super(game, x, y, "rogue", 0);
+        super(game, x, y, "adventurer", 0);
         this.anchor.setTo(0.5, 0);
         game.physics.arcade.enableBody(this);
         game.add.existing(this);
         this.body.gravity.y = 1000;
         this.body.collideWorldBounds = true;
         game.physics.enable(this, Phaser.Physics.ARCADE);
-        this.body.setSize(26 / this.scale.x, 32 / this.scale.y, 6, 0);
+        this.body.setSize(10 / this.scale.x, 30 / this.scale.y, 30, 5);
         this.spawnPositionX = x;
         this.spawnPositionY = y;
         this.stats = {
@@ -98,7 +98,7 @@ class RogueEnemy extends Phaser.Sprite {
             movespeed: 120,
             luck: 1,
         };
-        this.animations.add("idle", [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], 3, false).onComplete.add(() => {
+        this.animations.add("idle", [0, 1, 2, 3], 3, false).onComplete.add(() => {
             const rndNumber = this.game.rnd.integerInRange(1, 100);
             if (rndNumber > 90) {
                 this.enemyState = enemyStateEnum.idleSpecial;
@@ -106,16 +106,16 @@ class RogueEnemy extends Phaser.Sprite {
                 this.wander();
             }
         });
-        this.animations.add("butterfly", [10, 11, 12, 13, 14, 15, 16, 17, 18, 19], 3, false).onComplete.add(() => {
+        this.animations.add("idlespecial", [38, 39, 40, 41], 3, false).onComplete.add(() => {
             this.animations.stop();
             this.enemyState = enemyStateEnum.idle;
         });
-        this.animations.add("walk", [20, 21, 22, 23, 24, 25, 26, 27, 28, 29], 3, true);
-        this.animations.add("attack1", [30, 31, 32, 33, 34, 35, 36, 37, 38, 39], 6, false).onComplete.add(() => {
+        this.animations.add("walk", [8, 9, 10], 3, true);
+        this.animations.add("attack1", [42, 43, 44, 45, 46, 47, 48, 49], 6, false).onComplete.add(() => {
             this.animations.stop();
             this.enemyState = enemyStateEnum.idle;
         });
-        this.animations.add("death", [40, 41, 42, 43, 44, 45, 46, 47, 48, 49], 3, false).onComplete.add(() => {
+        this.animations.add("death", [62, 63, 64, 65, 66, 67, 68], 3, false).onComplete.add(() => {
             //kill enemy and respawn
         });
         this.health = this.maxHealth;
@@ -135,8 +135,8 @@ class RogueEnemy extends Phaser.Sprite {
 
     checkForHit() {
         if (this.animations.currentAnim.name === "attack1" &&
-            this.animations.frame > 30 &&
-            this.animations.frame < 39 &&
+            this.animations.frame > 42 &&
+            this.animations.frame < 46 &&
             this.game.physics.arcade.overlap(this, this.player)
         ) {
             this.player.takeDamage(this.stats.attack * 20, this.x);
@@ -163,7 +163,6 @@ class RogueEnemy extends Phaser.Sprite {
         if (this.player) {
             const distance = this.game.physics.arcade.distanceBetween(this, this.player);
             let fullAttackRange = this.attackRange;
-
             if (this.width < 0) {
                 fullAttackRange += (this.width / 2) * -1;
             } else {
