@@ -1,29 +1,29 @@
 class PreloadState extends Phaser.State {
-    background!:number|Phaser.Image;
-    loadingText!:Phaser.Text;
-    logo!:Phaser.Image;
+    background!: number | Phaser.Image;
+    loadingText!: Phaser.Text;
+    logo!: Phaser.Image;
     preload() {
         this.game.load.onLoadStart.add(this.assets, this);
         //need one here for it to work apparently
-        this.game.load.spritesheet("player", "bin/assets/skeleton/skeleton.png", 32,64);
-		this.game.load.onFileComplete.add(this.progressBar, this);
-		this.game.load.onLoadComplete.add(this.finishedLoading, this);
+        this.game.load.spritesheet("player", "bin/assets/player/player.png", 64, 64);
+        this.game.load.onFileComplete.add(this.progressBar, this);
+        this.game.load.onLoadComplete.add(this.finishedLoading, this);
     }
-    
+
     create() {
         this.loadingText.destroy();
         this.startTitleMenu();
     }
-        
+
     startTitleMenu() {
         this.game.state.start("title", true, false);
     }
 
-    progressBar(this:PreloadState, progress:Phaser.Loader, cacheKey:Phaser.Cache, success:Phaser.Signal, totalLoaded:Phaser.Loader, totalFiles:Phaser.Loader) {
+    progressBar(this: PreloadState, progress: Phaser.Loader, cacheKey: Phaser.Cache, success: Phaser.Signal, totalLoaded: Phaser.Loader, totalFiles: Phaser.Loader) {
         this.loadingText.setText("File Complete: " + progress + "% - " + totalLoaded + " out of " + totalFiles);
     }
 
-    assets(this:PreloadState) {
+    assets(this: PreloadState) {
         this.loadingText = this.game.add.text(this.game.camera.x, this.game.camera.height / 2, "loading...", {
             fill: "#ffffff",
         });
@@ -38,14 +38,11 @@ class PreloadState extends Phaser.State {
         this.game.load.spritesheet("bonfire", "bin/assets/bonfire/bonfire.png", 500, 740);
         this.game.load.spritesheet("chest", "bin/assets/chest/chest.png", 30, 30);
         this.game.load.spritesheet("explosion", "bin/assets/explosion/explosion.png", 30, 30);
-        this.game.load.spritesheet("skeleton", "bin/assets/skeleton/skeleton.png", 30,30);
-        this.game.load.spritesheet("bloodskeleton", "bin/assets/skeleton/bloodskeleton.png", 30,30);
-        this.game.load.spritesheet("golemattack", "bin/assets/golem/golem-attack.png", 30, 30);
-        this.game.load.spritesheet("golemdie", "bin/assets/golem/golem-die.png", 30, 30);
-        this.game.load.spritesheet("golemwalk", "bin/assets/golem/golem-walk.png", 30, 30);
+        this.game.load.spritesheet("adventurer", "bin/assets/adventurer/adventurer.png", 50, 37);
+        this.game.load.image("darkbackground", "bin/assets/backgrounds/background.png");
     }
 
-    finishedLoading(this:PreloadState) {
+    finishedLoading(this: PreloadState) {
         this.loadingText.setText("Load Complete");
     }
 }

@@ -1,18 +1,20 @@
 class Level0 extends Phaser.State {
     levelNumber = levelsEnum.level0;
-    background!: number|Phaser.Image;
+    background!: number | Phaser.Image;
     music!: Phaser.Sound;
     player!: Player;
-    platforms!:Phaser.Group;
-    playerStorage:savePlayerInterface = JSON.parse(window.localStorage.getItem("player")!);
-    enemies!:Phaser.Group;
-    npcs!:Phaser.Group;
-    bonfires!:Phaser.Group;
+    platforms!: Phaser.Group;
+    playerStorage: savePlayerInterface = JSON.parse(window.localStorage.getItem("player")!);
+    enemies!: Phaser.Group;
+    npcs!: Phaser.Group;
+    bonfires!: Phaser.Group;
 
-    preload(){
-        this.background = 0x49801;
+    preload() {
+        this.background = this.game.add.image(0, 0, "darkbackground");
+        this.background.height = this.game.height;
+        this.background.width = this.game.width;
 
-        this.game.add.text(100,0, "Everything you see is a Placeholder");
+        this.game.add.text(100, 0, "Everything you see is a Placeholder");
 
         this.platforms = this.game.add.group();
         this.platforms.enableBody = true;
@@ -21,7 +23,7 @@ class Level0 extends Phaser.State {
         ground.y -= ground.height;
         ground.width = this.game.width;
 
-        this.platforms.forEach(function(platform:Phaser.Sprite){
+        this.platforms.forEach(function (platform: Phaser.Sprite) {
             platform.body.immovable = true;
         });
 
@@ -36,12 +38,12 @@ class Level0 extends Phaser.State {
 
         this.game.physics.enable(ground, Phaser.Physics.ARCADE);
     }
-        
+
     create() {
         this.game.stage.backgroundColor = this.background;
         this.game.world.setBounds(0, 0, this.game.width, this.game.height);
         this.player = new Player(this.game, 0, 0);
-        this.player.y -= this.player.height*2;
+        this.player.y -= this.player.height * 2;
         this.player.currentRoom = this.levelNumber;
         this.player.loadPlayer(this.playerStorage);
         this.addPlayerToNpcs();
@@ -49,43 +51,45 @@ class Level0 extends Phaser.State {
         this.game.physics.startSystem(Phaser.Physics.ARCADE);
     }
 
-    update(){
+    update() {
         this.game.physics.arcade.collide(this.player, this.platforms);
         this.game.physics.arcade.collide(this.npcs, this.platforms);
+        this.game.physics.arcade.collide(this.enemies, this.platforms);
+        this.game.physics.arcade.collide(this.bonfires, this.platforms);
         this.playerFacingNpc();
         this.playerFacingBonfire();
     }
 
-    addPlayerToNpcs(){
-        for(let ii = 0; ii < this.npcs.children.length; ii++){
+    addPlayerToNpcs() {
+        for (let ii = 0; ii < this.npcs.children.length; ii++) {
             this.npcs.children[ii].player = this.player;
         }
     }
 
-    addPlayerToEnemies(){
-        for(let ii = 0; ii < this.enemies.children.length; ii++){
+    addPlayerToEnemies() {
+        for (let ii = 0; ii < this.enemies.children.length; ii++) {
             this.enemies.children[ii].player = this.player;
         }
     }
 
-    playerFacingNpc(){
-        for(let ii = 0; ii < this.npcs.children.length; ii++){
-            if(this.game.physics.arcade.overlap(this.player, this.npcs.children[ii])){
+    playerFacingNpc() {
+        for (let ii = 0; ii < this.npcs.children.length; ii++) {
+            if (this.game.physics.arcade.overlap(this.player, this.npcs.children[ii])) {
                 this.npcs.children[ii].canInteract = true;
                 this.player.facingNpc = this.npcs.children[ii];
-            }else{
+            } else {
                 this.npcs.children[ii].canInteract = false;
                 this.player.facingNpc = null;
             }
         }
     }
 
-    playerFacingBonfire(){
-        for(let ii = 0; ii < this.bonfires.children.length; ii++){
-            if(this.game.physics.arcade.overlap(this.player, this.bonfires.children[ii])){
+    playerFacingBonfire() {
+        for (let ii = 0; ii < this.bonfires.children.length; ii++) {
+            if (this.game.physics.arcade.overlap(this.player, this.bonfires.children[ii])) {
                 this.bonfires.children[ii].canInteract = true;
                 this.player.facingBonfire = this.bonfires.children[ii];
-            }else{
+            } else {
                 this.bonfires.children[ii].canInteract = false;
                 this.player.facingBonfire = null;
             }

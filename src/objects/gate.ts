@@ -1,23 +1,23 @@
 class Gate extends Phaser.Sprite {
-    isClosed:boolean;
+    isClosed: boolean;
     roomIsClear = false;
-    player:Player;
+    player: Player;
     constructor(game: Phaser.Game, x: number, y: number) {
         super(game, x, y, "gate", 0);
         this.isClosed = false;
-        this.height = this.height*2;
-        this.y -= (this.height/2);
+        this.height = this.height * 2;
+        this.y -= (this.height / 2);
     }
-    
+
     update() {
-        if(this.player){
+        if (this.player) {
             this.closeGate();
             this.openGate();
         }
     }
 
-    openGate(){
-        if(this.isClosed && this.roomIsClear){
+    openGate() {
+        if (this.isClosed && this.roomIsClear) {
             this.isClosed = false;
             const endX = this.x;
             const endY = this.y -= this.height;
@@ -38,12 +38,9 @@ class Gate extends Phaser.Sprite {
         }
     }
 
-    closeGate(){
-        let distance = this.x - this.player.x;
-        if(distance < 0){
-            distance *= -1;
-        }
-        if(!this.isClosed && !this.roomIsClear && distance > this.width*2){
+    closeGate() {
+        const distance = this.game.physics.arcade.distanceToXY(this, this.player.x, this.y);
+        if (!this.isClosed && !this.roomIsClear && distance > this.width * 2) {
             this.isClosed = true;
             const endX = this.x;
             const endY = this.y + this.height;
