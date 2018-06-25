@@ -201,7 +201,7 @@ var Player = /** @class */ (function (_super) {
         _this.game.physics.enable(_this, Phaser.Physics.ARCADE);
         _this.bodyWidth = 12;
         _this.bodyHeight = 24;
-        _this.body.setSize(_this.bodyWidth / _this.scale.x, _this.bodyHeight / _this.scale.y, (_this.width - _this.bodyWidth) / 2, 32);
+        _this.body.setSize(_this.bodyWidth / _this.scale.x, _this.bodyHeight / _this.scale.y, (_this.width - _this.bodyWidth) / 2 - 3, 32);
         _this.stats = {
             level: 1,
             maxHealth: _this.maxHealth,
@@ -272,6 +272,12 @@ var Player = /** @class */ (function (_super) {
             _this.game.state.start("title");
         });
         _this.animations.add("knockback", [83], 10, true);
+        _this.hitBoxes = _this.game.add.group();
+        _this.addChild(_this.hitBoxes);
+        _this.hitBox1 = _this.hitBoxes.create(0, _this.height / 1.5);
+        _this.game.physics.enable(_this.hitBoxes, Phaser.Physics.ARCADE);
+        _this.hitBox1.body.setSize(20, 10);
+        _this.hitBox1.name = "attack1";
         _this.healthBar();
         _this.staminaBar();
         return _this;
@@ -284,7 +290,19 @@ var Player = /** @class */ (function (_super) {
         this.updateStaminaBar();
         this.handleEnteringLevel();
         this.handleDeath();
+        this.updateHitbox();
         this.fpsCounter.setText("FPS: " + this.game.time.fps);
+    };
+    Player.prototype.updateHitbox = function () {
+        var _this = this;
+        this.hitBoxes.forEach(function (v) {
+            if (_this.width < 0) {
+                v.scale.setTo(-1, 1);
+            }
+            else {
+                v.scale.setTo(1, 1);
+            }
+        });
     };
     Player.prototype.handleDeath = function () {
         if (this.stats.health <= 0 && this.playerState !== playerStateEnum.death) {
@@ -726,7 +744,7 @@ var AdventurerEnemy = /** @class */ (function (_super) {
             movespeed: 120,
             luck: 1,
         };
-        _this.animations.add("idle", [0, 1, 2, 3], 3, false).onComplete.add(function () {
+        _this.animations.add("idle", [0, 1, 2, 3], 10, false).onComplete.add(function () {
             var rndNumber = _this.game.rnd.integerInRange(1, 100);
             if (rndNumber > 90) {
                 _this.enemyState = enemyStateEnum.idleSpecial;
@@ -735,19 +753,25 @@ var AdventurerEnemy = /** @class */ (function (_super) {
                 _this.wander();
             }
         });
-        _this.animations.add("idlespecial", [38, 39, 40, 41], 3, false).onComplete.add(function () {
+        _this.animations.add("idlespecial", [38, 39, 40, 41], 10, false).onComplete.add(function () {
             _this.animations.stop();
             _this.enemyState = enemyStateEnum.idle;
         });
         _this.animations.add("walk", [8, 9, 10], 3, true);
-        _this.animations.add("attack1", [42, 43, 44, 45, 46, 47, 48, 49], 6, false).onComplete.add(function () {
+        _this.animations.add("attack1", [42, 43, 44, 45, 46, 47, 48, 49], 10, false).onComplete.add(function () {
             _this.animations.stop();
             _this.enemyState = enemyStateEnum.idle;
         });
-        _this.animations.add("death", [62, 63, 64, 65, 66, 67, 68], 3, false).onComplete.add(function () {
+        _this.animations.add("death", [62, 63, 64, 65, 66, 67, 68], 10, false).onComplete.add(function () {
             //kill enemy and respawn
         });
         _this.health = _this.maxHealth;
+        _this.hitBoxes = _this.game.add.group();
+        _this.addChild(_this.hitBoxes);
+        _this.hitBox1 = _this.hitBoxes.create(0, _this.height / 2);
+        _this.game.physics.enable(_this.hitBoxes, Phaser.Physics.ARCADE);
+        _this.hitBox1.body.setSize(20, 10);
+        _this.hitBox1.name = "attack1";
         return _this;
     }
     AdventurerEnemy.prototype.update = function () {
@@ -757,12 +781,24 @@ var AdventurerEnemy = /** @class */ (function (_super) {
             this.handleInput();
         }
         this.checkForHit();
+        this.updateHitbox();
+    };
+    AdventurerEnemy.prototype.updateHitbox = function () {
+        var _this = this;
+        this.hitBoxes.forEach(function (v) {
+            if (_this.width < 0) {
+                v.scale.setTo(-1, 1);
+            }
+            else {
+                v.scale.setTo(1, 1);
+            }
+        });
     };
     AdventurerEnemy.prototype.checkForHit = function () {
         if (this.animations.currentAnim.name === "attack1" &&
-            this.animations.frame > 42 &&
-            this.animations.frame < 46 &&
-            this.game.physics.arcade.overlap(this, this.player)) {
+            this.animations.frame >= 45 &&
+            this.animations.frame <= 46 &&
+            this.game.physics.arcade.overlap(this.hitBox1, this.player)) {
             this.player.takeDamage(this.stats.attack * 20, this.x);
         }
     };
@@ -783,19 +819,7 @@ var AdventurerEnemy = /** @class */ (function (_super) {
         }
         if (this.player) {
             var distance = this.game.physics.arcade.distanceBetween(this, this.player);
-            var fullAttackRange = this.attackRange + this.bodyWidth / 2 + this.player.bodyWidth;
-            /*
-            if (this.width < 0) {
-                fullAttackRange += (this.width / 2) * -1;
-            } else {
-                fullAttackRange += this.width / 2;
-            }
-            if (this.player.width < 0) {
-                fullAttackRange += (this.player.width / 2) * -1;
-            } else {
-                fullAttackRange += this.player.width / 2;
-            }*/
-            if (distance < fullAttackRange && this.canAttack[this.enemyState]) {
+            if (distance < Math.abs(this.hitBox1.width) && this.canAttack[this.enemyState]) {
                 this.attack();
             }
             else if (distance < this.aggroRange && this.canChase[this.enemyState]) {
@@ -956,7 +980,7 @@ var RogueEnemy = /** @class */ (function (_super) {
         _this.body.gravity.y = 1000;
         _this.body.collideWorldBounds = true;
         game.physics.enable(_this, Phaser.Physics.ARCADE);
-        _this.bodyWidth = 26;
+        _this.bodyWidth = 16;
         _this.bodyHeight = 32;
         _this.body.setSize(_this.bodyWidth / _this.scale.x, _this.bodyHeight / _this.scale.y, (_this.width - _this.bodyWidth) / 2, _this.height - _this.bodyHeight);
         _this.spawnPositionX = x;
@@ -994,6 +1018,12 @@ var RogueEnemy = /** @class */ (function (_super) {
             //kill enemy and respawn
         });
         _this.health = _this.maxHealth;
+        _this.hitBoxes = _this.game.add.group();
+        _this.addChild(_this.hitBoxes);
+        _this.hitBox1 = _this.hitBoxes.create(0, _this.height / 2);
+        _this.game.physics.enable(_this.hitBoxes, Phaser.Physics.ARCADE);
+        _this.hitBox1.body.setSize(15, 10);
+        _this.hitBox1.name = "attack1";
         return _this;
     }
     RogueEnemy.prototype.update = function () {
@@ -1003,12 +1033,24 @@ var RogueEnemy = /** @class */ (function (_super) {
             this.handleInput();
         }
         this.checkForHit();
+        this.updateHitbox();
+    };
+    RogueEnemy.prototype.updateHitbox = function () {
+        var _this = this;
+        this.hitBoxes.forEach(function (v) {
+            if (_this.width < 0) {
+                v.scale.setTo(-1, 1);
+            }
+            else {
+                v.scale.setTo(1, 1);
+            }
+        });
     };
     RogueEnemy.prototype.checkForHit = function () {
         if (this.animations.currentAnim.name === "attack1" &&
-            this.animations.frame > 30 &&
-            this.animations.frame < 39 &&
-            this.game.physics.arcade.overlap(this, this.player)) {
+            this.animations.frame >= 34 &&
+            this.animations.frame <= 36 &&
+            this.game.physics.arcade.overlap(this.hitBox1, this.player)) {
             this.player.takeDamage(this.stats.attack * 20, this.x);
         }
     };
@@ -1029,19 +1071,7 @@ var RogueEnemy = /** @class */ (function (_super) {
         }
         if (this.player) {
             var distance = this.game.physics.arcade.distanceBetween(this, this.player);
-            var fullAttackRange = this.attackRange + this.bodyWidth / 2 + this.player.bodyWidth;
-            /*
-            if (this.width < 0) {
-                fullAttackRange += (this.width / 2) * -1;
-            } else {
-                fullAttackRange += this.width / 2;
-            }
-            if (this.player.width < 0) {
-                fullAttackRange += (this.player.width / 2) * -1;
-            } else {
-                fullAttackRange += this.player.width / 2;
-            }*/
-            if (distance < fullAttackRange && this.canAttack[this.enemyState]) {
+            if (distance < Math.abs(this.hitBox1.width) && this.canAttack[this.enemyState]) {
                 this.attack();
             }
             else if (distance < this.aggroRange && this.canChase[this.enemyState]) {
@@ -1124,6 +1154,7 @@ var Level0 = /** @class */ (function (_super) {
         var _this = _super !== null && _super.apply(this, arguments) || this;
         _this.levelNumber = levelsEnum.level0;
         _this.playerStorage = JSON.parse(window.localStorage.getItem("player"));
+        _this.debugMode = true;
         return _this;
     }
     Level0.prototype.preload = function () {
@@ -1164,6 +1195,9 @@ var Level0 = /** @class */ (function (_super) {
         this.game.physics.arcade.collide(this.bonfires, this.platforms);
         this.playerFacingNpc();
         this.playerFacingBonfire();
+        if (this.debugMode) {
+            this.debug();
+        }
     };
     Level0.prototype.addPlayerToNpcs = function () {
         for (var ii = 0; ii < this.npcs.children.length; ii++) {
@@ -1199,6 +1233,19 @@ var Level0 = /** @class */ (function (_super) {
             }
         }
     };
+    Level0.prototype.debug = function () {
+        var _this = this;
+        this.game.debug.body(this.player);
+        this.game.debug.physicsGroup(this.player.hitBoxes);
+        this.npcs.forEach(function (v) {
+            _this.game.debug.body(v);
+            _this.game.debug.physicsGroup(v.hitBoxes);
+        });
+        this.enemies.forEach(function (v) {
+            _this.game.debug.body(v);
+            _this.game.debug.physicsGroup(v.hitBoxes);
+        });
+    };
     return Level0;
 }(Phaser.State));
 var Level1 = /** @class */ (function (_super) {
@@ -1207,6 +1254,7 @@ var Level1 = /** @class */ (function (_super) {
         var _this = _super !== null && _super.apply(this, arguments) || this;
         _this.levelNumber = levelsEnum.level1;
         _this.playerStorage = JSON.parse(window.localStorage.getItem("player"));
+        _this.debugMode = true;
         return _this;
     }
     Level1.prototype.preload = function () {
@@ -1259,6 +1307,9 @@ var Level1 = /** @class */ (function (_super) {
         this.game.physics.arcade.collide(this.enemies, this.gates);
         this.playerFacingBonfire();
         this.playerFacingNpc();
+        if (this.debugMode) {
+            this.debug();
+        }
     };
     Level1.prototype.addPlayerToNpcs = function () {
         for (var ii = 0; ii < this.npcs.children.length; ii++) {
@@ -1307,6 +1358,19 @@ var Level1 = /** @class */ (function (_super) {
             return true;
         }
         return false;
+    };
+    Level1.prototype.debug = function () {
+        var _this = this;
+        this.game.debug.body(this.player);
+        this.game.debug.physicsGroup(this.player.hitBoxes);
+        this.npcs.forEach(function (v) {
+            _this.game.debug.body(v);
+            _this.game.debug.physicsGroup(v.hitBoxes);
+        });
+        this.enemies.forEach(function (v) {
+            _this.game.debug.body(v);
+            _this.game.debug.physicsGroup(v.hitBoxes);
+        });
     };
     return Level1;
 }(Phaser.State));
@@ -1416,7 +1480,7 @@ var RogueNpc = /** @class */ (function (_super) {
         _this.body.gravity.y = 1000;
         _this.body.collideWorldBounds = true;
         game.physics.enable(_this, Phaser.Physics.ARCADE);
-        _this.bodyWidth = 26;
+        _this.bodyWidth = 16;
         _this.bodyHeight = 32;
         _this.body.setSize(_this.bodyWidth / _this.scale.x, _this.bodyHeight / _this.scale.y, (_this.width - _this.bodyWidth) / 2, _this.height - _this.bodyHeight);
         _this.spawnPositionX = x;
@@ -1454,6 +1518,12 @@ var RogueNpc = /** @class */ (function (_super) {
             //kill npc and respawn
         });
         _this.health = _this.maxHealth;
+        _this.hitBoxes = _this.game.add.group();
+        _this.addChild(_this.hitBoxes);
+        _this.hitBox1 = _this.hitBoxes.create(0, _this.height / 2);
+        _this.game.physics.enable(_this.hitBoxes, Phaser.Physics.ARCADE);
+        _this.hitBox1.body.setSize(15, 10);
+        _this.hitBox1.name = "attack1";
         return _this;
     }
     RogueNpc.prototype.update = function () {
@@ -1467,12 +1537,24 @@ var RogueNpc = /** @class */ (function (_super) {
         }
         this.interaction();
         this.checkForHit();
+        this.updateHitbox();
+    };
+    RogueNpc.prototype.updateHitbox = function () {
+        var _this = this;
+        this.hitBoxes.forEach(function (v) {
+            if (_this.width < 0) {
+                v.scale.setTo(-1, 1);
+            }
+            else {
+                v.scale.setTo(1, 1);
+            }
+        });
     };
     RogueNpc.prototype.checkForHit = function () {
         if (this.animations.currentAnim.name === "attack1" &&
-            this.animations.frame > 30 &&
-            this.animations.frame < 39 &&
-            this.game.physics.arcade.overlap(this, this.player)) {
+            this.animations.frame >= 34 &&
+            this.animations.frame <= 36 &&
+            this.game.physics.arcade.overlap(this.hitBox1, this.player)) {
             this.player.takeDamage(this.stats.attack * 50, this.x);
         }
     };
@@ -1488,19 +1570,7 @@ var RogueNpc = /** @class */ (function (_super) {
         }
         if (this.player) {
             var distance = this.game.physics.arcade.distanceBetween(this, this.player);
-            var fullAttackRange = this.attackRange + this.bodyWidth / 2 + this.player.bodyWidth;
-            /*
-            if (this.bodyWidth < 0) {
-                fullAttackRange += (this.bodyWidth / 2) * -1;
-            } else {
-                fullAttackRange += this.bodyWidth / 2;
-            }
-            if (this.player.width < 0) {
-                fullAttackRange += (this.player.bodyWidth / 2) * -1;
-            } else {
-                fullAttackRange += this.player.bodyWidth / 2;
-            }*/
-            if (distance < fullAttackRange && this.canAttack[this.npcState]) {
+            if (distance < Math.abs(this.hitBox1.width) && this.canAttack[this.npcState]) {
                 this.attack();
             }
             else if (distance < this.aggroRange && this.canChase[this.npcState]) {

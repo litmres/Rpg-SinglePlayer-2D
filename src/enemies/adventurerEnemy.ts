@@ -78,6 +78,8 @@ class AdventurerEnemy extends Phaser.Sprite {
         [enemyStateEnum.movingChase]: "walk",
         [enemyStateEnum.idleSpecial]: "idlespecial",
     };
+    hitBoxes: Phaser.Group;
+    hitBox1: Phaser.Sprite;
     constructor(game: Phaser.Game, x: number, y: number) {
         super(game, x, y, "adventurer", 0);
         this.anchor.setTo(0.5, 0);
@@ -102,7 +104,7 @@ class AdventurerEnemy extends Phaser.Sprite {
             movespeed: 120,
             luck: 1,
         };
-        this.animations.add("idle", [0, 1, 2, 3], 3, false).onComplete.add(() => {
+        this.animations.add("idle", [0, 1, 2, 3], 10, false).onComplete.add(() => {
             const rndNumber = this.game.rnd.integerInRange(1, 100);
             if (rndNumber > 90) {
                 this.enemyState = enemyStateEnum.idleSpecial;
@@ -110,19 +112,28 @@ class AdventurerEnemy extends Phaser.Sprite {
                 this.wander();
             }
         });
-        this.animations.add("idlespecial", [38, 39, 40, 41], 3, false).onComplete.add(() => {
+        this.animations.add("idlespecial", [38, 39, 40, 41], 10, false).onComplete.add(() => {
             this.animations.stop();
             this.enemyState = enemyStateEnum.idle;
         });
         this.animations.add("walk", [8, 9, 10], 3, true);
-        this.animations.add("attack1", [42, 43, 44, 45, 46, 47, 48, 49], 6, false).onComplete.add(() => {
+        this.animations.add("attack1", [42, 43, 44, 45, 46, 47, 48, 49], 10, false).onComplete.add(() => {
             this.animations.stop();
             this.enemyState = enemyStateEnum.idle;
         });
-        this.animations.add("death", [62, 63, 64, 65, 66, 67, 68], 3, false).onComplete.add(() => {
+        this.animations.add("death", [62, 63, 64, 65, 66, 67, 68], 10, false).onComplete.add(() => {
             //kill enemy and respawn
         });
         this.health = this.maxHealth;
+
+        this.hitBoxes = this.game.add.group();
+
+        this.addChild(this.hitBoxes);
+
+        this.hitBox1 = this.hitBoxes.create(0, this.height / 2);
+        this.game.physics.enable(this.hitBoxes, Phaser.Physics.ARCADE);
+        this.hitBox1.body.setSize(20, 10);
+        this.hitBox1.name = "attack1";
     }
 
     update() {
@@ -135,13 +146,25 @@ class AdventurerEnemy extends Phaser.Sprite {
         }
 
         this.checkForHit();
+
+        this.updateHitbox();
+    }
+
+    updateHitbox() {
+        this.hitBoxes.forEach((v: Phaser.Sprite) => {
+            if (this.width < 0) {
+                v.scale.setTo(-1, 1);
+            } else {
+                v.scale.setTo(1, 1);
+            }
+        });
     }
 
     checkForHit() {
         if (this.animations.currentAnim.name === "attack1" &&
-            this.animations.frame > 42 &&
-            this.animations.frame < 46 &&
-            this.game.physics.arcade.overlap(this, this.player)
+            this.animations.frame >= 45 &&
+            this.animations.frame <= 46 &&
+            this.game.physics.arcade.overlap(this.hitBox1, this.player)
         ) {
             this.player.takeDamage(this.stats.attack * 20, this.x);
         }
@@ -166,19 +189,7 @@ class AdventurerEnemy extends Phaser.Sprite {
 
         if (this.player) {
             const distance = this.game.physics.arcade.distanceBetween(this, this.player);
-            const fullAttackRange = this.attackRange + this.bodyWidth / 2 + this.player.bodyWidth;
-            /*
-            if (this.width < 0) {
-                fullAttackRange += (this.width / 2) * -1;
-            } else {
-                fullAttackRange += this.width / 2;
-            }
-            if (this.player.width < 0) {
-                fullAttackRange += (this.player.width / 2) * -1;
-            } else {
-                fullAttackRange += this.player.width / 2;
-            }*/
-            if (distance < fullAttackRange && this.canAttack[this.enemyState]) {
+            if (distance < Math.abs(this.hitBox1.width) && this.canAttack[this.enemyState]) {
                 this.attack();
             } else if (distance < this.aggroRange && this.canChase[this.enemyState]) {
                 this.chase();

@@ -9,6 +9,8 @@ class Level1 extends Phaser.State {
     npcs!: Phaser.Group;
     bonfires!: Phaser.Group;
     gates!: Phaser.Group;
+    debugMode = true;
+
     preload() {
         this.background = 0x49801;
 
@@ -76,6 +78,10 @@ class Level1 extends Phaser.State {
 
         this.playerFacingBonfire();
         this.playerFacingNpc();
+
+        if (this.debugMode) {
+            this.debug();
+        }
     }
 
     addPlayerToNpcs() {
@@ -128,5 +134,18 @@ class Level1 extends Phaser.State {
             return true;
         }
         return false;
+    }
+
+    debug() {
+        this.game.debug.body(this.player);
+        this.game.debug.physicsGroup(this.player.hitBoxes);
+        this.npcs.forEach((v: Phaser.Sprite) => {
+            this.game.debug.body(v);
+            this.game.debug.physicsGroup(v.hitBoxes);
+        });
+        this.enemies.forEach((v: Phaser.Sprite) => {
+            this.game.debug.body(v);
+            this.game.debug.physicsGroup(v.hitBoxes);
+        });
     }
 }
