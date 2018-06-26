@@ -8,6 +8,7 @@ class Level0 extends Phaser.State {
     enemies!: Phaser.Group;
     npcs!: Phaser.Group;
     bonfires!: Phaser.Group;
+    debugMode = false;
 
     preload() {
         this.background = this.game.add.image(0, 0, "darkbackground");
@@ -58,6 +59,9 @@ class Level0 extends Phaser.State {
         this.game.physics.arcade.collide(this.bonfires, this.platforms);
         this.playerFacingNpc();
         this.playerFacingBonfire();
+        if (this.debugMode) {
+            this.debug();
+        }
     }
 
     addPlayerToNpcs() {
@@ -94,5 +98,18 @@ class Level0 extends Phaser.State {
                 this.player.facingBonfire = null;
             }
         }
+    }
+
+    debug() {
+        this.game.debug.body(this.player);
+        this.game.debug.physicsGroup(this.player.hitBoxes);
+        this.npcs.forEach((v: Phaser.Sprite) => {
+            this.game.debug.body(v);
+            this.game.debug.physicsGroup(v.hitBoxes);
+        });
+        this.enemies.forEach((v: Phaser.Sprite) => {
+            this.game.debug.body(v);
+            this.game.debug.physicsGroup(v.hitBoxes);
+        });
     }
 }

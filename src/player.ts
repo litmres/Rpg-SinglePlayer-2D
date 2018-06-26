@@ -64,6 +64,8 @@ class Player extends Phaser.Sprite {
     };
     facingNpc: any;
     facingBonfire: any;
+    hitBoxes: Phaser.Group;
+    hitBox1: Phaser.Sprite;
     pauseMenu: any = {
         backgroundImage: null,
         continueGame: null,
@@ -121,7 +123,7 @@ class Player extends Phaser.Sprite {
         this.game.physics.enable(this, Phaser.Physics.ARCADE);
         this.bodyWidth = 12;
         this.bodyHeight = 24;
-        this.body.setSize(this.bodyWidth / this.scale.x, this.bodyHeight / this.scale.y, (this.width - this.bodyWidth) / 2, 32);
+        this.body.setSize(this.bodyWidth / this.scale.x, this.bodyHeight / this.scale.y, (this.width - this.bodyWidth) / 2 - 3, 32);
         this.stats = {
             level: 1,
             maxHealth: this.maxHealth,
@@ -193,15 +195,30 @@ class Player extends Phaser.Sprite {
             this.playerState = playerStateEnum.idle;
         });
         this.animations.add("death", [71, 72, 73, 74, 75, 76, 78, 79, 80, 81, 81, 82, 83], 10, false).onComplete.add(() => {
+            this.kill();
             this.game.state.start("title");
         });
         this.animations.add("knockback", [83], 10, true);
+
+
+
+        this.hitBoxes = this.game.add.group();
+
+        this.addChild(this.hitBoxes);
+
+        this.hitBox1 = this.hitBoxes.create(0, this.height / 1.5);
+        this.game.physics.enable(this.hitBoxes, Phaser.Physics.ARCADE);
+        this.hitBox1.body.setSize(20, 10);
+        this.hitBox1.name = "attack1";
+
+
 
         this.healthBar();
         this.staminaBar();
     }
 
     update() {
+
         this.resetVelocity();
 
         this.animations.play(this.playerAnimations[this.playerState]);
@@ -215,7 +232,19 @@ class Player extends Phaser.Sprite {
 
         this.handleDeath();
 
+        this.updateHitbox();
+
         this.fpsCounter.setText("FPS: " + this.game.time.fps);
+    }
+
+    updateHitbox() {
+        this.hitBoxes.forEach((v: Phaser.Sprite) => {
+            if (this.width < 0) {
+                v.scale.setTo(-1, 1);
+            } else {
+                v.scale.setTo(1, 1);
+            }
+        });
     }
 
     handleDeath() {
@@ -229,8 +258,10 @@ class Player extends Phaser.Sprite {
         if (this.canTakeDamage()) {
             this.stats.health -= this.calculateDamage(damage);
             this.invincible = true;
-            this.game.time.events.add(1000, this.resetInvincable, this);
-            this.knockBack(objPositionX);
+            if (this.stats.health > 0) {
+                this.game.time.events.add(1000, this.resetInvincable, this);
+                this.knockBack(objPositionX);
+            }
         }
     }
 

@@ -24,6 +24,7 @@ class AdventurerEnemy extends Phaser.Sprite {
         [enemyStateEnum.sit]: false,
         [enemyStateEnum.sitDown]: false,
         [enemyStateEnum.movingChase]: false,
+        [enemyStateEnum.knockBack]: false,
     };
     canIdle: enemyAllowanceInterface = {
         [enemyStateEnum.movingWalk]: false,
@@ -37,6 +38,7 @@ class AdventurerEnemy extends Phaser.Sprite {
         [enemyStateEnum.sit]: false,
         [enemyStateEnum.sitDown]: false,
         [enemyStateEnum.movingChase]: false,
+        [enemyStateEnum.knockBack]: false,
     };
     canChase: enemyAllowanceInterface = {
         [enemyStateEnum.movingWalk]: true,
@@ -50,6 +52,7 @@ class AdventurerEnemy extends Phaser.Sprite {
         [enemyStateEnum.sit]: false,
         [enemyStateEnum.sitDown]: false,
         [enemyStateEnum.movingChase]: true,
+        [enemyStateEnum.knockBack]: false,
     };
     canAttack: enemyAllowanceInterface = {
         [enemyStateEnum.movingWalk]: true,
@@ -63,6 +66,7 @@ class AdventurerEnemy extends Phaser.Sprite {
         [enemyStateEnum.sit]: false,
         [enemyStateEnum.sitDown]: false,
         [enemyStateEnum.movingChase]: true,
+        [enemyStateEnum.knockBack]: false,
     };
     stats: playerStatsInterface;
     enemyAnimations: enemyAnimationInterface = {
@@ -77,7 +81,11 @@ class AdventurerEnemy extends Phaser.Sprite {
         [enemyStateEnum.sitDown]: "sitdown",
         [enemyStateEnum.movingChase]: "walk",
         [enemyStateEnum.idleSpecial]: "idlespecial",
+        [enemyStateEnum.knockBack]: "knockback",
     };
+    invincible = false;
+    hitBoxes: Phaser.Group;
+    hitBox1: Phaser.Sprite;
     constructor(game: Phaser.Game, x: number, y: number) {
         super(game, x, y, "adventurer", 0);
         this.anchor.setTo(0.5, 0);
@@ -102,7 +110,7 @@ class AdventurerEnemy extends Phaser.Sprite {
             movespeed: 120,
             luck: 1,
         };
-        this.animations.add("idle", [0, 1, 2, 3], 3, false).onComplete.add(() => {
+        this.animations.add("idle", [0, 1, 2, 3], 10, false).onComplete.add(() => {
             const rndNumber = this.game.rnd.integerInRange(1, 100);
             if (rndNumber > 90) {
                 this.enemyState = enemyStateEnum.idleSpecial;
@@ -110,19 +118,28 @@ class AdventurerEnemy extends Phaser.Sprite {
                 this.wander();
             }
         });
-        this.animations.add("idlespecial", [38, 39, 40, 41], 3, false).onComplete.add(() => {
+        this.animations.add("idlespecial", [38, 39, 40, 41], 10, false).onComplete.add(() => {
             this.animations.stop();
             this.enemyState = enemyStateEnum.idle;
         });
         this.animations.add("walk", [8, 9, 10], 3, true);
-        this.animations.add("attack1", [42, 43, 44, 45, 46, 47, 48, 49], 6, false).onComplete.add(() => {
+        this.animations.add("attack1", [42, 43, 44, 45, 46, 47, 48, 49], 10, false).onComplete.add(() => {
             this.animations.stop();
             this.enemyState = enemyStateEnum.idle;
         });
-        this.animations.add("death", [62, 63, 64, 65, 66, 67, 68], 3, false).onComplete.add(() => {
-            //kill enemy and respawn
+        this.animations.add("death", [62, 63, 64, 65, 66, 67, 68], 10, false).onComplete.add(() => {
+            this.kill();
         });
         this.health = this.maxHealth;
+
+        this.hitBoxes = this.game.add.group();
+
+        this.addChild(this.hitBoxes);
+
+        this.hitBox1 = this.hitBoxes.create(0, this.height / 2);
+        this.game.physics.enable(this.hitBoxes, Phaser.Physics.ARCADE);
+        this.hitBox1.body.setSize(20, 10);
+        this.hitBox1.name = "attack1";
     }
 
     update() {
@@ -135,20 +152,107 @@ class AdventurerEnemy extends Phaser.Sprite {
         }
 
         this.checkForHit();
+
+        this.handleDeath();
+
+        this.updateHitbox();
+    }
+
+    updateHitbox() {
+        this.hitBoxes.forEach((v: Phaser.Sprite) => {
+            if (this.width < 0) {
+                v.scale.setTo(-1, 1);
+            } else {
+                v.scale.setTo(1, 1);
+            }
+        });
+    }
+
+    handleDeath() {
+        if (this.stats.health <= 0 && this.enemyState !== enemyStateEnum.death) {
+            this.invincible = true;
+            this.enemyState = enemyStateEnum.death;
+        }
+    }
+
+    takeDamage(damage: number, objPositionX: number) {
+        if (this.canTakeDamage()) {
+            this.stats.health -= this.calculateDamage(damage);
+            this.invincible = true;
+            if (this.stats.health > 0) {
+                this.game.time.events.add(1000, this.resetInvincable, this);
+                this.knockBack(objPositionX);
+            }
+        }
+    }
+
+    knockBack(objPositionX: number) {
+        this.enemyState = enemyStateEnum.knockBack;
+        if (this.x > objPositionX) {
+            this.scale.setTo(-1, 1);
+            this.moveNpcTowards(this.x - this.width, this.y, 0.2, 700, enemyStateEnum.idle);
+        } else {
+            this.scale.setTo(1, 1);
+            this.moveNpcTowards(this.x - this.width, this.y, 0.2, 700, enemyStateEnum.idle);
+        }
+    }
+
+    moveNpcTowards(toX: number, toY: number, speed: number, time = 0, endState = enemyStateEnum.idle) {
+        this.game.physics.arcade.moveToXY(
+            this,
+            toX,
+            toY,
+            speed,
+            time
+        );
+
+        this.game.time.events.add(time, () => {
+            this.body.velocity.x = 0;
+            this.body.velocity.y = 0;
+            this.x = toX;
+            this.y = toY;
+            this.enemyState = endState;
+        }, this);
+    }
+
+    resetInvincable() {
+        this.invincible = false;
+    }
+
+    calculateDamage(damage: number) {
+        if (this.stats.health - damage < 0) {
+            return 0;
+        }
+        return damage;
+    }
+
+    canTakeDamage() {
+        if (this.invincible || this.enemyState === enemyStateEnum.death) {
+            return false;
+        }
+        return true;
     }
 
     checkForHit() {
         if (this.animations.currentAnim.name === "attack1" &&
-            this.animations.frame > 42 &&
-            this.animations.frame < 46 &&
-            this.game.physics.arcade.overlap(this, this.player)
+            this.animations.frame >= 45 &&
+            this.animations.frame <= 46 &&
+            this.game.physics.arcade.overlap(this.hitBox1, this.player)
         ) {
             this.player.takeDamage(this.stats.attack * 20, this.x);
+        }
+        if (this.player && this.player.playerState === playerStateEnum.attack1) {
+            if (this.game.physics.arcade.overlap(this, this.player.hitBox1)) {
+                this.takeDamage(this.player.stats.attack * 50, this.player.x);
+            }
         }
     }
 
     resetVelocity() {
-        if (this.enemyState !== enemyStateEnum.movingWalk) {
+        if (
+            this.enemyState !== enemyStateEnum.movingWalk &&
+            this.enemyState !== enemyStateEnum.knockBack
+        ) {
             this.body.velocity.x = 0;
         }
     }
@@ -166,19 +270,7 @@ class AdventurerEnemy extends Phaser.Sprite {
 
         if (this.player) {
             const distance = this.game.physics.arcade.distanceBetween(this, this.player);
-            const fullAttackRange = this.attackRange + this.bodyWidth / 2 + this.player.bodyWidth;
-            /*
-            if (this.width < 0) {
-                fullAttackRange += (this.width / 2) * -1;
-            } else {
-                fullAttackRange += this.width / 2;
-            }
-            if (this.player.width < 0) {
-                fullAttackRange += (this.player.width / 2) * -1;
-            } else {
-                fullAttackRange += this.player.width / 2;
-            }*/
-            if (distance < fullAttackRange && this.canAttack[this.enemyState]) {
+            if (distance < Math.abs(this.hitBox1.width) && this.canAttack[this.enemyState]) {
                 this.attack();
             } else if (distance < this.aggroRange && this.canChase[this.enemyState]) {
                 this.chase();
