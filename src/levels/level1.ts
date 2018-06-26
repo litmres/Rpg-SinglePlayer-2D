@@ -9,7 +9,7 @@ class Level1 extends Phaser.State {
     npcs!: Phaser.Group;
     bonfires!: Phaser.Group;
     gates!: Phaser.Group;
-    debugMode = true;
+    debugMode = false;
 
     preload() {
         this.background = 0x49801;

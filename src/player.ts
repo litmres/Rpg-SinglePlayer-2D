@@ -195,6 +195,7 @@ class Player extends Phaser.Sprite {
             this.playerState = playerStateEnum.idle;
         });
         this.animations.add("death", [71, 72, 73, 74, 75, 76, 78, 79, 80, 81, 81, 82, 83], 10, false).onComplete.add(() => {
+            this.kill();
             this.game.state.start("title");
         });
         this.animations.add("knockback", [83], 10, true);
@@ -257,8 +258,10 @@ class Player extends Phaser.Sprite {
         if (this.canTakeDamage()) {
             this.stats.health -= this.calculateDamage(damage);
             this.invincible = true;
-            this.game.time.events.add(1000, this.resetInvincable, this);
-            this.knockBack(objPositionX);
+            if (this.stats.health > 0) {
+                this.game.time.events.add(1000, this.resetInvincable, this);
+                this.knockBack(objPositionX);
+            }
         }
     }
 

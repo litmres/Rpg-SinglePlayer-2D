@@ -24,6 +24,7 @@ class RogueEnemy extends Phaser.Sprite {
         [enemyStateEnum.sit]: false,
         [enemyStateEnum.sitDown]: false,
         [enemyStateEnum.movingChase]: false,
+        [enemyStateEnum.knockBack]: false,
     };
     canIdle: enemyAllowanceInterface = {
         [enemyStateEnum.movingWalk]: false,
@@ -37,6 +38,7 @@ class RogueEnemy extends Phaser.Sprite {
         [enemyStateEnum.sit]: false,
         [enemyStateEnum.sitDown]: false,
         [enemyStateEnum.movingChase]: false,
+        [enemyStateEnum.knockBack]: false,
     };
     canChase: enemyAllowanceInterface = {
         [enemyStateEnum.movingWalk]: true,
@@ -50,6 +52,7 @@ class RogueEnemy extends Phaser.Sprite {
         [enemyStateEnum.sit]: false,
         [enemyStateEnum.sitDown]: false,
         [enemyStateEnum.movingChase]: true,
+        [enemyStateEnum.knockBack]: false,
     };
     canAttack: enemyAllowanceInterface = {
         [enemyStateEnum.movingWalk]: true,
@@ -63,6 +66,7 @@ class RogueEnemy extends Phaser.Sprite {
         [enemyStateEnum.sit]: false,
         [enemyStateEnum.sitDown]: false,
         [enemyStateEnum.movingChase]: true,
+        [enemyStateEnum.knockBack]: false,
     };
     stats: playerStatsInterface;
     enemyAnimations: enemyAnimationInterface = {
@@ -77,7 +81,9 @@ class RogueEnemy extends Phaser.Sprite {
         [enemyStateEnum.sitDown]: "sitdown",
         [enemyStateEnum.movingChase]: "walk",
         [enemyStateEnum.idleSpecial]: "idlespecial",
+        [enemyStateEnum.knockBack]: "knockback",
     };
+    invincible = false;
     hitBoxes: Phaser.Group;
     hitBox1: Phaser.Sprite;
     constructor(game: Phaser.Game, x: number, y: number) {
@@ -104,7 +110,7 @@ class RogueEnemy extends Phaser.Sprite {
             movespeed: 120,
             luck: 1,
         };
-        this.animations.add("idle", [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], 3, false).onComplete.add(() => {
+        this.animations.add("idle", [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], 10, false).onComplete.add(() => {
             const rndNumber = this.game.rnd.integerInRange(1, 100);
             if (rndNumber > 90) {
                 this.enemyState = enemyStateEnum.idleSpecial;
@@ -112,17 +118,17 @@ class RogueEnemy extends Phaser.Sprite {
                 this.wander();
             }
         });
-        this.animations.add("idlespecial", [10, 11, 12, 13, 14, 15, 16, 17, 18, 19], 3, false).onComplete.add(() => {
+        this.animations.add("idlespecial", [10, 11, 12, 13, 14, 15, 16, 17, 18, 19], 10, false).onComplete.add(() => {
             this.animations.stop();
             this.enemyState = enemyStateEnum.idle;
         });
-        this.animations.add("walk", [20, 21, 22, 23, 24, 25, 26, 27, 28, 29], 3, true);
-        this.animations.add("attack1", [30, 31, 32, 33, 34, 35, 36, 37, 38, 39], 6, false).onComplete.add(() => {
+        this.animations.add("walk", [20, 21, 22, 23, 24, 25, 26, 27, 28, 29], 10, true);
+        this.animations.add("attack1", [30, 31, 32, 33, 34, 35, 36, 37, 38, 39], 10, false).onComplete.add(() => {
             this.animations.stop();
             this.enemyState = enemyStateEnum.idle;
         });
-        this.animations.add("death", [40, 41, 42, 43, 44, 45, 46, 47, 48, 49], 3, false).onComplete.add(() => {
-            //kill enemy and respawn
+        this.animations.add("death", [40, 41, 42, 43, 44, 45, 46, 47, 48, 49], 10, false).onComplete.add(() => {
+            this.kill();
         });
         this.health = this.maxHealth;
 
@@ -147,6 +153,8 @@ class RogueEnemy extends Phaser.Sprite {
 
         this.checkForHit();
 
+        this.handleDeath();
+
         this.updateHitbox();
     }
 
@@ -160,6 +168,71 @@ class RogueEnemy extends Phaser.Sprite {
         });
     }
 
+    handleDeath() {
+        if (this.stats.health <= 0 && this.enemyState !== enemyStateEnum.death) {
+            this.invincible = true;
+            this.enemyState = enemyStateEnum.death;
+        }
+    }
+
+    takeDamage(damage: number, objPositionX: number) {
+        if (this.canTakeDamage()) {
+            this.stats.health -= this.calculateDamage(damage);
+            this.invincible = true;
+            if (this.stats.health > 0) {
+                this.game.time.events.add(1000, this.resetInvincable, this);
+                this.knockBack(objPositionX);
+            }
+        }
+    }
+
+    knockBack(objPositionX: number) {
+        this.enemyState = enemyStateEnum.knockBack;
+        if (this.x > objPositionX) {
+            this.scale.setTo(-1, 1);
+            this.moveNpcTowards(this.x - this.width, this.y, 0.2, 700, enemyStateEnum.idle);
+        } else {
+            this.scale.setTo(1, 1);
+            this.moveNpcTowards(this.x - this.width, this.y, 0.2, 700, enemyStateEnum.idle);
+        }
+    }
+
+    moveNpcTowards(toX: number, toY: number, speed: number, time = 0, endState = enemyStateEnum.idle) {
+        this.game.physics.arcade.moveToXY(
+            this,
+            toX,
+            toY,
+            speed,
+            time
+        );
+
+        this.game.time.events.add(time, () => {
+            this.body.velocity.x = 0;
+            this.body.velocity.y = 0;
+            this.x = toX;
+            this.y = toY;
+            this.enemyState = endState;
+        }, this);
+    }
+
+    resetInvincable() {
+        this.invincible = false;
+    }
+
+    calculateDamage(damage: number) {
+        if (this.stats.health - damage < 0) {
+            return 0;
+        }
+        return damage;
+    }
+
+    canTakeDamage() {
+        if (this.invincible || this.enemyState === enemyStateEnum.death) {
+            return false;
+        }
+        return true;
+    }
+
     checkForHit() {
         if (this.animations.currentAnim.name === "attack1" &&
             this.animations.frame >= 34 &&
@@ -168,10 +241,19 @@ class RogueEnemy extends Phaser.Sprite {
         ) {
             this.player.takeDamage(this.stats.attack * 20, this.x);
         }
+
+        if (this.player && this.player.playerState === playerStateEnum.attack1) {
+            if (this.game.physics.arcade.overlap(this, this.player.hitBox1)) {
+                this.takeDamage(this.player.stats.attack * 50, this.player.x);
+            }
+        }
     }
 
     resetVelocity() {
-        if (this.enemyState !== enemyStateEnum.movingWalk) {
+        if (
+            this.enemyState !== enemyStateEnum.movingWalk &&
+            this.enemyState !== enemyStateEnum.knockBack
+        ) {
             this.body.velocity.x = 0;
         }
     }

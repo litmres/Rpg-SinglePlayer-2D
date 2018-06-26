@@ -47,6 +47,7 @@ class RogueNpc extends Phaser.Sprite {
         [npcStateEnum.sit]: false,
         [npcStateEnum.sitDown]: false,
         [npcStateEnum.movingChase]: false,
+        [npcStateEnum.knockBack]: false,
     };
     canIdle: npcAllowanceInterface = {
         [npcStateEnum.movingWalk]: false,
@@ -60,6 +61,7 @@ class RogueNpc extends Phaser.Sprite {
         [npcStateEnum.sit]: false,
         [npcStateEnum.sitDown]: false,
         [npcStateEnum.movingChase]: false,
+        [npcStateEnum.knockBack]: false,
     };
     canChase: npcAllowanceInterface = {
         [npcStateEnum.movingWalk]: true,
@@ -73,6 +75,7 @@ class RogueNpc extends Phaser.Sprite {
         [npcStateEnum.sit]: false,
         [npcStateEnum.sitDown]: false,
         [npcStateEnum.movingChase]: true,
+        [npcStateEnum.knockBack]: false,
     };
     canAttack: npcAllowanceInterface = {
         [npcStateEnum.movingWalk]: true,
@@ -86,6 +89,7 @@ class RogueNpc extends Phaser.Sprite {
         [npcStateEnum.sit]: false,
         [npcStateEnum.sitDown]: false,
         [npcStateEnum.movingChase]: true,
+        [npcStateEnum.knockBack]: false,
     };
     stats: playerStatsInterface;
     npcAnimations: npcAnimationInterface = {
@@ -100,7 +104,9 @@ class RogueNpc extends Phaser.Sprite {
         [npcStateEnum.sitDown]: "sitdown",
         [npcStateEnum.movingChase]: "walk",
         [npcStateEnum.idleSpecial]: "idlespecial",
+        [npcStateEnum.knockBack]: "knockback",
     };
+    invincible = false;
     hitBoxes: Phaser.Group;
     hitBox1: Phaser.Sprite;
     constructor(game: Phaser.Game, x: number, y: number) {
@@ -127,7 +133,7 @@ class RogueNpc extends Phaser.Sprite {
             movespeed: 120,
             luck: 1,
         };
-        this.animations.add("idle", [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], 3, false).onComplete.add(() => {
+        this.animations.add("idle", [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], 10, false).onComplete.add(() => {
             const rndNumber = this.game.rnd.integerInRange(1, 100);
             if (rndNumber > 90) {
                 this.npcState = npcStateEnum.idleSpecial;
@@ -135,17 +141,17 @@ class RogueNpc extends Phaser.Sprite {
                 this.wander();
             }
         });
-        this.animations.add("idlespecial", [10, 11, 12, 13, 14, 15, 16, 17, 18, 19], 3, false).onComplete.add(() => {
+        this.animations.add("idlespecial", [10, 11, 12, 13, 14, 15, 16, 17, 18, 19], 10, false).onComplete.add(() => {
             this.animations.stop();
             this.npcState = npcStateEnum.idle;
         });
-        this.animations.add("walk", [20, 21, 22, 23, 24, 25, 26, 27, 28, 29], 3, true);
-        this.animations.add("attack1", [30, 31, 32, 33, 34, 35, 36, 37, 38, 39], 6, false).onComplete.add(() => {
+        this.animations.add("walk", [20, 21, 22, 23, 24, 25, 26, 27, 28, 29], 10, true);
+        this.animations.add("attack1", [30, 31, 32, 33, 34, 35, 36, 37, 38, 39], 10, false).onComplete.add(() => {
             this.animations.stop();
             this.npcState = npcStateEnum.idle;
         });
-        this.animations.add("death", [40, 41, 42, 43, 44, 45, 46, 47, 48, 49], 3, false).onComplete.add(() => {
-            //kill npc and respawn
+        this.animations.add("death", [40, 41, 42, 43, 44, 45, 46, 47, 48, 49], 10, false).onComplete.add(() => {
+            this.kill();
         });
         this.health = this.maxHealth;
 
@@ -176,6 +182,8 @@ class RogueNpc extends Phaser.Sprite {
 
         this.checkForHit();
 
+        this.handleDeath();
+
         this.updateHitbox();
     }
 
@@ -189,6 +197,71 @@ class RogueNpc extends Phaser.Sprite {
         });
     }
 
+    handleDeath() {
+        if (this.stats.health <= 0 && this.npcState !== npcStateEnum.death) {
+            this.invincible = true;
+            this.npcState = npcStateEnum.death;
+        }
+    }
+
+    takeDamage(damage: number, objPositionX: number) {
+        if (this.canTakeDamage()) {
+            this.stats.health -= this.calculateDamage(damage);
+            this.invincible = true;
+            if (this.stats.health > 0) {
+                this.game.time.events.add(1000, this.resetInvincable, this);
+                this.knockBack(objPositionX);
+            }
+        }
+    }
+
+    knockBack(objPositionX: number) {
+        this.npcState = npcStateEnum.knockBack;
+        if (this.x > objPositionX) {
+            this.scale.setTo(-1, 1);
+            this.moveNpcTowards(this.x - this.width, this.y, 0.2, 700, npcStateEnum.idle);
+        } else {
+            this.scale.setTo(1, 1);
+            this.moveNpcTowards(this.x - this.width, this.y, 0.2, 700, npcStateEnum.idle);
+        }
+    }
+
+    moveNpcTowards(toX: number, toY: number, speed: number, time = 0, endState = npcStateEnum.idle) {
+        this.game.physics.arcade.moveToXY(
+            this,
+            toX,
+            toY,
+            speed,
+            time
+        );
+
+        this.game.time.events.add(time, () => {
+            this.body.velocity.x = 0;
+            this.body.velocity.y = 0;
+            this.x = toX;
+            this.y = toY;
+            this.npcState = endState;
+        }, this);
+    }
+
+    resetInvincable() {
+        this.invincible = false;
+    }
+
+    calculateDamage(damage: number) {
+        if (this.stats.health - damage < 0) {
+            return 0;
+        }
+        return damage;
+    }
+
+    canTakeDamage() {
+        if (this.invincible || this.npcState === npcStateEnum.death) {
+            return false;
+        }
+        return true;
+    }
+
     checkForHit() {
         if (this.animations.currentAnim.name === "attack1" &&
             this.animations.frame >= 34 &&
@@ -196,6 +269,13 @@ class RogueNpc extends Phaser.Sprite {
             this.game.physics.arcade.overlap(this.hitBox1, this.player)
         ) {
             this.player.takeDamage(this.stats.attack * 50, this.x);
+        }
+
+        if (this.player && this.player.playerState === playerStateEnum.attack1) {
+            if (this.game.physics.arcade.overlap(this, this.player.hitBox1)) {
+                this.friendly = false;
+                this.takeDamage(this.player.stats.attack * 50, this.player.x);
+            }
         }
     }
 
@@ -303,7 +383,10 @@ class RogueNpc extends Phaser.Sprite {
     }
 
     resetVelocity() {
-        if (this.npcState !== npcStateEnum.movingWalk) {
+        if (
+            this.npcState !== npcStateEnum.movingWalk &&
+            this.npcState !== npcStateEnum.knockBack
+        ) {
             this.body.velocity.x = 0;
         }
     }

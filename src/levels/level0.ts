@@ -8,7 +8,7 @@ class Level0 extends Phaser.State {
     enemies!: Phaser.Group;
     npcs!: Phaser.Group;
     bonfires!: Phaser.Group;
-    debugMode = true;
+    debugMode = false;
 
     preload() {
         this.background = this.game.add.image(0, 0, "darkbackground");

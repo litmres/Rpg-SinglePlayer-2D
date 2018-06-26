@@ -43,6 +43,7 @@ var enemyStateEnum;
     enemyStateEnum[enemyStateEnum["sit"] = 8] = "sit";
     enemyStateEnum[enemyStateEnum["sitDown"] = 9] = "sitDown";
     enemyStateEnum[enemyStateEnum["movingChase"] = 10] = "movingChase";
+    enemyStateEnum[enemyStateEnum["knockBack"] = 11] = "knockBack";
 })(enemyStateEnum || (enemyStateEnum = {}));
 var npcStateEnum;
 (function (npcStateEnum) {
@@ -57,6 +58,7 @@ var npcStateEnum;
     npcStateEnum[npcStateEnum["sit"] = 8] = "sit";
     npcStateEnum[npcStateEnum["sitDown"] = 9] = "sitDown";
     npcStateEnum[npcStateEnum["movingChase"] = 10] = "movingChase";
+    npcStateEnum[npcStateEnum["knockBack"] = 11] = "knockBack";
 })(npcStateEnum || (npcStateEnum = {}));
 var levelsEnum;
 (function (levelsEnum) {
@@ -269,6 +271,7 @@ var Player = /** @class */ (function (_super) {
             _this.playerState = playerStateEnum.idle;
         });
         _this.animations.add("death", [71, 72, 73, 74, 75, 76, 78, 79, 80, 81, 81, 82, 83], 10, false).onComplete.add(function () {
+            _this.kill();
             _this.game.state.start("title");
         });
         _this.animations.add("knockback", [83], 10, true);
@@ -314,8 +317,10 @@ var Player = /** @class */ (function (_super) {
         if (this.canTakeDamage()) {
             this.stats.health -= this.calculateDamage(damage);
             this.invincible = true;
-            this.game.time.events.add(1000, this.resetInvincable, this);
-            this.knockBack(objPositionX);
+            if (this.stats.health > 0) {
+                this.game.time.events.add(1000, this.resetInvincable, this);
+                this.knockBack(objPositionX);
+            }
         }
     };
     Player.prototype.knockBack = function (objPositionX) {
@@ -669,6 +674,7 @@ var AdventurerEnemy = /** @class */ (function (_super) {
             _a[enemyStateEnum.sit] = false,
             _a[enemyStateEnum.sitDown] = false,
             _a[enemyStateEnum.movingChase] = false,
+            _a[enemyStateEnum.knockBack] = false,
             _a);
         _this.canIdle = (_b = {},
             _b[enemyStateEnum.movingWalk] = false,
@@ -682,6 +688,7 @@ var AdventurerEnemy = /** @class */ (function (_super) {
             _b[enemyStateEnum.sit] = false,
             _b[enemyStateEnum.sitDown] = false,
             _b[enemyStateEnum.movingChase] = false,
+            _b[enemyStateEnum.knockBack] = false,
             _b);
         _this.canChase = (_c = {},
             _c[enemyStateEnum.movingWalk] = true,
@@ -695,6 +702,7 @@ var AdventurerEnemy = /** @class */ (function (_super) {
             _c[enemyStateEnum.sit] = false,
             _c[enemyStateEnum.sitDown] = false,
             _c[enemyStateEnum.movingChase] = true,
+            _c[enemyStateEnum.knockBack] = false,
             _c);
         _this.canAttack = (_d = {},
             _d[enemyStateEnum.movingWalk] = true,
@@ -708,6 +716,7 @@ var AdventurerEnemy = /** @class */ (function (_super) {
             _d[enemyStateEnum.sit] = false,
             _d[enemyStateEnum.sitDown] = false,
             _d[enemyStateEnum.movingChase] = true,
+            _d[enemyStateEnum.knockBack] = false,
             _d);
         _this.enemyAnimations = (_e = {},
             _e[enemyStateEnum.movingWalk] = "walk",
@@ -721,7 +730,9 @@ var AdventurerEnemy = /** @class */ (function (_super) {
             _e[enemyStateEnum.sitDown] = "sitdown",
             _e[enemyStateEnum.movingChase] = "walk",
             _e[enemyStateEnum.idleSpecial] = "idlespecial",
+            _e[enemyStateEnum.knockBack] = "knockback",
             _e);
+        _this.invincible = false;
         _this.anchor.setTo(0.5, 0);
         game.physics.arcade.enableBody(_this);
         game.add.existing(_this);
@@ -763,7 +774,7 @@ var AdventurerEnemy = /** @class */ (function (_super) {
             _this.enemyState = enemyStateEnum.idle;
         });
         _this.animations.add("death", [62, 63, 64, 65, 66, 67, 68], 10, false).onComplete.add(function () {
-            //kill enemy and respawn
+            _this.kill();
         });
         _this.health = _this.maxHealth;
         _this.hitBoxes = _this.game.add.group();
@@ -781,6 +792,7 @@ var AdventurerEnemy = /** @class */ (function (_super) {
             this.handleInput();
         }
         this.checkForHit();
+        this.handleDeath();
         this.updateHitbox();
     };
     AdventurerEnemy.prototype.updateHitbox = function () {
@@ -794,6 +806,61 @@ var AdventurerEnemy = /** @class */ (function (_super) {
             }
         });
     };
+    AdventurerEnemy.prototype.handleDeath = function () {
+        if (this.stats.health <= 0 && this.enemyState !== enemyStateEnum.death) {
+            this.invincible = true;
+            this.enemyState = enemyStateEnum.death;
+        }
+    };
+    AdventurerEnemy.prototype.takeDamage = function (damage, objPositionX) {
+        if (this.canTakeDamage()) {
+            this.stats.health -= this.calculateDamage(damage);
+            this.invincible = true;
+            if (this.stats.health > 0) {
+                this.game.time.events.add(1000, this.resetInvincable, this);
+                this.knockBack(objPositionX);
+            }
+        }
+    };
+    AdventurerEnemy.prototype.knockBack = function (objPositionX) {
+        this.enemyState = enemyStateEnum.knockBack;
+        if (this.x > objPositionX) {
+            this.scale.setTo(-1, 1);
+            this.moveNpcTowards(this.x - this.width, this.y, 0.2, 700, enemyStateEnum.idle);
+        }
+        else {
+            this.scale.setTo(1, 1);
+            this.moveNpcTowards(this.x - this.width, this.y, 0.2, 700, enemyStateEnum.idle);
+        }
+    };
+    AdventurerEnemy.prototype.moveNpcTowards = function (toX, toY, speed, time, endState) {
+        var _this = this;
+        if (time === void 0) { time = 0; }
+        if (endState === void 0) { endState = enemyStateEnum.idle; }
+        this.game.physics.arcade.moveToXY(this, toX, toY, speed, time);
+        this.game.time.events.add(time, function () {
+            _this.body.velocity.x = 0;
+            _this.body.velocity.y = 0;
+            _this.x = toX;
+            _this.y = toY;
+            _this.enemyState = endState;
+        }, this);
+    };
+    AdventurerEnemy.prototype.resetInvincable = function () {
+        this.invincible = false;
+    };
+    AdventurerEnemy.prototype.calculateDamage = function (damage) {
+        if (this.stats.health - damage < 0) {
+            return 0;
+        }
+        return damage;
+    };
+    AdventurerEnemy.prototype.canTakeDamage = function () {
+        if (this.invincible || this.enemyState === enemyStateEnum.death) {
+            return false;
+        }
+        return true;
+    };
     AdventurerEnemy.prototype.checkForHit = function () {
         if (this.animations.currentAnim.name === "attack1" &&
             this.animations.frame >= 45 &&
@@ -801,9 +868,15 @@ var AdventurerEnemy = /** @class */ (function (_super) {
             this.game.physics.arcade.overlap(this.hitBox1, this.player)) {
             this.player.takeDamage(this.stats.attack * 20, this.x);
         }
+        if (this.player && this.player.playerState === playerStateEnum.attack1) {
+            if (this.game.physics.arcade.overlap(this, this.player.hitBox1)) {
+                this.takeDamage(this.player.stats.attack * 50, this.player.x);
+            }
+        }
     };
     AdventurerEnemy.prototype.resetVelocity = function () {
-        if (this.enemyState !== enemyStateEnum.movingWalk) {
+        if (this.enemyState !== enemyStateEnum.movingWalk &&
+            this.enemyState !== enemyStateEnum.knockBack) {
             this.body.velocity.x = 0;
         }
     };
@@ -921,6 +994,7 @@ var RogueEnemy = /** @class */ (function (_super) {
             _a[enemyStateEnum.sit] = false,
             _a[enemyStateEnum.sitDown] = false,
             _a[enemyStateEnum.movingChase] = false,
+            _a[enemyStateEnum.knockBack] = false,
             _a);
         _this.canIdle = (_b = {},
             _b[enemyStateEnum.movingWalk] = false,
@@ -934,6 +1008,7 @@ var RogueEnemy = /** @class */ (function (_super) {
             _b[enemyStateEnum.sit] = false,
             _b[enemyStateEnum.sitDown] = false,
             _b[enemyStateEnum.movingChase] = false,
+            _b[enemyStateEnum.knockBack] = false,
             _b);
         _this.canChase = (_c = {},
             _c[enemyStateEnum.movingWalk] = true,
@@ -947,6 +1022,7 @@ var RogueEnemy = /** @class */ (function (_super) {
             _c[enemyStateEnum.sit] = false,
             _c[enemyStateEnum.sitDown] = false,
             _c[enemyStateEnum.movingChase] = true,
+            _c[enemyStateEnum.knockBack] = false,
             _c);
         _this.canAttack = (_d = {},
             _d[enemyStateEnum.movingWalk] = true,
@@ -960,6 +1036,7 @@ var RogueEnemy = /** @class */ (function (_super) {
             _d[enemyStateEnum.sit] = false,
             _d[enemyStateEnum.sitDown] = false,
             _d[enemyStateEnum.movingChase] = true,
+            _d[enemyStateEnum.knockBack] = false,
             _d);
         _this.enemyAnimations = (_e = {},
             _e[enemyStateEnum.movingWalk] = "walk",
@@ -973,7 +1050,9 @@ var RogueEnemy = /** @class */ (function (_super) {
             _e[enemyStateEnum.sitDown] = "sitdown",
             _e[enemyStateEnum.movingChase] = "walk",
             _e[enemyStateEnum.idleSpecial] = "idlespecial",
+            _e[enemyStateEnum.knockBack] = "knockback",
             _e);
+        _this.invincible = false;
         _this.anchor.setTo(0.5, 0);
         game.physics.arcade.enableBody(_this);
         game.add.existing(_this);
@@ -996,7 +1075,7 @@ var RogueEnemy = /** @class */ (function (_super) {
             movespeed: 120,
             luck: 1,
         };
-        _this.animations.add("idle", [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], 3, false).onComplete.add(function () {
+        _this.animations.add("idle", [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], 10, false).onComplete.add(function () {
             var rndNumber = _this.game.rnd.integerInRange(1, 100);
             if (rndNumber > 90) {
                 _this.enemyState = enemyStateEnum.idleSpecial;
@@ -1005,17 +1084,17 @@ var RogueEnemy = /** @class */ (function (_super) {
                 _this.wander();
             }
         });
-        _this.animations.add("idlespecial", [10, 11, 12, 13, 14, 15, 16, 17, 18, 19], 3, false).onComplete.add(function () {
+        _this.animations.add("idlespecial", [10, 11, 12, 13, 14, 15, 16, 17, 18, 19], 10, false).onComplete.add(function () {
             _this.animations.stop();
             _this.enemyState = enemyStateEnum.idle;
         });
-        _this.animations.add("walk", [20, 21, 22, 23, 24, 25, 26, 27, 28, 29], 3, true);
-        _this.animations.add("attack1", [30, 31, 32, 33, 34, 35, 36, 37, 38, 39], 6, false).onComplete.add(function () {
+        _this.animations.add("walk", [20, 21, 22, 23, 24, 25, 26, 27, 28, 29], 10, true);
+        _this.animations.add("attack1", [30, 31, 32, 33, 34, 35, 36, 37, 38, 39], 10, false).onComplete.add(function () {
             _this.animations.stop();
             _this.enemyState = enemyStateEnum.idle;
         });
-        _this.animations.add("death", [40, 41, 42, 43, 44, 45, 46, 47, 48, 49], 3, false).onComplete.add(function () {
-            //kill enemy and respawn
+        _this.animations.add("death", [40, 41, 42, 43, 44, 45, 46, 47, 48, 49], 10, false).onComplete.add(function () {
+            _this.kill();
         });
         _this.health = _this.maxHealth;
         _this.hitBoxes = _this.game.add.group();
@@ -1033,6 +1112,7 @@ var RogueEnemy = /** @class */ (function (_super) {
             this.handleInput();
         }
         this.checkForHit();
+        this.handleDeath();
         this.updateHitbox();
     };
     RogueEnemy.prototype.updateHitbox = function () {
@@ -1046,6 +1126,61 @@ var RogueEnemy = /** @class */ (function (_super) {
             }
         });
     };
+    RogueEnemy.prototype.handleDeath = function () {
+        if (this.stats.health <= 0 && this.enemyState !== enemyStateEnum.death) {
+            this.invincible = true;
+            this.enemyState = enemyStateEnum.death;
+        }
+    };
+    RogueEnemy.prototype.takeDamage = function (damage, objPositionX) {
+        if (this.canTakeDamage()) {
+            this.stats.health -= this.calculateDamage(damage);
+            this.invincible = true;
+            if (this.stats.health > 0) {
+                this.game.time.events.add(1000, this.resetInvincable, this);
+                this.knockBack(objPositionX);
+            }
+        }
+    };
+    RogueEnemy.prototype.knockBack = function (objPositionX) {
+        this.enemyState = enemyStateEnum.knockBack;
+        if (this.x > objPositionX) {
+            this.scale.setTo(-1, 1);
+            this.moveNpcTowards(this.x - this.width, this.y, 0.2, 700, enemyStateEnum.idle);
+        }
+        else {
+            this.scale.setTo(1, 1);
+            this.moveNpcTowards(this.x - this.width, this.y, 0.2, 700, enemyStateEnum.idle);
+        }
+    };
+    RogueEnemy.prototype.moveNpcTowards = function (toX, toY, speed, time, endState) {
+        var _this = this;
+        if (time === void 0) { time = 0; }
+        if (endState === void 0) { endState = enemyStateEnum.idle; }
+        this.game.physics.arcade.moveToXY(this, toX, toY, speed, time);
+        this.game.time.events.add(time, function () {
+            _this.body.velocity.x = 0;
+            _this.body.velocity.y = 0;
+            _this.x = toX;
+            _this.y = toY;
+            _this.enemyState = endState;
+        }, this);
+    };
+    RogueEnemy.prototype.resetInvincable = function () {
+        this.invincible = false;
+    };
+    RogueEnemy.prototype.calculateDamage = function (damage) {
+        if (this.stats.health - damage < 0) {
+            return 0;
+        }
+        return damage;
+    };
+    RogueEnemy.prototype.canTakeDamage = function () {
+        if (this.invincible || this.enemyState === enemyStateEnum.death) {
+            return false;
+        }
+        return true;
+    };
     RogueEnemy.prototype.checkForHit = function () {
         if (this.animations.currentAnim.name === "attack1" &&
             this.animations.frame >= 34 &&
@@ -1053,9 +1188,15 @@ var RogueEnemy = /** @class */ (function (_super) {
             this.game.physics.arcade.overlap(this.hitBox1, this.player)) {
             this.player.takeDamage(this.stats.attack * 20, this.x);
         }
+        if (this.player && this.player.playerState === playerStateEnum.attack1) {
+            if (this.game.physics.arcade.overlap(this, this.player.hitBox1)) {
+                this.takeDamage(this.player.stats.attack * 50, this.player.x);
+            }
+        }
     };
     RogueEnemy.prototype.resetVelocity = function () {
-        if (this.enemyState !== enemyStateEnum.movingWalk) {
+        if (this.enemyState !== enemyStateEnum.movingWalk &&
+            this.enemyState !== enemyStateEnum.knockBack) {
             this.body.velocity.x = 0;
         }
     };
@@ -1154,7 +1295,7 @@ var Level0 = /** @class */ (function (_super) {
         var _this = _super !== null && _super.apply(this, arguments) || this;
         _this.levelNumber = levelsEnum.level0;
         _this.playerStorage = JSON.parse(window.localStorage.getItem("player"));
-        _this.debugMode = true;
+        _this.debugMode = false;
         return _this;
     }
     Level0.prototype.preload = function () {
@@ -1254,7 +1395,7 @@ var Level1 = /** @class */ (function (_super) {
         var _this = _super !== null && _super.apply(this, arguments) || this;
         _this.levelNumber = levelsEnum.level1;
         _this.playerStorage = JSON.parse(window.localStorage.getItem("player"));
-        _this.debugMode = true;
+        _this.debugMode = false;
         return _this;
     }
     Level1.prototype.preload = function () {
@@ -1421,6 +1562,7 @@ var RogueNpc = /** @class */ (function (_super) {
             _a[npcStateEnum.sit] = false,
             _a[npcStateEnum.sitDown] = false,
             _a[npcStateEnum.movingChase] = false,
+            _a[npcStateEnum.knockBack] = false,
             _a);
         _this.canIdle = (_b = {},
             _b[npcStateEnum.movingWalk] = false,
@@ -1434,6 +1576,7 @@ var RogueNpc = /** @class */ (function (_super) {
             _b[npcStateEnum.sit] = false,
             _b[npcStateEnum.sitDown] = false,
             _b[npcStateEnum.movingChase] = false,
+            _b[npcStateEnum.knockBack] = false,
             _b);
         _this.canChase = (_c = {},
             _c[npcStateEnum.movingWalk] = true,
@@ -1447,6 +1590,7 @@ var RogueNpc = /** @class */ (function (_super) {
             _c[npcStateEnum.sit] = false,
             _c[npcStateEnum.sitDown] = false,
             _c[npcStateEnum.movingChase] = true,
+            _c[npcStateEnum.knockBack] = false,
             _c);
         _this.canAttack = (_d = {},
             _d[npcStateEnum.movingWalk] = true,
@@ -1460,6 +1604,7 @@ var RogueNpc = /** @class */ (function (_super) {
             _d[npcStateEnum.sit] = false,
             _d[npcStateEnum.sitDown] = false,
             _d[npcStateEnum.movingChase] = true,
+            _d[npcStateEnum.knockBack] = false,
             _d);
         _this.npcAnimations = (_e = {},
             _e[npcStateEnum.movingWalk] = "walk",
@@ -1473,7 +1618,9 @@ var RogueNpc = /** @class */ (function (_super) {
             _e[npcStateEnum.sitDown] = "sitdown",
             _e[npcStateEnum.movingChase] = "walk",
             _e[npcStateEnum.idleSpecial] = "idlespecial",
+            _e[npcStateEnum.knockBack] = "knockback",
             _e);
+        _this.invincible = false;
         _this.anchor.setTo(0.5, 0);
         game.physics.arcade.enableBody(_this);
         game.add.existing(_this);
@@ -1496,7 +1643,7 @@ var RogueNpc = /** @class */ (function (_super) {
             movespeed: 120,
             luck: 1,
         };
-        _this.animations.add("idle", [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], 3, false).onComplete.add(function () {
+        _this.animations.add("idle", [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], 10, false).onComplete.add(function () {
             var rndNumber = _this.game.rnd.integerInRange(1, 100);
             if (rndNumber > 90) {
                 _this.npcState = npcStateEnum.idleSpecial;
@@ -1505,17 +1652,17 @@ var RogueNpc = /** @class */ (function (_super) {
                 _this.wander();
             }
         });
-        _this.animations.add("idlespecial", [10, 11, 12, 13, 14, 15, 16, 17, 18, 19], 3, false).onComplete.add(function () {
+        _this.animations.add("idlespecial", [10, 11, 12, 13, 14, 15, 16, 17, 18, 19], 10, false).onComplete.add(function () {
             _this.animations.stop();
             _this.npcState = npcStateEnum.idle;
         });
-        _this.animations.add("walk", [20, 21, 22, 23, 24, 25, 26, 27, 28, 29], 3, true);
-        _this.animations.add("attack1", [30, 31, 32, 33, 34, 35, 36, 37, 38, 39], 6, false).onComplete.add(function () {
+        _this.animations.add("walk", [20, 21, 22, 23, 24, 25, 26, 27, 28, 29], 10, true);
+        _this.animations.add("attack1", [30, 31, 32, 33, 34, 35, 36, 37, 38, 39], 10, false).onComplete.add(function () {
             _this.animations.stop();
             _this.npcState = npcStateEnum.idle;
         });
-        _this.animations.add("death", [40, 41, 42, 43, 44, 45, 46, 47, 48, 49], 3, false).onComplete.add(function () {
-            //kill npc and respawn
+        _this.animations.add("death", [40, 41, 42, 43, 44, 45, 46, 47, 48, 49], 10, false).onComplete.add(function () {
+            _this.kill();
         });
         _this.health = _this.maxHealth;
         _this.hitBoxes = _this.game.add.group();
@@ -1537,6 +1684,7 @@ var RogueNpc = /** @class */ (function (_super) {
         }
         this.interaction();
         this.checkForHit();
+        this.handleDeath();
         this.updateHitbox();
     };
     RogueNpc.prototype.updateHitbox = function () {
@@ -1550,12 +1698,73 @@ var RogueNpc = /** @class */ (function (_super) {
             }
         });
     };
+    RogueNpc.prototype.handleDeath = function () {
+        if (this.stats.health <= 0 && this.npcState !== npcStateEnum.death) {
+            this.invincible = true;
+            this.npcState = npcStateEnum.death;
+        }
+    };
+    RogueNpc.prototype.takeDamage = function (damage, objPositionX) {
+        if (this.canTakeDamage()) {
+            this.stats.health -= this.calculateDamage(damage);
+            this.invincible = true;
+            if (this.stats.health > 0) {
+                this.game.time.events.add(1000, this.resetInvincable, this);
+                this.knockBack(objPositionX);
+            }
+        }
+    };
+    RogueNpc.prototype.knockBack = function (objPositionX) {
+        this.npcState = npcStateEnum.knockBack;
+        if (this.x > objPositionX) {
+            this.scale.setTo(-1, 1);
+            this.moveNpcTowards(this.x - this.width, this.y, 0.2, 700, npcStateEnum.idle);
+        }
+        else {
+            this.scale.setTo(1, 1);
+            this.moveNpcTowards(this.x - this.width, this.y, 0.2, 700, npcStateEnum.idle);
+        }
+    };
+    RogueNpc.prototype.moveNpcTowards = function (toX, toY, speed, time, endState) {
+        var _this = this;
+        if (time === void 0) { time = 0; }
+        if (endState === void 0) { endState = npcStateEnum.idle; }
+        this.game.physics.arcade.moveToXY(this, toX, toY, speed, time);
+        this.game.time.events.add(time, function () {
+            _this.body.velocity.x = 0;
+            _this.body.velocity.y = 0;
+            _this.x = toX;
+            _this.y = toY;
+            _this.npcState = endState;
+        }, this);
+    };
+    RogueNpc.prototype.resetInvincable = function () {
+        this.invincible = false;
+    };
+    RogueNpc.prototype.calculateDamage = function (damage) {
+        if (this.stats.health - damage < 0) {
+            return 0;
+        }
+        return damage;
+    };
+    RogueNpc.prototype.canTakeDamage = function () {
+        if (this.invincible || this.npcState === npcStateEnum.death) {
+            return false;
+        }
+        return true;
+    };
     RogueNpc.prototype.checkForHit = function () {
         if (this.animations.currentAnim.name === "attack1" &&
             this.animations.frame >= 34 &&
             this.animations.frame <= 36 &&
             this.game.physics.arcade.overlap(this.hitBox1, this.player)) {
             this.player.takeDamage(this.stats.attack * 50, this.x);
+        }
+        if (this.player && this.player.playerState === playerStateEnum.attack1) {
+            if (this.game.physics.arcade.overlap(this, this.player.hitBox1)) {
+                this.friendly = false;
+                this.takeDamage(this.player.stats.attack * 50, this.player.x);
+            }
         }
     };
     // tslint:disable-next-line:cyclomatic-complexity
@@ -1653,7 +1862,8 @@ var RogueNpc = /** @class */ (function (_super) {
         }
     };
     RogueNpc.prototype.resetVelocity = function () {
-        if (this.npcState !== npcStateEnum.movingWalk) {
+        if (this.npcState !== npcStateEnum.movingWalk &&
+            this.npcState !== npcStateEnum.knockBack) {
             this.body.velocity.x = 0;
         }
     };

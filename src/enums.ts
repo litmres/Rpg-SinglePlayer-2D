@@ -31,6 +31,7 @@ enum enemyStateEnum {
 	sit,
 	sitDown,
 	movingChase,
+	knockBack,
 }
 
 enum npcStateEnum {
@@ -45,6 +46,7 @@ enum npcStateEnum {
 	sit,
 	sitDown,
 	movingChase,
+	knockBack,
 }
 
 enum levelsEnum {
