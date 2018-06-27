@@ -1,18 +1,18 @@
 class TitleState extends Phaser.State {
-    background!: number|Phaser.Image;
+    background!: number | Phaser.Image;
     logo!: Phaser.Sprite;
     startGame!: Phaser.Text;
-    loadGame!:Phaser.Text;
-    githubLink!:Phaser.Text;
-    Options!:Phaser.Text;
+    loadGame!: Phaser.Text;
+    githubLink!: Phaser.Text;
+    Options!: Phaser.Text;
     style = {
         font: "bold 32px Arial",
         fill: "#fff",
         boundsAlignH: "center",
         boundsAlignV: "middle"
     };
-        
-    preload(){
+
+    preload() {
         this.background = 0x055550;
         this.startGame = this.game.add.text(0, 0, "Start New Game", this.style);
         this.loadGame = this.game.add.text(0, 50, "Load Game", this.style);
@@ -29,7 +29,7 @@ class TitleState extends Phaser.State {
             this.githubLink
         ];
 
-        array.forEach((text)=>{
+        array.forEach((text) => {
             text.setShadow(3, 3, "rgba(0,0,0,0.5)", 2);
             text.setTextBounds(0, 200, 800, 100);
             text.inputEnabled = true;
@@ -38,52 +38,52 @@ class TitleState extends Phaser.State {
             text.events.onInputUp.add(this.fadeOut, this);
         });
     }
-        
-    fadeOut(item:Phaser.Text) {
-        switch(item){
+
+    fadeOut(item: Phaser.Text) {
+        switch (item) {
             case this.startGame: this.startTheGame();
-            break;
+                break;
             case this.loadGame: this.loadTheGame();
-            break;
+                break;
             case this.Options: this.optionsMenu();
-            break;
+                break;
             case this.githubLink: this.openGithubLink();
-            break;
+                break;
             default:
         }
     }
 
-    startTheGame(){
+    startTheGame() {
         window.localStorage.setItem("player", "null");
         this.switchState("level" + levelsEnum.level0);
     }
 
-    loadTheGame(){
+    loadTheGame() {
         const loadedGame = JSON.parse(window.localStorage.getItem("player")!);
-        if(loadedGame){
+        if (loadedGame) {
             this.switchState("level" + loadedGame.currentRoom);
-        }else{
+        } else {
             alert("no Saved Game Found!");
         }
     }
 
-    optionsMenu(){
+    optionsMenu() {
 
     }
 
-    openGithubLink(){
+    openGithubLink() {
         window.open("http://www.github.com/twofist");
     }
 
-    glow(item:Phaser.Text){
+    glow(item: Phaser.Text) {
         item.fill = "#ffff44";
     }
 
-    stopGlow(item:Phaser.Text){
+    stopGlow(item: Phaser.Text) {
         item.fill = "#fff";
     }
 
-    switchState(state:string){
+    switchState(state: string) {
         this.game.state.start(state);
     }
 }
