@@ -1,0 +1,256 @@
+class MasterEnemy extends Phaser.Sprite {
+    enemyState: enemyStateEnum = enemyStateEnum.idle;
+    friendly = false;
+    wanderRange = 100;
+    player: Player;
+    targetX = 0;
+    targetY = 0;
+    maxWanderRange = 100;
+    spawnPositionX: number;
+    spawnPositionY: number;
+    aggroRange = 100;
+    canWalk: enemyAllowanceInterface = {
+        [enemyStateEnum.movingWalk]: true,
+        [enemyStateEnum.movingFall]: false,
+        [enemyStateEnum.idle]: true,
+        [enemyStateEnum.idleSpecial]: true,
+        [enemyStateEnum.attack1]: false,
+        [enemyStateEnum.attack2]: false,
+        [enemyStateEnum.attack3]: false,
+        [enemyStateEnum.death]: false,
+        [enemyStateEnum.sit]: false,
+        [enemyStateEnum.sitDown]: false,
+        [enemyStateEnum.movingChase]: false,
+        [enemyStateEnum.knockBack]: false,
+    };
+    canIdle: enemyAllowanceInterface = {
+        [enemyStateEnum.movingWalk]: false,
+        [enemyStateEnum.movingFall]: false,
+        [enemyStateEnum.idle]: false,
+        [enemyStateEnum.idleSpecial]: false,
+        [enemyStateEnum.attack1]: false,
+        [enemyStateEnum.attack2]: false,
+        [enemyStateEnum.attack3]: false,
+        [enemyStateEnum.death]: false,
+        [enemyStateEnum.sit]: false,
+        [enemyStateEnum.sitDown]: false,
+        [enemyStateEnum.movingChase]: false,
+        [enemyStateEnum.knockBack]: false,
+    };
+    canChase: enemyAllowanceInterface = {
+        [enemyStateEnum.movingWalk]: true,
+        [enemyStateEnum.movingFall]: false,
+        [enemyStateEnum.idle]: true,
+        [enemyStateEnum.idleSpecial]: true,
+        [enemyStateEnum.attack1]: false,
+        [enemyStateEnum.attack2]: false,
+        [enemyStateEnum.attack3]: false,
+        [enemyStateEnum.death]: false,
+        [enemyStateEnum.sit]: false,
+        [enemyStateEnum.sitDown]: false,
+        [enemyStateEnum.movingChase]: true,
+        [enemyStateEnum.knockBack]: false,
+    };
+    canAttack: enemyAllowanceInterface = {
+        [enemyStateEnum.movingWalk]: true,
+        [enemyStateEnum.movingFall]: false,
+        [enemyStateEnum.idle]: true,
+        [enemyStateEnum.idleSpecial]: true,
+        [enemyStateEnum.attack1]: false,
+        [enemyStateEnum.attack2]: false,
+        [enemyStateEnum.attack3]: false,
+        [enemyStateEnum.death]: false,
+        [enemyStateEnum.sit]: false,
+        [enemyStateEnum.sitDown]: false,
+        [enemyStateEnum.movingChase]: true,
+        [enemyStateEnum.knockBack]: false,
+    };
+    stats: playerStatsInterface;
+    enemyAnimations: enemyAnimationInterface = {
+        [enemyStateEnum.movingWalk]: "walk",
+        [enemyStateEnum.movingFall]: "fall",
+        [enemyStateEnum.idle]: "idle",
+        [enemyStateEnum.attack1]: "attack1",
+        [enemyStateEnum.attack2]: "attack2",
+        [enemyStateEnum.attack3]: "attack3",
+        [enemyStateEnum.death]: "death",
+        [enemyStateEnum.sit]: "sit",
+        [enemyStateEnum.sitDown]: "sitdown",
+        [enemyStateEnum.movingChase]: "walk",
+        [enemyStateEnum.idleSpecial]: "idlespecial",
+        [enemyStateEnum.knockBack]: "knockback",
+    };
+    invincible = false;
+    hitBoxes: Phaser.Group;
+    constructor(game: Phaser.Game, x: number, y: number, key?: string, frame?: number) {
+        super(game, x, y, key, frame);
+        this.anchor.setTo(0.5, 0);
+        game.physics.arcade.enableBody(this);
+        game.add.existing(this);
+        this.body.gravity.y = 1000;
+        this.body.collideWorldBounds = true;
+        game.physics.enable(this, Phaser.Physics.ARCADE);
+        this.spawnPositionX = x;
+        this.spawnPositionY = y;
+        this.stats = {
+            level: 1,
+            maxHealth: this.maxHealth,
+            health: this.maxHealth,
+            maxStamina: this.maxHealth,
+            stamina: this.maxHealth,
+            attack: 1,
+            defense: 1,
+            movespeed: 120,
+            luck: 1,
+        };
+        this.hitBoxes = this.game.add.group();
+
+        this.addChild(this.hitBoxes);
+    }
+
+    handleDeath() {
+        if (this.stats.health <= 0 && this.enemyState !== enemyStateEnum.death) {
+            this.invincible = true;
+            this.enemyState = enemyStateEnum.death;
+        }
+    }
+
+    takeDamage(damage: number, objPositionX: number) {
+        if (this.canTakeDamage()) {
+            this.stats.health -= this.calculateDamage(damage);
+            this.invincible = true;
+            if (this.stats.health > 0) {
+                this.game.time.events.add(1000, this.resetInvincable, this);
+                this.knockBack(objPositionX);
+            }
+        }
+    }
+
+    knockBack(objPositionX: number) {
+        this.enemyState = enemyStateEnum.knockBack;
+        if (this.x > objPositionX) {
+            this.scale.setTo(-1, 1);
+            this.moveNpcTowards(this.x - this.width, this.y, 0.2, 700, enemyStateEnum.idle);
+        } else {
+            this.scale.setTo(1, 1);
+            this.moveNpcTowards(this.x - this.width, this.y, 0.2, 700, enemyStateEnum.idle);
+        }
+    }
+
+    moveNpcTowards(toX: number, toY: number, speed: number, time = 0, endState = enemyStateEnum.idle) {
+        this.game.physics.arcade.moveToXY(
+            this,
+            toX,
+            toY,
+            speed,
+            time
+        );
+
+        this.game.time.events.add(time, () => {
+            this.body.velocity.x = 0;
+            this.body.velocity.y = 0;
+            this.x = toX;
+            this.y = toY;
+            this.enemyState = endState;
+        }, this);
+    }
+
+    resetInvincable() {
+        this.invincible = false;
+    }
+
+    calculateDamage(damage: number) {
+        if (this.stats.health - damage < 0) {
+            return 0;
+        }
+        return damage;
+    }
+
+    canTakeDamage() {
+        if (this.invincible || this.enemyState === enemyStateEnum.death) {
+            return false;
+        }
+        return true;
+    }
+
+    resetVelocity() {
+        if (
+            this.enemyState !== enemyStateEnum.movingWalk &&
+            this.enemyState !== enemyStateEnum.knockBack
+        ) {
+            this.body.velocity.x = 0;
+        }
+    }
+
+    attack() {
+        if (this.player.x > this.x) {
+            this.scale.setTo(1, 1);
+        } else {
+            this.scale.setTo(-1, 1);
+        }
+        this.enemyState = enemyStateEnum.attack1;
+    }
+
+    chase() {
+        this.enemyState = enemyStateEnum.movingChase;
+        if (this.player.x > this.x) {
+            this.scale.setTo(1, 1);
+        } else {
+            this.scale.setTo(-1, 1);
+        }
+        this.game.physics.arcade.moveToXY(this, this.player.x, this.y, this.stats.movespeed);
+    }
+
+    wander() {
+        if (this.game.physics.arcade.distanceToXY(this, this.spawnPositionX, this.spawnPositionY) > this.maxWanderRange) {
+            this.moveEnemyTo(this.spawnPositionX, this.spawnPositionY, this.stats.movespeed);
+            return;
+        }
+        const direction = this.game.rnd.integerInRange(0, 1);
+        const distance = this.game.rnd.integerInRange(10, this.maxWanderRange);
+        if (direction) {
+            this.moveLeft(distance);
+        } else {
+            this.moveRight(distance);
+        }
+    }
+
+    moveEnemyTo(toX: number, toY: number, speed: number) {
+        this.enemyState = enemyStateEnum.movingWalk;
+        this.game.physics.arcade.moveToXY(
+            this,
+            toX,
+            toY,
+            speed
+        );
+        this.targetX = toX;
+        this.targetY = toY;
+
+        if (this.targetX > this.x) {
+            this.scale.setTo(1, 1);
+        } else {
+            this.scale.setTo(-1, 1);
+        }
+    }
+
+    moveLeft(distance: number) {
+        if (this.x - distance < this.spawnPositionX - this.maxWanderRange) {
+            this.moveEnemyTo(this.spawnPositionX - this.maxWanderRange, this.y, this.stats.movespeed);
+        } else {
+            this.moveEnemyTo(this.x - distance, this.y, this.stats.movespeed);
+        }
+    }
+
+    moveRight(distance: number) {
+        if (this.x + distance > this.spawnPositionX + this.maxWanderRange) {
+            this.moveEnemyTo(this.spawnPositionX + this.maxWanderRange, this.y, this.stats.movespeed);
+        } else {
+            this.moveEnemyTo(this.x + distance, this.y, this.stats.movespeed);
+        }
+    }
+
+    idle() {
+        this.enemyState = enemyStateEnum.idle;
+    }
+}
+

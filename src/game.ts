@@ -1,4 +1,4 @@
-class SimpleGame extends Phaser.Game{
+class SimpleGame extends Phaser.Game {
 	constructor() {
 		super(800, 600, Phaser.AUTO, "content", null);
 		this.state.add("boot", new BootState());
@@ -6,10 +6,10 @@ class SimpleGame extends Phaser.Game{
 		this.state.add("title", new TitleState());
 		this.state.add("level0", new Level0());
 		this.state.add("level1", new Level1());
-        
-       this.state.start("boot");
+
+		this.state.start("boot");
 	}
-	
+
 }
 
 window.onload = () => {

@@ -649,18 +649,17 @@ var Player = /** @class */ (function (_super) {
     };
     return Player;
 }(Phaser.Sprite));
-var AdventurerEnemy = /** @class */ (function (_super) {
-    __extends(AdventurerEnemy, _super);
-    function AdventurerEnemy(game, x, y) {
+var MasterEnemy = /** @class */ (function (_super) {
+    __extends(MasterEnemy, _super);
+    function MasterEnemy(game, x, y, key, frame) {
         var _a, _b, _c, _d, _e;
-        var _this = _super.call(this, game, x, y, "adventurer", 0) || this;
+        var _this = _super.call(this, game, x, y, key, frame) || this;
         _this.enemyState = enemyStateEnum.idle;
         _this.friendly = false;
         _this.wanderRange = 100;
         _this.targetX = 0;
         _this.targetY = 0;
         _this.maxWanderRange = 100;
-        _this.attackRange = 15;
         _this.aggroRange = 100;
         _this.canWalk = (_a = {},
             _a[enemyStateEnum.movingWalk] = true,
@@ -739,11 +738,161 @@ var AdventurerEnemy = /** @class */ (function (_super) {
         _this.body.gravity.y = 1000;
         _this.body.collideWorldBounds = true;
         game.physics.enable(_this, Phaser.Physics.ARCADE);
+        _this.spawnPositionX = x;
+        _this.spawnPositionY = y;
+        _this.stats = {
+            level: 1,
+            maxHealth: _this.maxHealth,
+            health: _this.maxHealth,
+            maxStamina: _this.maxHealth,
+            stamina: _this.maxHealth,
+            attack: 1,
+            defense: 1,
+            movespeed: 120,
+            luck: 1,
+        };
+        _this.hitBoxes = _this.game.add.group();
+        _this.addChild(_this.hitBoxes);
+        return _this;
+    }
+    MasterEnemy.prototype.handleDeath = function () {
+        if (this.stats.health <= 0 && this.enemyState !== enemyStateEnum.death) {
+            this.invincible = true;
+            this.enemyState = enemyStateEnum.death;
+        }
+    };
+    MasterEnemy.prototype.takeDamage = function (damage, objPositionX) {
+        if (this.canTakeDamage()) {
+            this.stats.health -= this.calculateDamage(damage);
+            this.invincible = true;
+            if (this.stats.health > 0) {
+                this.game.time.events.add(1000, this.resetInvincable, this);
+                this.knockBack(objPositionX);
+            }
+        }
+    };
+    MasterEnemy.prototype.knockBack = function (objPositionX) {
+        this.enemyState = enemyStateEnum.knockBack;
+        if (this.x > objPositionX) {
+            this.scale.setTo(-1, 1);
+            this.moveNpcTowards(this.x - this.width, this.y, 0.2, 700, enemyStateEnum.idle);
+        }
+        else {
+            this.scale.setTo(1, 1);
+            this.moveNpcTowards(this.x - this.width, this.y, 0.2, 700, enemyStateEnum.idle);
+        }
+    };
+    MasterEnemy.prototype.moveNpcTowards = function (toX, toY, speed, time, endState) {
+        var _this = this;
+        if (time === void 0) { time = 0; }
+        if (endState === void 0) { endState = enemyStateEnum.idle; }
+        this.game.physics.arcade.moveToXY(this, toX, toY, speed, time);
+        this.game.time.events.add(time, function () {
+            _this.body.velocity.x = 0;
+            _this.body.velocity.y = 0;
+            _this.x = toX;
+            _this.y = toY;
+            _this.enemyState = endState;
+        }, this);
+    };
+    MasterEnemy.prototype.resetInvincable = function () {
+        this.invincible = false;
+    };
+    MasterEnemy.prototype.calculateDamage = function (damage) {
+        if (this.stats.health - damage < 0) {
+            return 0;
+        }
+        return damage;
+    };
+    MasterEnemy.prototype.canTakeDamage = function () {
+        if (this.invincible || this.enemyState === enemyStateEnum.death) {
+            return false;
+        }
+        return true;
+    };
+    MasterEnemy.prototype.resetVelocity = function () {
+        if (this.enemyState !== enemyStateEnum.movingWalk &&
+            this.enemyState !== enemyStateEnum.knockBack) {
+            this.body.velocity.x = 0;
+        }
+    };
+    MasterEnemy.prototype.attack = function () {
+        if (this.player.x > this.x) {
+            this.scale.setTo(1, 1);
+        }
+        else {
+            this.scale.setTo(-1, 1);
+        }
+        this.enemyState = enemyStateEnum.attack1;
+    };
+    MasterEnemy.prototype.chase = function () {
+        this.enemyState = enemyStateEnum.movingChase;
+        if (this.player.x > this.x) {
+            this.scale.setTo(1, 1);
+        }
+        else {
+            this.scale.setTo(-1, 1);
+        }
+        this.game.physics.arcade.moveToXY(this, this.player.x, this.y, this.stats.movespeed);
+    };
+    MasterEnemy.prototype.wander = function () {
+        if (this.game.physics.arcade.distanceToXY(this, this.spawnPositionX, this.spawnPositionY) > this.maxWanderRange) {
+            this.moveEnemyTo(this.spawnPositionX, this.spawnPositionY, this.stats.movespeed);
+            return;
+        }
+        var direction = this.game.rnd.integerInRange(0, 1);
+        var distance = this.game.rnd.integerInRange(10, this.maxWanderRange);
+        if (direction) {
+            this.moveLeft(distance);
+        }
+        else {
+            this.moveRight(distance);
+        }
+    };
+    MasterEnemy.prototype.moveEnemyTo = function (toX, toY, speed) {
+        this.enemyState = enemyStateEnum.movingWalk;
+        this.game.physics.arcade.moveToXY(this, toX, toY, speed);
+        this.targetX = toX;
+        this.targetY = toY;
+        if (this.targetX > this.x) {
+            this.scale.setTo(1, 1);
+        }
+        else {
+            this.scale.setTo(-1, 1);
+        }
+    };
+    MasterEnemy.prototype.moveLeft = function (distance) {
+        if (this.x - distance < this.spawnPositionX - this.maxWanderRange) {
+            this.moveEnemyTo(this.spawnPositionX - this.maxWanderRange, this.y, this.stats.movespeed);
+        }
+        else {
+            this.moveEnemyTo(this.x - distance, this.y, this.stats.movespeed);
+        }
+    };
+    MasterEnemy.prototype.moveRight = function (distance) {
+        if (this.x + distance > this.spawnPositionX + this.maxWanderRange) {
+            this.moveEnemyTo(this.spawnPositionX + this.maxWanderRange, this.y, this.stats.movespeed);
+        }
+        else {
+            this.moveEnemyTo(this.x + distance, this.y, this.stats.movespeed);
+        }
+    };
+    MasterEnemy.prototype.idle = function () {
+        this.enemyState = enemyStateEnum.idle;
+    };
+    return MasterEnemy;
+}(Phaser.Sprite));
+/// <reference path="./masterEnemy.ts"/>
+var AdventurerEnemy = /** @class */ (function (_super) {
+    __extends(AdventurerEnemy, _super);
+    function AdventurerEnemy(game, x, y) {
+        var _this = _super.call(this, game, x, y, "adventurer", 0) || this;
+        _this.wanderRange = 100;
+        _this.maxWanderRange = 100;
+        _this.aggroRange = 100;
         _this.bodyWidth = 10;
         _this.bodyHeight = 30;
         _this.body.setSize(_this.bodyWidth / _this.scale.x, _this.bodyHeight / _this.scale.y, (_this.width - _this.bodyWidth) / 2, 5);
-        _this.spawnPositionX = x;
-        _this.spawnPositionY = y;
         _this.stats = {
             level: 1,
             maxHealth: _this.maxHealth,
@@ -777,8 +926,6 @@ var AdventurerEnemy = /** @class */ (function (_super) {
             _this.kill();
         });
         _this.health = _this.maxHealth;
-        _this.hitBoxes = _this.game.add.group();
-        _this.addChild(_this.hitBoxes);
         _this.hitBox1 = _this.hitBoxes.create(0, _this.height / 2);
         _this.game.physics.enable(_this.hitBoxes, Phaser.Physics.ARCADE);
         _this.hitBox1.body.setSize(20, 10);
@@ -806,61 +953,6 @@ var AdventurerEnemy = /** @class */ (function (_super) {
             }
         });
     };
-    AdventurerEnemy.prototype.handleDeath = function () {
-        if (this.stats.health <= 0 && this.enemyState !== enemyStateEnum.death) {
-            this.invincible = true;
-            this.enemyState = enemyStateEnum.death;
-        }
-    };
-    AdventurerEnemy.prototype.takeDamage = function (damage, objPositionX) {
-        if (this.canTakeDamage()) {
-            this.stats.health -= this.calculateDamage(damage);
-            this.invincible = true;
-            if (this.stats.health > 0) {
-                this.game.time.events.add(1000, this.resetInvincable, this);
-                this.knockBack(objPositionX);
-            }
-        }
-    };
-    AdventurerEnemy.prototype.knockBack = function (objPositionX) {
-        this.enemyState = enemyStateEnum.knockBack;
-        if (this.x > objPositionX) {
-            this.scale.setTo(-1, 1);
-            this.moveNpcTowards(this.x - this.width, this.y, 0.2, 700, enemyStateEnum.idle);
-        }
-        else {
-            this.scale.setTo(1, 1);
-            this.moveNpcTowards(this.x - this.width, this.y, 0.2, 700, enemyStateEnum.idle);
-        }
-    };
-    AdventurerEnemy.prototype.moveNpcTowards = function (toX, toY, speed, time, endState) {
-        var _this = this;
-        if (time === void 0) { time = 0; }
-        if (endState === void 0) { endState = enemyStateEnum.idle; }
-        this.game.physics.arcade.moveToXY(this, toX, toY, speed, time);
-        this.game.time.events.add(time, function () {
-            _this.body.velocity.x = 0;
-            _this.body.velocity.y = 0;
-            _this.x = toX;
-            _this.y = toY;
-            _this.enemyState = endState;
-        }, this);
-    };
-    AdventurerEnemy.prototype.resetInvincable = function () {
-        this.invincible = false;
-    };
-    AdventurerEnemy.prototype.calculateDamage = function (damage) {
-        if (this.stats.health - damage < 0) {
-            return 0;
-        }
-        return damage;
-    };
-    AdventurerEnemy.prototype.canTakeDamage = function () {
-        if (this.invincible || this.enemyState === enemyStateEnum.death) {
-            return false;
-        }
-        return true;
-    };
     AdventurerEnemy.prototype.checkForHit = function () {
         if (this.animations.currentAnim.name === "attack1" &&
             this.animations.frame >= 45 &&
@@ -872,12 +964,6 @@ var AdventurerEnemy = /** @class */ (function (_super) {
             if (this.game.physics.arcade.overlap(this, this.player.hitBox1)) {
                 this.takeDamage(this.player.stats.attack * 50, this.player.x);
             }
-        }
-    };
-    AdventurerEnemy.prototype.resetVelocity = function () {
-        if (this.enemyState !== enemyStateEnum.movingWalk &&
-            this.enemyState !== enemyStateEnum.knockBack) {
-            this.body.velocity.x = 0;
         }
     };
     // tslint:disable-next-line:cyclomatic-complexity
@@ -903,167 +989,19 @@ var AdventurerEnemy = /** @class */ (function (_super) {
             this.idle();
         }
     };
-    AdventurerEnemy.prototype.attack = function () {
-        if (this.player.x > this.x) {
-            this.scale.setTo(1, 1);
-        }
-        else {
-            this.scale.setTo(-1, 1);
-        }
-        this.enemyState = enemyStateEnum.attack1;
-    };
-    AdventurerEnemy.prototype.chase = function () {
-        this.enemyState = enemyStateEnum.movingChase;
-        if (this.player.x > this.x) {
-            this.scale.setTo(1, 1);
-        }
-        else {
-            this.scale.setTo(-1, 1);
-        }
-        this.game.physics.arcade.moveToXY(this, this.player.x, this.y, this.stats.movespeed);
-    };
-    AdventurerEnemy.prototype.wander = function () {
-        if (this.game.physics.arcade.distanceToXY(this, this.spawnPositionX, this.spawnPositionY) > this.maxWanderRange) {
-            this.moveEnemyTo(this.spawnPositionX, this.spawnPositionY, this.stats.movespeed);
-            return;
-        }
-        var direction = this.game.rnd.integerInRange(0, 1);
-        var distance = this.game.rnd.integerInRange(10, this.maxWanderRange);
-        if (direction) {
-            this.moveLeft(distance);
-        }
-        else {
-            this.moveRight(distance);
-        }
-    };
-    AdventurerEnemy.prototype.moveEnemyTo = function (toX, toY, speed) {
-        this.enemyState = enemyStateEnum.movingWalk;
-        this.game.physics.arcade.moveToXY(this, toX, toY, speed);
-        this.targetX = toX;
-        this.targetY = toY;
-        if (this.targetX > this.x) {
-            this.scale.setTo(1, 1);
-        }
-        else {
-            this.scale.setTo(-1, 1);
-        }
-    };
-    AdventurerEnemy.prototype.moveLeft = function (distance) {
-        if (this.x - distance < this.spawnPositionX - this.maxWanderRange) {
-            this.moveEnemyTo(this.spawnPositionX - this.maxWanderRange, this.y, this.stats.movespeed);
-        }
-        else {
-            this.moveEnemyTo(this.x - distance, this.y, this.stats.movespeed);
-        }
-    };
-    AdventurerEnemy.prototype.moveRight = function (distance) {
-        if (this.x + distance > this.spawnPositionX + this.maxWanderRange) {
-            this.moveEnemyTo(this.spawnPositionX + this.maxWanderRange, this.y, this.stats.movespeed);
-        }
-        else {
-            this.moveEnemyTo(this.x + distance, this.y, this.stats.movespeed);
-        }
-    };
-    AdventurerEnemy.prototype.idle = function () {
-        this.enemyState = enemyStateEnum.idle;
-    };
     return AdventurerEnemy;
-}(Phaser.Sprite));
+}(MasterEnemy));
+/// <reference path="./masterEnemy.ts"/>
 var RogueEnemy = /** @class */ (function (_super) {
     __extends(RogueEnemy, _super);
     function RogueEnemy(game, x, y) {
-        var _a, _b, _c, _d, _e;
         var _this = _super.call(this, game, x, y, "rogue", 0) || this;
-        _this.enemyState = enemyStateEnum.idle;
-        _this.friendly = false;
         _this.wanderRange = 100;
-        _this.targetX = 0;
-        _this.targetY = 0;
         _this.maxWanderRange = 100;
-        _this.attackRange = 0;
         _this.aggroRange = 100;
-        _this.canWalk = (_a = {},
-            _a[enemyStateEnum.movingWalk] = true,
-            _a[enemyStateEnum.movingFall] = false,
-            _a[enemyStateEnum.idle] = true,
-            _a[enemyStateEnum.idleSpecial] = true,
-            _a[enemyStateEnum.attack1] = false,
-            _a[enemyStateEnum.attack2] = false,
-            _a[enemyStateEnum.attack3] = false,
-            _a[enemyStateEnum.death] = false,
-            _a[enemyStateEnum.sit] = false,
-            _a[enemyStateEnum.sitDown] = false,
-            _a[enemyStateEnum.movingChase] = false,
-            _a[enemyStateEnum.knockBack] = false,
-            _a);
-        _this.canIdle = (_b = {},
-            _b[enemyStateEnum.movingWalk] = false,
-            _b[enemyStateEnum.movingFall] = false,
-            _b[enemyStateEnum.idle] = false,
-            _b[enemyStateEnum.idleSpecial] = false,
-            _b[enemyStateEnum.attack1] = false,
-            _b[enemyStateEnum.attack2] = false,
-            _b[enemyStateEnum.attack3] = false,
-            _b[enemyStateEnum.death] = false,
-            _b[enemyStateEnum.sit] = false,
-            _b[enemyStateEnum.sitDown] = false,
-            _b[enemyStateEnum.movingChase] = false,
-            _b[enemyStateEnum.knockBack] = false,
-            _b);
-        _this.canChase = (_c = {},
-            _c[enemyStateEnum.movingWalk] = true,
-            _c[enemyStateEnum.movingFall] = false,
-            _c[enemyStateEnum.idle] = true,
-            _c[enemyStateEnum.idleSpecial] = true,
-            _c[enemyStateEnum.attack1] = false,
-            _c[enemyStateEnum.attack2] = false,
-            _c[enemyStateEnum.attack3] = false,
-            _c[enemyStateEnum.death] = false,
-            _c[enemyStateEnum.sit] = false,
-            _c[enemyStateEnum.sitDown] = false,
-            _c[enemyStateEnum.movingChase] = true,
-            _c[enemyStateEnum.knockBack] = false,
-            _c);
-        _this.canAttack = (_d = {},
-            _d[enemyStateEnum.movingWalk] = true,
-            _d[enemyStateEnum.movingFall] = false,
-            _d[enemyStateEnum.idle] = true,
-            _d[enemyStateEnum.idleSpecial] = true,
-            _d[enemyStateEnum.attack1] = false,
-            _d[enemyStateEnum.attack2] = false,
-            _d[enemyStateEnum.attack3] = false,
-            _d[enemyStateEnum.death] = false,
-            _d[enemyStateEnum.sit] = false,
-            _d[enemyStateEnum.sitDown] = false,
-            _d[enemyStateEnum.movingChase] = true,
-            _d[enemyStateEnum.knockBack] = false,
-            _d);
-        _this.enemyAnimations = (_e = {},
-            _e[enemyStateEnum.movingWalk] = "walk",
-            _e[enemyStateEnum.movingFall] = "fall",
-            _e[enemyStateEnum.idle] = "idle",
-            _e[enemyStateEnum.attack1] = "attack1",
-            _e[enemyStateEnum.attack2] = "attack2",
-            _e[enemyStateEnum.attack3] = "attack3",
-            _e[enemyStateEnum.death] = "death",
-            _e[enemyStateEnum.sit] = "sit",
-            _e[enemyStateEnum.sitDown] = "sitdown",
-            _e[enemyStateEnum.movingChase] = "walk",
-            _e[enemyStateEnum.idleSpecial] = "idlespecial",
-            _e[enemyStateEnum.knockBack] = "knockback",
-            _e);
-        _this.invincible = false;
-        _this.anchor.setTo(0.5, 0);
-        game.physics.arcade.enableBody(_this);
-        game.add.existing(_this);
-        _this.body.gravity.y = 1000;
-        _this.body.collideWorldBounds = true;
-        game.physics.enable(_this, Phaser.Physics.ARCADE);
         _this.bodyWidth = 16;
         _this.bodyHeight = 32;
         _this.body.setSize(_this.bodyWidth / _this.scale.x, _this.bodyHeight / _this.scale.y, (_this.width - _this.bodyWidth) / 2, _this.height - _this.bodyHeight);
-        _this.spawnPositionX = x;
-        _this.spawnPositionY = y;
         _this.stats = {
             level: 1,
             maxHealth: _this.maxHealth,
@@ -1097,8 +1035,6 @@ var RogueEnemy = /** @class */ (function (_super) {
             _this.kill();
         });
         _this.health = _this.maxHealth;
-        _this.hitBoxes = _this.game.add.group();
-        _this.addChild(_this.hitBoxes);
         _this.hitBox1 = _this.hitBoxes.create(0, _this.height / 2);
         _this.game.physics.enable(_this.hitBoxes, Phaser.Physics.ARCADE);
         _this.hitBox1.body.setSize(15, 10);
@@ -1126,61 +1062,6 @@ var RogueEnemy = /** @class */ (function (_super) {
             }
         });
     };
-    RogueEnemy.prototype.handleDeath = function () {
-        if (this.stats.health <= 0 && this.enemyState !== enemyStateEnum.death) {
-            this.invincible = true;
-            this.enemyState = enemyStateEnum.death;
-        }
-    };
-    RogueEnemy.prototype.takeDamage = function (damage, objPositionX) {
-        if (this.canTakeDamage()) {
-            this.stats.health -= this.calculateDamage(damage);
-            this.invincible = true;
-            if (this.stats.health > 0) {
-                this.game.time.events.add(1000, this.resetInvincable, this);
-                this.knockBack(objPositionX);
-            }
-        }
-    };
-    RogueEnemy.prototype.knockBack = function (objPositionX) {
-        this.enemyState = enemyStateEnum.knockBack;
-        if (this.x > objPositionX) {
-            this.scale.setTo(-1, 1);
-            this.moveNpcTowards(this.x - this.width, this.y, 0.2, 700, enemyStateEnum.idle);
-        }
-        else {
-            this.scale.setTo(1, 1);
-            this.moveNpcTowards(this.x - this.width, this.y, 0.2, 700, enemyStateEnum.idle);
-        }
-    };
-    RogueEnemy.prototype.moveNpcTowards = function (toX, toY, speed, time, endState) {
-        var _this = this;
-        if (time === void 0) { time = 0; }
-        if (endState === void 0) { endState = enemyStateEnum.idle; }
-        this.game.physics.arcade.moveToXY(this, toX, toY, speed, time);
-        this.game.time.events.add(time, function () {
-            _this.body.velocity.x = 0;
-            _this.body.velocity.y = 0;
-            _this.x = toX;
-            _this.y = toY;
-            _this.enemyState = endState;
-        }, this);
-    };
-    RogueEnemy.prototype.resetInvincable = function () {
-        this.invincible = false;
-    };
-    RogueEnemy.prototype.calculateDamage = function (damage) {
-        if (this.stats.health - damage < 0) {
-            return 0;
-        }
-        return damage;
-    };
-    RogueEnemy.prototype.canTakeDamage = function () {
-        if (this.invincible || this.enemyState === enemyStateEnum.death) {
-            return false;
-        }
-        return true;
-    };
     RogueEnemy.prototype.checkForHit = function () {
         if (this.animations.currentAnim.name === "attack1" &&
             this.animations.frame >= 34 &&
@@ -1192,12 +1073,6 @@ var RogueEnemy = /** @class */ (function (_super) {
             if (this.game.physics.arcade.overlap(this, this.player.hitBox1)) {
                 this.takeDamage(this.player.stats.attack * 50, this.player.x);
             }
-        }
-    };
-    RogueEnemy.prototype.resetVelocity = function () {
-        if (this.enemyState !== enemyStateEnum.movingWalk &&
-            this.enemyState !== enemyStateEnum.knockBack) {
-            this.body.velocity.x = 0;
         }
     };
     // tslint:disable-next-line:cyclomatic-complexity
@@ -1223,72 +1098,8 @@ var RogueEnemy = /** @class */ (function (_super) {
             this.idle();
         }
     };
-    RogueEnemy.prototype.attack = function () {
-        if (this.player.x > this.x) {
-            this.scale.setTo(1, 1);
-        }
-        else {
-            this.scale.setTo(-1, 1);
-        }
-        this.enemyState = enemyStateEnum.attack1;
-    };
-    RogueEnemy.prototype.chase = function () {
-        this.enemyState = enemyStateEnum.movingChase;
-        if (this.player.x > this.x) {
-            this.scale.setTo(1, 1);
-        }
-        else {
-            this.scale.setTo(-1, 1);
-        }
-        this.game.physics.arcade.moveToXY(this, this.player.x, this.y, this.stats.movespeed);
-    };
-    RogueEnemy.prototype.wander = function () {
-        if (this.game.physics.arcade.distanceToXY(this, this.spawnPositionX, this.spawnPositionY) > this.maxWanderRange) {
-            this.moveEnemyTo(this.spawnPositionX, this.spawnPositionY, this.stats.movespeed);
-            return;
-        }
-        var direction = this.game.rnd.integerInRange(0, 1);
-        var distance = this.game.rnd.integerInRange(10, this.maxWanderRange);
-        if (direction) {
-            this.moveLeft(distance);
-        }
-        else {
-            this.moveRight(distance);
-        }
-    };
-    RogueEnemy.prototype.moveEnemyTo = function (toX, toY, speed) {
-        this.enemyState = enemyStateEnum.movingWalk;
-        this.game.physics.arcade.moveToXY(this, toX, toY, speed);
-        this.targetX = toX;
-        this.targetY = toY;
-        if (this.targetX > this.x) {
-            this.scale.setTo(1, 1);
-        }
-        else {
-            this.scale.setTo(-1, 1);
-        }
-    };
-    RogueEnemy.prototype.moveLeft = function (distance) {
-        if (this.x - distance < this.spawnPositionX - this.maxWanderRange) {
-            this.moveEnemyTo(this.spawnPositionX - this.maxWanderRange, this.y, this.stats.movespeed);
-        }
-        else {
-            this.moveEnemyTo(this.x - distance, this.y, this.stats.movespeed);
-        }
-    };
-    RogueEnemy.prototype.moveRight = function (distance) {
-        if (this.x + distance > this.spawnPositionX + this.maxWanderRange) {
-            this.moveEnemyTo(this.spawnPositionX + this.maxWanderRange, this.y, this.stats.movespeed);
-        }
-        else {
-            this.moveEnemyTo(this.x + distance, this.y, this.stats.movespeed);
-        }
-    };
-    RogueEnemy.prototype.idle = function () {
-        this.enemyState = enemyStateEnum.idle;
-    };
     return RogueEnemy;
-}(Phaser.Sprite));
+}(MasterEnemy));
 var Level0 = /** @class */ (function (_super) {
     __extends(Level0, _super);
     function Level0() {
@@ -1515,25 +1326,13 @@ var Level1 = /** @class */ (function (_super) {
     };
     return Level1;
 }(Phaser.State));
-var RogueNpc = /** @class */ (function (_super) {
-    __extends(RogueNpc, _super);
-    function RogueNpc(game, x, y) {
+var MasterNpc = /** @class */ (function (_super) {
+    __extends(MasterNpc, _super);
+    function MasterNpc(game, x, y, key, frame) {
         var _a, _b, _c, _d, _e;
-        var _this = _super.call(this, game, x, y, "rogue", 0) || this;
+        var _this = _super.call(this, game, x, y, key, frame) || this;
         _this.npcState = npcStateEnum.idle;
         _this.npcDialogue = [
-            "Press E to Talk",
-            "hello there traveler",
-            "i am A",
-            "*Cough*",
-            "Aron",
-            "it's tough out here you know",
-            "hmmm...",
-            "it looks like you're new to this place",
-            "this place is quite dangerous",
-            "heh hehe he",
-            "you should be careful",
-            "here take this",
             "..."
         ];
         _this.npcDialogueLine = 0;
@@ -1627,11 +1426,213 @@ var RogueNpc = /** @class */ (function (_super) {
         _this.body.gravity.y = 1000;
         _this.body.collideWorldBounds = true;
         game.physics.enable(_this, Phaser.Physics.ARCADE);
+        _this.spawnPositionX = x;
+        _this.spawnPositionY = y;
+        _this.stats = {
+            level: 1,
+            maxHealth: _this.maxHealth,
+            health: _this.maxHealth,
+            maxStamina: _this.maxHealth,
+            stamina: _this.maxHealth,
+            attack: 1,
+            defense: 1,
+            movespeed: 120,
+            luck: 1,
+        };
+        _this.hitBoxes = _this.game.add.group();
+        _this.addChild(_this.hitBoxes);
+        return _this;
+    }
+    MasterNpc.prototype.updateHitbox = function () {
+        var _this = this;
+        this.hitBoxes.forEach(function (v) {
+            if (_this.width < 0) {
+                v.scale.setTo(-1, 1);
+            }
+            else {
+                v.scale.setTo(1, 1);
+            }
+        });
+    };
+    MasterNpc.prototype.handleDeath = function () {
+        if (this.stats.health <= 0 && this.npcState !== npcStateEnum.death) {
+            this.invincible = true;
+            this.npcState = npcStateEnum.death;
+        }
+    };
+    MasterNpc.prototype.takeDamage = function (damage, objPositionX) {
+        if (this.canTakeDamage()) {
+            this.stats.health -= this.calculateDamage(damage);
+            this.invincible = true;
+            if (this.stats.health > 0) {
+                this.game.time.events.add(1000, this.resetInvincable, this);
+                this.knockBack(objPositionX);
+            }
+        }
+    };
+    MasterNpc.prototype.knockBack = function (objPositionX) {
+        this.npcState = npcStateEnum.knockBack;
+        if (this.x > objPositionX) {
+            this.scale.setTo(-1, 1);
+            this.moveNpcTowards(this.x - this.width, this.y, 0.2, 700, npcStateEnum.idle);
+        }
+        else {
+            this.scale.setTo(1, 1);
+            this.moveNpcTowards(this.x - this.width, this.y, 0.2, 700, npcStateEnum.idle);
+        }
+    };
+    MasterNpc.prototype.moveNpcTowards = function (toX, toY, speed, time, endState) {
+        var _this = this;
+        if (time === void 0) { time = 0; }
+        if (endState === void 0) { endState = npcStateEnum.idle; }
+        this.game.physics.arcade.moveToXY(this, toX, toY, speed, time);
+        this.game.time.events.add(time, function () {
+            _this.body.velocity.x = 0;
+            _this.body.velocity.y = 0;
+            _this.x = toX;
+            _this.y = toY;
+            _this.npcState = endState;
+        }, this);
+    };
+    MasterNpc.prototype.resetInvincable = function () {
+        this.invincible = false;
+    };
+    MasterNpc.prototype.calculateDamage = function (damage) {
+        if (this.stats.health - damage < 0) {
+            return 0;
+        }
+        return damage;
+    };
+    MasterNpc.prototype.canTakeDamage = function () {
+        if (this.invincible || this.npcState === npcStateEnum.death) {
+            return false;
+        }
+        return true;
+    };
+    MasterNpc.prototype.attack = function () {
+        if (this.player.x > this.x) {
+            this.scale.setTo(1, 1);
+        }
+        else {
+            this.scale.setTo(-1, 1);
+        }
+        this.npcState = npcStateEnum.attack1;
+    };
+    MasterNpc.prototype.chase = function () {
+        this.npcState = npcStateEnum.movingChase;
+        if (this.player.x > this.x) {
+            this.scale.setTo(1, 1);
+        }
+        else {
+            this.scale.setTo(-1, 1);
+        }
+        this.game.physics.arcade.moveToXY(this, this.player.x, this.y, this.stats.movespeed);
+    };
+    MasterNpc.prototype.wander = function () {
+        if (this.game.physics.arcade.distanceToXY(this, this.spawnPositionX, this.spawnPositionY) > this.maxWanderRange) {
+            this.moveNpcTo(this.spawnPositionX, this.spawnPositionY, this.stats.movespeed);
+            return;
+        }
+        var direction = this.game.rnd.integerInRange(0, 1);
+        var distance = this.game.rnd.integerInRange(10, this.maxWanderRange);
+        if (direction) {
+            this.moveLeft(distance);
+        }
+        else {
+            this.moveRight(distance);
+        }
+    };
+    MasterNpc.prototype.moveNpcTo = function (toX, toY, speed) {
+        this.npcState = npcStateEnum.movingWalk;
+        this.game.physics.arcade.moveToXY(this, toX, toY, speed);
+        this.targetX = toX;
+        this.targetY = toY;
+        if (this.targetX > this.x) {
+            this.scale.setTo(1, 1);
+        }
+        else {
+            this.scale.setTo(-1, 1);
+        }
+    };
+    MasterNpc.prototype.interaction = function () {
+        if (!this.canInteractText) {
+            this.canInteractText = this.game.add.text(this.x - this.width, this.y - this.height, "", this.DialogueStyle);
+            this.canInteractText.setTextBounds(30, 20, 0, 0);
+        }
+        if (this.canInteract) {
+            if (this.npcDialogueLine >= this.npcDialogue.length) {
+                this.npcDialogueLine = this.npcDialogue.length - 1;
+            }
+            this.canInteractText.setText(this.npcDialogue[this.npcDialogueLine]);
+            if (this.npcDialogueLine >= this.npcDialogue.length - 1) {
+                this.friendly = false;
+            }
+        }
+        else if (!this.canInteract) {
+            this.canInteractText.setText("");
+            if (this.npcDialogueLine > 0) {
+                this.npcDialogueLine = 1;
+            }
+        }
+    };
+    MasterNpc.prototype.nextDialogueText = function () {
+        if (this.canInteract && this.friendly) {
+            this.npcDialogueLine++;
+        }
+    };
+    MasterNpc.prototype.resetVelocity = function () {
+        if (this.npcState !== npcStateEnum.movingWalk &&
+            this.npcState !== npcStateEnum.knockBack) {
+            this.body.velocity.x = 0;
+        }
+    };
+    MasterNpc.prototype.moveLeft = function (distance) {
+        if (this.x - distance < this.spawnPositionX - this.maxWanderRange) {
+            this.moveNpcTo(this.spawnPositionX - this.maxWanderRange, this.y, this.stats.movespeed);
+        }
+        else {
+            this.moveNpcTo(this.x - distance, this.y, this.stats.movespeed);
+        }
+    };
+    MasterNpc.prototype.moveRight = function (distance) {
+        if (this.x + distance > this.spawnPositionX + this.maxWanderRange) {
+            this.moveNpcTo(this.spawnPositionX + this.maxWanderRange, this.y, this.stats.movespeed);
+        }
+        else {
+            this.moveNpcTo(this.x + distance, this.y, this.stats.movespeed);
+        }
+    };
+    MasterNpc.prototype.idle = function () {
+        this.npcState = npcStateEnum.idle;
+    };
+    return MasterNpc;
+}(Phaser.Sprite));
+/// <reference path="./masterNpc.ts"/>
+var RogueNpc = /** @class */ (function (_super) {
+    __extends(RogueNpc, _super);
+    function RogueNpc(game, x, y) {
+        var _this = _super.call(this, game, x, y, "rogue", 0) || this;
+        _this.npcDialogue = [
+            "Press E to Talk",
+            "hello there traveler",
+            "i am A",
+            "*Cough*",
+            "Aron",
+            "it's tough out here you know",
+            "hmmm...",
+            "it looks like you're new to this place",
+            "this place is quite dangerous",
+            "heh hehe he",
+            "you should be careful",
+            "here take this",
+            "..."
+        ];
+        _this.maxWanderRange = 100;
+        _this.attackRange = 0;
+        _this.aggroRange = 100;
         _this.bodyWidth = 16;
         _this.bodyHeight = 32;
         _this.body.setSize(_this.bodyWidth / _this.scale.x, _this.bodyHeight / _this.scale.y, (_this.width - _this.bodyWidth) / 2, _this.height - _this.bodyHeight);
-        _this.spawnPositionX = x;
-        _this.spawnPositionY = y;
         _this.stats = {
             level: 1,
             maxHealth: _this.maxHealth,
@@ -1665,8 +1666,6 @@ var RogueNpc = /** @class */ (function (_super) {
             _this.kill();
         });
         _this.health = _this.maxHealth;
-        _this.hitBoxes = _this.game.add.group();
-        _this.addChild(_this.hitBoxes);
         _this.hitBox1 = _this.hitBoxes.create(0, _this.height / 2);
         _this.game.physics.enable(_this.hitBoxes, Phaser.Physics.ARCADE);
         _this.hitBox1.body.setSize(15, 10);
@@ -1697,61 +1696,6 @@ var RogueNpc = /** @class */ (function (_super) {
                 v.scale.setTo(1, 1);
             }
         });
-    };
-    RogueNpc.prototype.handleDeath = function () {
-        if (this.stats.health <= 0 && this.npcState !== npcStateEnum.death) {
-            this.invincible = true;
-            this.npcState = npcStateEnum.death;
-        }
-    };
-    RogueNpc.prototype.takeDamage = function (damage, objPositionX) {
-        if (this.canTakeDamage()) {
-            this.stats.health -= this.calculateDamage(damage);
-            this.invincible = true;
-            if (this.stats.health > 0) {
-                this.game.time.events.add(1000, this.resetInvincable, this);
-                this.knockBack(objPositionX);
-            }
-        }
-    };
-    RogueNpc.prototype.knockBack = function (objPositionX) {
-        this.npcState = npcStateEnum.knockBack;
-        if (this.x > objPositionX) {
-            this.scale.setTo(-1, 1);
-            this.moveNpcTowards(this.x - this.width, this.y, 0.2, 700, npcStateEnum.idle);
-        }
-        else {
-            this.scale.setTo(1, 1);
-            this.moveNpcTowards(this.x - this.width, this.y, 0.2, 700, npcStateEnum.idle);
-        }
-    };
-    RogueNpc.prototype.moveNpcTowards = function (toX, toY, speed, time, endState) {
-        var _this = this;
-        if (time === void 0) { time = 0; }
-        if (endState === void 0) { endState = npcStateEnum.idle; }
-        this.game.physics.arcade.moveToXY(this, toX, toY, speed, time);
-        this.game.time.events.add(time, function () {
-            _this.body.velocity.x = 0;
-            _this.body.velocity.y = 0;
-            _this.x = toX;
-            _this.y = toY;
-            _this.npcState = endState;
-        }, this);
-    };
-    RogueNpc.prototype.resetInvincable = function () {
-        this.invincible = false;
-    };
-    RogueNpc.prototype.calculateDamage = function (damage) {
-        if (this.stats.health - damage < 0) {
-            return 0;
-        }
-        return damage;
-    };
-    RogueNpc.prototype.canTakeDamage = function () {
-        if (this.invincible || this.npcState === npcStateEnum.death) {
-            return false;
-        }
-        return true;
     };
     RogueNpc.prototype.checkForHit = function () {
         if (this.animations.currentAnim.name === "attack1" &&
@@ -1790,104 +1734,8 @@ var RogueNpc = /** @class */ (function (_super) {
             this.idle();
         }
     };
-    RogueNpc.prototype.attack = function () {
-        if (this.player.x > this.x) {
-            this.scale.setTo(1, 1);
-        }
-        else {
-            this.scale.setTo(-1, 1);
-        }
-        this.npcState = npcStateEnum.attack1;
-    };
-    RogueNpc.prototype.chase = function () {
-        this.npcState = npcStateEnum.movingChase;
-        if (this.player.x > this.x) {
-            this.scale.setTo(1, 1);
-        }
-        else {
-            this.scale.setTo(-1, 1);
-        }
-        this.game.physics.arcade.moveToXY(this, this.player.x, this.y, this.stats.movespeed);
-    };
-    RogueNpc.prototype.wander = function () {
-        if (this.game.physics.arcade.distanceToXY(this, this.spawnPositionX, this.spawnPositionY) > this.maxWanderRange) {
-            this.moveNpcTo(this.spawnPositionX, this.spawnPositionY, this.stats.movespeed);
-            return;
-        }
-        var direction = this.game.rnd.integerInRange(0, 1);
-        var distance = this.game.rnd.integerInRange(10, this.maxWanderRange);
-        if (direction) {
-            this.moveLeft(distance);
-        }
-        else {
-            this.moveRight(distance);
-        }
-    };
-    RogueNpc.prototype.moveNpcTo = function (toX, toY, speed) {
-        this.npcState = npcStateEnum.movingWalk;
-        this.game.physics.arcade.moveToXY(this, toX, toY, speed);
-        this.targetX = toX;
-        this.targetY = toY;
-        if (this.targetX > this.x) {
-            this.scale.setTo(1, 1);
-        }
-        else {
-            this.scale.setTo(-1, 1);
-        }
-    };
-    RogueNpc.prototype.interaction = function () {
-        if (!this.canInteractText) {
-            this.canInteractText = this.game.add.text(this.x - this.width, this.y - this.height, "", this.DialogueStyle);
-            this.canInteractText.setTextBounds(30, 20, 0, 0);
-        }
-        if (this.canInteract) {
-            if (this.npcDialogueLine >= this.npcDialogue.length) {
-                this.npcDialogueLine = this.npcDialogue.length - 1;
-            }
-            this.canInteractText.setText(this.npcDialogue[this.npcDialogueLine]);
-            if (this.npcDialogueLine >= this.npcDialogue.length - 1) {
-                this.friendly = false;
-            }
-        }
-        else if (!this.canInteract) {
-            this.canInteractText.setText("");
-            if (this.npcDialogueLine > 0) {
-                this.npcDialogueLine = 1;
-            }
-        }
-    };
-    RogueNpc.prototype.nextDialogueText = function () {
-        if (this.canInteract && this.friendly) {
-            this.npcDialogueLine++;
-        }
-    };
-    RogueNpc.prototype.resetVelocity = function () {
-        if (this.npcState !== npcStateEnum.movingWalk &&
-            this.npcState !== npcStateEnum.knockBack) {
-            this.body.velocity.x = 0;
-        }
-    };
-    RogueNpc.prototype.moveLeft = function (distance) {
-        if (this.x - distance < this.spawnPositionX - this.maxWanderRange) {
-            this.moveNpcTo(this.spawnPositionX - this.maxWanderRange, this.y, this.stats.movespeed);
-        }
-        else {
-            this.moveNpcTo(this.x - distance, this.y, this.stats.movespeed);
-        }
-    };
-    RogueNpc.prototype.moveRight = function (distance) {
-        if (this.x + distance > this.spawnPositionX + this.maxWanderRange) {
-            this.moveNpcTo(this.spawnPositionX + this.maxWanderRange, this.y, this.stats.movespeed);
-        }
-        else {
-            this.moveNpcTo(this.x + distance, this.y, this.stats.movespeed);
-        }
-    };
-    RogueNpc.prototype.idle = function () {
-        this.npcState = npcStateEnum.idle;
-    };
     return RogueNpc;
-}(Phaser.Sprite));
+}(MasterNpc));
 var Bonfire = /** @class */ (function (_super) {
     __extends(Bonfire, _super);
     function Bonfire(game, x, y) {
