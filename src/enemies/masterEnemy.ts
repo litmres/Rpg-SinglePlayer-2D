@@ -108,6 +108,35 @@ class MasterEnemy extends Phaser.Sprite {
         this.addChild(this.hitBoxes);
     }
 
+    stopMovingTo() {
+        if (this.enemyState === enemyStateEnum.movingWalk) {
+            if (this.game.physics.arcade.distanceToXY(this, this.targetX, this.targetY) < 5) {
+                this.x = this.targetX;
+                this.y = this.targetY;
+                this.body.velocity.setTo(0, 0);
+                this.enemyState = enemyStateEnum.idle;
+            }
+        }
+    }
+
+    updateHitbox() {
+        this.hitBoxes.forEach((v: Phaser.Sprite) => {
+            if (this.width < 0) {
+                v.scale.setTo(-1, 1);
+            } else {
+                v.scale.setTo(1, 1);
+            }
+        });
+    }
+
+    checkForGettingHit() {
+        if (this.player && this.player.playerState === playerStateEnum.attack1) {
+            if (this.game.physics.arcade.overlap(this, this.player.hitBox1)) {
+                this.takeDamage(this.player.stats.attack * 50, this.player.x);
+            }
+        }
+    }
+
     handleDeath() {
         if (this.stats.health <= 0 && this.enemyState !== enemyStateEnum.death) {
             this.invincible = true;
@@ -250,7 +279,9 @@ class MasterEnemy extends Phaser.Sprite {
     }
 
     idle() {
-        this.enemyState = enemyStateEnum.idle;
+        if (this.canIdle[this.enemyState]) {
+            this.enemyState = enemyStateEnum.idle;
+        }
     }
 }
 

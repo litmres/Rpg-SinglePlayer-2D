@@ -755,6 +755,34 @@ var MasterEnemy = /** @class */ (function (_super) {
         _this.addChild(_this.hitBoxes);
         return _this;
     }
+    MasterEnemy.prototype.stopMovingTo = function () {
+        if (this.enemyState === enemyStateEnum.movingWalk) {
+            if (this.game.physics.arcade.distanceToXY(this, this.targetX, this.targetY) < 5) {
+                this.x = this.targetX;
+                this.y = this.targetY;
+                this.body.velocity.setTo(0, 0);
+                this.enemyState = enemyStateEnum.idle;
+            }
+        }
+    };
+    MasterEnemy.prototype.updateHitbox = function () {
+        var _this = this;
+        this.hitBoxes.forEach(function (v) {
+            if (_this.width < 0) {
+                v.scale.setTo(-1, 1);
+            }
+            else {
+                v.scale.setTo(1, 1);
+            }
+        });
+    };
+    MasterEnemy.prototype.checkForGettingHit = function () {
+        if (this.player && this.player.playerState === playerStateEnum.attack1) {
+            if (this.game.physics.arcade.overlap(this, this.player.hitBox1)) {
+                this.takeDamage(this.player.stats.attack * 50, this.player.x);
+            }
+        }
+    };
     MasterEnemy.prototype.handleDeath = function () {
         if (this.stats.health <= 0 && this.enemyState !== enemyStateEnum.death) {
             this.invincible = true;
@@ -878,7 +906,9 @@ var MasterEnemy = /** @class */ (function (_super) {
         }
     };
     MasterEnemy.prototype.idle = function () {
-        this.enemyState = enemyStateEnum.idle;
+        if (this.canIdle[this.enemyState]) {
+            this.enemyState = enemyStateEnum.idle;
+        }
     };
     return MasterEnemy;
 }(Phaser.Sprite));
@@ -937,45 +967,23 @@ var AdventurerEnemy = /** @class */ (function (_super) {
         this.animations.play(this.enemyAnimations[this.enemyState]);
         if (!this.friendly) {
             this.handleInput();
+            this.stopMovingTo();
+            this.idle();
         }
-        this.checkForHit();
+        this.checkForHitting();
+        this.checkForGettingHit();
         this.handleDeath();
         this.updateHitbox();
     };
-    AdventurerEnemy.prototype.updateHitbox = function () {
-        var _this = this;
-        this.hitBoxes.forEach(function (v) {
-            if (_this.width < 0) {
-                v.scale.setTo(-1, 1);
-            }
-            else {
-                v.scale.setTo(1, 1);
-            }
-        });
-    };
-    AdventurerEnemy.prototype.checkForHit = function () {
+    AdventurerEnemy.prototype.checkForHitting = function () {
         if (this.animations.currentAnim.name === "attack1" &&
             this.animations.frame >= 45 &&
             this.animations.frame <= 46 &&
             this.game.physics.arcade.overlap(this.hitBox1, this.player)) {
             this.player.takeDamage(this.stats.attack * 20, this.x);
         }
-        if (this.player && this.player.playerState === playerStateEnum.attack1) {
-            if (this.game.physics.arcade.overlap(this, this.player.hitBox1)) {
-                this.takeDamage(this.player.stats.attack * 50, this.player.x);
-            }
-        }
     };
-    // tslint:disable-next-line:cyclomatic-complexity
     AdventurerEnemy.prototype.handleInput = function () {
-        if (this.enemyState === enemyStateEnum.movingWalk) {
-            if (this.game.physics.arcade.distanceToXY(this, this.targetX, this.targetY) < 5) {
-                this.x = this.targetX;
-                this.y = this.targetY;
-                this.body.velocity.setTo(0, 0);
-                this.enemyState = enemyStateEnum.idle;
-            }
-        }
         if (this.player) {
             var distance = this.game.physics.arcade.distanceBetween(this, this.player);
             if (distance < Math.abs(this.hitBox1.width) && this.canAttack[this.enemyState]) {
@@ -984,9 +992,6 @@ var AdventurerEnemy = /** @class */ (function (_super) {
             else if (distance < this.aggroRange && this.canChase[this.enemyState]) {
                 this.chase();
             }
-        }
-        if (this.canIdle[this.enemyState]) {
-            this.idle();
         }
     };
     return AdventurerEnemy;
@@ -1046,45 +1051,23 @@ var RogueEnemy = /** @class */ (function (_super) {
         this.animations.play(this.enemyAnimations[this.enemyState]);
         if (!this.friendly) {
             this.handleInput();
+            this.stopMovingTo();
+            this.idle();
         }
-        this.checkForHit();
+        this.checkForHitting();
+        this.checkForGettingHit();
         this.handleDeath();
         this.updateHitbox();
     };
-    RogueEnemy.prototype.updateHitbox = function () {
-        var _this = this;
-        this.hitBoxes.forEach(function (v) {
-            if (_this.width < 0) {
-                v.scale.setTo(-1, 1);
-            }
-            else {
-                v.scale.setTo(1, 1);
-            }
-        });
-    };
-    RogueEnemy.prototype.checkForHit = function () {
+    RogueEnemy.prototype.checkForHitting = function () {
         if (this.animations.currentAnim.name === "attack1" &&
             this.animations.frame >= 34 &&
             this.animations.frame <= 36 &&
             this.game.physics.arcade.overlap(this.hitBox1, this.player)) {
             this.player.takeDamage(this.stats.attack * 20, this.x);
         }
-        if (this.player && this.player.playerState === playerStateEnum.attack1) {
-            if (this.game.physics.arcade.overlap(this, this.player.hitBox1)) {
-                this.takeDamage(this.player.stats.attack * 50, this.player.x);
-            }
-        }
     };
-    // tslint:disable-next-line:cyclomatic-complexity
     RogueEnemy.prototype.handleInput = function () {
-        if (this.enemyState === enemyStateEnum.movingWalk) {
-            if (this.game.physics.arcade.distanceToXY(this, this.targetX, this.targetY) < 5) {
-                this.x = this.targetX;
-                this.y = this.targetY;
-                this.body.velocity.setTo(0, 0);
-                this.enemyState = enemyStateEnum.idle;
-            }
-        }
         if (this.player) {
             var distance = this.game.physics.arcade.distanceBetween(this, this.player);
             if (distance < Math.abs(this.hitBox1.width) && this.canAttack[this.enemyState]) {
@@ -1094,27 +1077,127 @@ var RogueEnemy = /** @class */ (function (_super) {
                 this.chase();
             }
         }
-        if (this.canIdle[this.enemyState]) {
-            this.idle();
-        }
     };
     return RogueEnemy;
 }(MasterEnemy));
-var Level0 = /** @class */ (function (_super) {
-    __extends(Level0, _super);
-    function Level0() {
+var MasterLevel = /** @class */ (function (_super) {
+    __extends(MasterLevel, _super);
+    function MasterLevel() {
         var _this = _super !== null && _super.apply(this, arguments) || this;
         _this.levelNumber = levelsEnum.level0;
         _this.playerStorage = JSON.parse(window.localStorage.getItem("player"));
         _this.debugMode = false;
         return _this;
     }
+    MasterLevel.prototype.update = function () {
+        this.game.physics.arcade.collide(this.player, this.platforms);
+        this.game.physics.arcade.collide(this.enemies, this.platforms);
+        this.game.physics.arcade.collide(this.npcs, this.platforms);
+        this.game.physics.arcade.collide(this.bonfires, this.platforms);
+        this.game.physics.arcade.collide(this.player, this.gates);
+        this.game.physics.arcade.collide(this.enemies, this.gates);
+        this.game.physics.arcade.collide(this.npcs, this.gates);
+        this.playerFacingBonfire();
+        this.playerFacingNpc();
+        if (this.debugMode) {
+            this.debug();
+        }
+    };
+    MasterLevel.prototype.addGroups = function () {
+        this.enemies = this.game.add.group();
+        this.platforms = this.game.add.group();
+        this.gates = this.game.add.group();
+        this.npcs = this.game.add.group();
+        this.bonfires = this.game.add.group();
+    };
+    MasterLevel.prototype.addPlayerToNpcs = function () {
+        var _this = this;
+        this.npcs.forEach(function (v) {
+            v.player = _this.player;
+        });
+    };
+    MasterLevel.prototype.addPlayerToGates = function () {
+        var _this = this;
+        this.gates.forEach(function (v) {
+            v.player = _this.player;
+        });
+    };
+    MasterLevel.prototype.addPlayerToEnemies = function () {
+        var _this = this;
+        this.enemies.forEach(function (v) {
+            v.player = _this.player;
+        });
+    };
+    MasterLevel.prototype.playerFacingNpc = function () {
+        var _this = this;
+        this.npcs.forEach(function (v) {
+            if (_this.game.physics.arcade.overlap(_this.player, v)) {
+                v.canInteract = true;
+                _this.player.facingNpc = v;
+            }
+            else {
+                v.canInteract = false;
+                _this.player.facingNpc = null;
+            }
+        });
+    };
+    MasterLevel.prototype.playerFacingBonfire = function () {
+        var _this = this;
+        this.bonfires.forEach(function (v) {
+            if (_this.game.physics.arcade.overlap(_this.player, v)) {
+                v.canInteract = true;
+                _this.player.facingBonfire = v;
+            }
+            else {
+                v.canInteract = false;
+                _this.player.facingBonfire = null;
+            }
+        });
+    };
+    MasterLevel.prototype.roomIsClear = function () {
+        if (this.enemies.children.length === 0) {
+            this.gates.forEach(function (v) {
+                v.roomIsClear = true;
+            });
+            return true;
+        }
+        return false;
+    };
+    MasterLevel.prototype.debug = function () {
+        var _this = this;
+        this.game.debug.body(this.player);
+        this.game.debug.physicsGroup(this.player.hitBoxes);
+        this.npcs.forEach(function (v) {
+            _this.game.debug.body(v);
+            _this.game.debug.physicsGroup(v.hitBoxes);
+        });
+        this.enemies.forEach(function (v) {
+            _this.game.debug.body(v);
+            _this.game.debug.physicsGroup(v.hitBoxes);
+        });
+        this.bonfires.forEach(function (v) {
+            _this.game.debug.body(v);
+        });
+        this.gates.forEach(function (v) {
+            _this.game.debug.body(v);
+        });
+    };
+    return MasterLevel;
+}(Phaser.State));
+/// <reference path="./masterLevel.ts"/>
+var Level0 = /** @class */ (function (_super) {
+    __extends(Level0, _super);
+    function Level0() {
+        var _this = _super !== null && _super.apply(this, arguments) || this;
+        _this.levelNumber = levelsEnum.level0;
+        return _this;
+    }
     Level0.prototype.preload = function () {
+        this.addGroups();
         this.background = this.game.add.image(0, 0, "darkbackground");
         this.background.height = this.game.height;
         this.background.width = this.game.width;
         this.game.add.text(100, 0, "Everything you see is a Placeholder");
-        this.platforms = this.game.add.group();
         this.platforms.enableBody = true;
         var ground = this.platforms.create(0, this.game.height, "floor");
         ground.y -= ground.height;
@@ -1122,12 +1205,9 @@ var Level0 = /** @class */ (function (_super) {
         this.platforms.forEach(function (platform) {
             platform.body.immovable = true;
         });
-        this.enemies = this.game.add.group();
-        this.npcs = this.game.add.group();
         this.npcs.add(new RogueNpc(this.game, 600, ground.y - ground.height));
-        this.bonfires = this.game.add.group();
         this.game.time.advancedTiming = true;
-        this.game.physics.enable(ground, Phaser.Physics.ARCADE);
+        this.game.physics.enable(this.platforms, Phaser.Physics.ARCADE);
     };
     Level0.prototype.create = function () {
         this.game.stage.backgroundColor = this.background;
@@ -1140,78 +1220,19 @@ var Level0 = /** @class */ (function (_super) {
         this.addPlayerToEnemies();
         this.game.physics.startSystem(Phaser.Physics.ARCADE);
     };
-    Level0.prototype.update = function () {
-        this.game.physics.arcade.collide(this.player, this.platforms);
-        this.game.physics.arcade.collide(this.npcs, this.platforms);
-        this.game.physics.arcade.collide(this.enemies, this.platforms);
-        this.game.physics.arcade.collide(this.bonfires, this.platforms);
-        this.playerFacingNpc();
-        this.playerFacingBonfire();
-        if (this.debugMode) {
-            this.debug();
-        }
-    };
-    Level0.prototype.addPlayerToNpcs = function () {
-        for (var ii = 0; ii < this.npcs.children.length; ii++) {
-            this.npcs.children[ii].player = this.player;
-        }
-    };
-    Level0.prototype.addPlayerToEnemies = function () {
-        for (var ii = 0; ii < this.enemies.children.length; ii++) {
-            this.enemies.children[ii].player = this.player;
-        }
-    };
-    Level0.prototype.playerFacingNpc = function () {
-        for (var ii = 0; ii < this.npcs.children.length; ii++) {
-            if (this.game.physics.arcade.overlap(this.player, this.npcs.children[ii])) {
-                this.npcs.children[ii].canInteract = true;
-                this.player.facingNpc = this.npcs.children[ii];
-            }
-            else {
-                this.npcs.children[ii].canInteract = false;
-                this.player.facingNpc = null;
-            }
-        }
-    };
-    Level0.prototype.playerFacingBonfire = function () {
-        for (var ii = 0; ii < this.bonfires.children.length; ii++) {
-            if (this.game.physics.arcade.overlap(this.player, this.bonfires.children[ii])) {
-                this.bonfires.children[ii].canInteract = true;
-                this.player.facingBonfire = this.bonfires.children[ii];
-            }
-            else {
-                this.bonfires.children[ii].canInteract = false;
-                this.player.facingBonfire = null;
-            }
-        }
-    };
-    Level0.prototype.debug = function () {
-        var _this = this;
-        this.game.debug.body(this.player);
-        this.game.debug.physicsGroup(this.player.hitBoxes);
-        this.npcs.forEach(function (v) {
-            _this.game.debug.body(v);
-            _this.game.debug.physicsGroup(v.hitBoxes);
-        });
-        this.enemies.forEach(function (v) {
-            _this.game.debug.body(v);
-            _this.game.debug.physicsGroup(v.hitBoxes);
-        });
-    };
     return Level0;
-}(Phaser.State));
+}(MasterLevel));
+/// <reference path="./masterLevel.ts"/>
 var Level1 = /** @class */ (function (_super) {
     __extends(Level1, _super);
     function Level1() {
         var _this = _super !== null && _super.apply(this, arguments) || this;
         _this.levelNumber = levelsEnum.level1;
-        _this.playerStorage = JSON.parse(window.localStorage.getItem("player"));
-        _this.debugMode = false;
         return _this;
     }
     Level1.prototype.preload = function () {
+        this.addGroups();
         this.background = 0x49801;
-        this.platforms = this.game.add.group();
         this.platforms.enableBody = true;
         var ground = this.platforms.create(0, this.game.height, "floor");
         ground.y -= ground.height;
@@ -1222,7 +1243,6 @@ var Level1 = /** @class */ (function (_super) {
         wall.height = this.game.height - wall.height * 2 - ceiling.height * 2;
         var wall2 = this.platforms.create(this.game.width - wall.width, ceiling.height, "wall");
         wall2.height = this.game.height - wall2.height * 2 - ceiling.height * 2;
-        this.gates = this.game.add.group();
         this.gates.enableBody = true;
         this.gates.add(new Gate(this.game, wall.x, wall.height));
         this.gates.add(new Gate(this.game, wall2.x, wall2.height));
@@ -1232,11 +1252,8 @@ var Level1 = /** @class */ (function (_super) {
         this.gates.forEach(function (platform) {
             platform.body.immovable = true;
         });
-        this.enemies = this.game.add.group();
         this.enemies.add(new RogueEnemy(this.game, 600, ground.y - ground.height));
         this.enemies.add(new AdventurerEnemy(this.game, 300, ground.y - ground.height * 2));
-        this.npcs = this.game.add.group();
-        this.bonfires = this.game.add.group();
         this.bonfires.add(new Bonfire(this.game, 500, ground.y - ground.height));
         this.physics.enable(this.platforms, Phaser.Physics.ARCADE);
         this.physics.enable(this.gates, Phaser.Physics.ARCADE);
@@ -1251,81 +1268,8 @@ var Level1 = /** @class */ (function (_super) {
         this.addPlayerToNpcs();
         this.addPlayerToGates();
     };
-    Level1.prototype.update = function () {
-        this.game.physics.arcade.collide(this.player, this.platforms);
-        this.game.physics.arcade.collide(this.enemies, this.platforms);
-        this.game.physics.arcade.collide(this.bonfires, this.platforms);
-        this.game.physics.arcade.collide(this.player, this.gates);
-        this.game.physics.arcade.collide(this.enemies, this.gates);
-        this.playerFacingBonfire();
-        this.playerFacingNpc();
-        if (this.debugMode) {
-            this.debug();
-        }
-    };
-    Level1.prototype.addPlayerToNpcs = function () {
-        for (var ii = 0; ii < this.npcs.children.length; ii++) {
-            this.npcs.children[ii].player = this.player;
-        }
-    };
-    Level1.prototype.addPlayerToGates = function () {
-        for (var ii = 0; ii < this.gates.children.length; ii++) {
-            this.gates.children[ii].player = this.player;
-        }
-    };
-    Level1.prototype.addPlayerToEnemies = function () {
-        for (var ii = 0; ii < this.enemies.children.length; ii++) {
-            this.enemies.children[ii].player = this.player;
-        }
-    };
-    Level1.prototype.playerFacingNpc = function () {
-        for (var ii = 0; ii < this.npcs.children.length; ii++) {
-            if (this.game.physics.arcade.overlap(this.player, this.npcs.children[ii])) {
-                this.npcs.children[ii].canInteract = true;
-                this.player.facingNpc = this.npcs.children[ii];
-            }
-            else {
-                this.npcs.children[ii].canInteract = false;
-                this.player.facingNpc = null;
-            }
-        }
-    };
-    Level1.prototype.playerFacingBonfire = function () {
-        for (var ii = 0; ii < this.bonfires.children.length; ii++) {
-            if (this.game.physics.arcade.overlap(this.player, this.bonfires.children[ii])) {
-                this.bonfires.children[ii].canInteract = true;
-                this.player.facingBonfire = this.bonfires.children[ii];
-            }
-            else {
-                this.bonfires.children[ii].canInteract = false;
-                this.player.facingBonfire = null;
-            }
-        }
-    };
-    Level1.prototype.roomIsClear = function () {
-        if (this.enemies.children.length === 0) {
-            for (var ii = 0; ii < this.gates.children.length; ii++) {
-                this.gates.children[ii].roomIsClear = true;
-            }
-            return true;
-        }
-        return false;
-    };
-    Level1.prototype.debug = function () {
-        var _this = this;
-        this.game.debug.body(this.player);
-        this.game.debug.physicsGroup(this.player.hitBoxes);
-        this.npcs.forEach(function (v) {
-            _this.game.debug.body(v);
-            _this.game.debug.physicsGroup(v.hitBoxes);
-        });
-        this.enemies.forEach(function (v) {
-            _this.game.debug.body(v);
-            _this.game.debug.physicsGroup(v.hitBoxes);
-        });
-    };
     return Level1;
-}(Phaser.State));
+}(MasterLevel));
 var MasterNpc = /** @class */ (function (_super) {
     __extends(MasterNpc, _super);
     function MasterNpc(game, x, y, key, frame) {
@@ -1443,6 +1387,24 @@ var MasterNpc = /** @class */ (function (_super) {
         _this.addChild(_this.hitBoxes);
         return _this;
     }
+    MasterNpc.prototype.stopMovingTo = function () {
+        if (this.npcState === npcStateEnum.movingWalk) {
+            if (this.game.physics.arcade.distanceToXY(this, this.targetX, this.targetY) < 5) {
+                this.x = this.targetX;
+                this.y = this.targetY;
+                this.body.velocity.setTo(0, 0);
+                this.npcState = npcStateEnum.idle;
+            }
+        }
+    };
+    MasterNpc.prototype.checkForGettingHit = function () {
+        if (this.player && this.player.playerState === playerStateEnum.attack1) {
+            if (this.game.physics.arcade.overlap(this, this.player.hitBox1)) {
+                this.friendly = false;
+                this.takeDamage(this.player.stats.attack * 50, this.player.x);
+            }
+        }
+    };
     MasterNpc.prototype.updateHitbox = function () {
         var _this = this;
         this.hitBoxes.forEach(function (v) {
@@ -1564,9 +1526,6 @@ var MasterNpc = /** @class */ (function (_super) {
                 this.npcDialogueLine = this.npcDialogue.length - 1;
             }
             this.canInteractText.setText(this.npcDialogue[this.npcDialogueLine]);
-            if (this.npcDialogueLine >= this.npcDialogue.length - 1) {
-                this.friendly = false;
-            }
         }
         else if (!this.canInteract) {
             this.canInteractText.setText("");
@@ -1603,7 +1562,9 @@ var MasterNpc = /** @class */ (function (_super) {
         }
     };
     MasterNpc.prototype.idle = function () {
-        this.npcState = npcStateEnum.idle;
+        if (this.canIdle[this.npcState]) {
+            this.npcState = npcStateEnum.idle;
+        }
     };
     return MasterNpc;
 }(Phaser.Sprite));
@@ -1677,50 +1638,25 @@ var RogueNpc = /** @class */ (function (_super) {
         this.animations.play(this.npcAnimations[this.npcState]);
         if (!this.friendly) {
             this.handleInput();
-        }
-        if (!this.friendly) {
+            this.stopMovingTo();
+            this.idle();
             this.canInteract = false;
         }
         this.interaction();
-        this.checkForHit();
+        this.checkForHitting();
+        this.checkForGettingHit();
         this.handleDeath();
         this.updateHitbox();
     };
-    RogueNpc.prototype.updateHitbox = function () {
-        var _this = this;
-        this.hitBoxes.forEach(function (v) {
-            if (_this.width < 0) {
-                v.scale.setTo(-1, 1);
-            }
-            else {
-                v.scale.setTo(1, 1);
-            }
-        });
-    };
-    RogueNpc.prototype.checkForHit = function () {
+    RogueNpc.prototype.checkForHitting = function () {
         if (this.animations.currentAnim.name === "attack1" &&
             this.animations.frame >= 34 &&
             this.animations.frame <= 36 &&
             this.game.physics.arcade.overlap(this.hitBox1, this.player)) {
             this.player.takeDamage(this.stats.attack * 50, this.x);
         }
-        if (this.player && this.player.playerState === playerStateEnum.attack1) {
-            if (this.game.physics.arcade.overlap(this, this.player.hitBox1)) {
-                this.friendly = false;
-                this.takeDamage(this.player.stats.attack * 50, this.player.x);
-            }
-        }
     };
-    // tslint:disable-next-line:cyclomatic-complexity
     RogueNpc.prototype.handleInput = function () {
-        if (this.npcState === npcStateEnum.movingWalk) {
-            if (this.game.physics.arcade.distanceToXY(this, this.targetX, this.targetY) < 5) {
-                this.x = this.targetX;
-                this.y = this.targetY;
-                this.body.velocity.setTo(0, 0);
-                this.npcState = npcStateEnum.idle;
-            }
-        }
         if (this.player) {
             var distance = this.game.physics.arcade.distanceBetween(this, this.player);
             if (distance < Math.abs(this.hitBox1.width) && this.canAttack[this.npcState]) {
@@ -1730,8 +1666,26 @@ var RogueNpc = /** @class */ (function (_super) {
                 this.chase();
             }
         }
-        if (this.canIdle[this.npcState]) {
-            this.idle();
+    };
+    RogueNpc.prototype.interaction = function () {
+        if (!this.canInteractText) {
+            this.canInteractText = this.game.add.text(this.x - this.width, this.y - this.height, "", this.DialogueStyle);
+            this.canInteractText.setTextBounds(30, 20, 0, 0);
+        }
+        if (this.canInteract) {
+            if (this.npcDialogueLine >= this.npcDialogue.length) {
+                this.npcDialogueLine = this.npcDialogue.length - 1;
+            }
+            this.canInteractText.setText(this.npcDialogue[this.npcDialogueLine]);
+            if (this.npcDialogueLine >= this.npcDialogue.length - 1) {
+                this.friendly = false;
+            }
+        }
+        else if (!this.canInteract) {
+            this.canInteractText.setText("");
+            if (this.npcDialogueLine > 0) {
+                this.npcDialogueLine = 1;
+            }
         }
     };
     return RogueNpc;

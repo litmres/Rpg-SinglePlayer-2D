@@ -58,26 +58,20 @@ class RogueEnemy extends MasterEnemy {
 
         if (!this.friendly) {
             this.handleInput();
+            this.stopMovingTo();
+            this.idle();
         }
 
-        this.checkForHit();
+        this.checkForHitting();
+
+        this.checkForGettingHit();
 
         this.handleDeath();
 
         this.updateHitbox();
     }
 
-    updateHitbox() {
-        this.hitBoxes.forEach((v: Phaser.Sprite) => {
-            if (this.width < 0) {
-                v.scale.setTo(-1, 1);
-            } else {
-                v.scale.setTo(1, 1);
-            }
-        });
-    }
-
-    checkForHit() {
+    checkForHitting() {
         if (this.animations.currentAnim.name === "attack1" &&
             this.animations.frame >= 34 &&
             this.animations.frame <= 36 &&
@@ -85,25 +79,9 @@ class RogueEnemy extends MasterEnemy {
         ) {
             this.player.takeDamage(this.stats.attack * 20, this.x);
         }
-
-        if (this.player && this.player.playerState === playerStateEnum.attack1) {
-            if (this.game.physics.arcade.overlap(this, this.player.hitBox1)) {
-                this.takeDamage(this.player.stats.attack * 50, this.player.x);
-            }
-        }
     }
 
-    // tslint:disable-next-line:cyclomatic-complexity
     handleInput() {
-        if (this.enemyState === enemyStateEnum.movingWalk) {
-            if (this.game.physics.arcade.distanceToXY(this, this.targetX, this.targetY) < 5) {
-                this.x = this.targetX;
-                this.y = this.targetY;
-                this.body.velocity.setTo(0, 0);
-                this.enemyState = enemyStateEnum.idle;
-            }
-        }
-
         if (this.player) {
             const distance = this.game.physics.arcade.distanceBetween(this, this.player);
             if (distance < Math.abs(this.hitBox1.width) && this.canAttack[this.enemyState]) {
@@ -111,10 +89,6 @@ class RogueEnemy extends MasterEnemy {
             } else if (distance < this.aggroRange && this.canChase[this.enemyState]) {
                 this.chase();
             }
-        }
-
-        if (this.canIdle[this.enemyState]) {
-            this.idle();
         }
     }
 }

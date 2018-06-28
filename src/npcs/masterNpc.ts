@@ -121,6 +121,26 @@ class MasterNpc extends Phaser.Sprite {
         this.addChild(this.hitBoxes);
     }
 
+    stopMovingTo() {
+        if (this.npcState === npcStateEnum.movingWalk) {
+            if (this.game.physics.arcade.distanceToXY(this, this.targetX, this.targetY) < 5) {
+                this.x = this.targetX;
+                this.y = this.targetY;
+                this.body.velocity.setTo(0, 0);
+                this.npcState = npcStateEnum.idle;
+            }
+        }
+    }
+
+    checkForGettingHit() {
+        if (this.player && this.player.playerState === playerStateEnum.attack1) {
+            if (this.game.physics.arcade.overlap(this, this.player.hitBox1)) {
+                this.friendly = false;
+                this.takeDamage(this.player.stats.attack * 50, this.player.x);
+            }
+        }
+    }
+
     updateHitbox() {
         this.hitBoxes.forEach((v: Phaser.Sprite) => {
             if (this.width < 0) {
@@ -257,9 +277,6 @@ class MasterNpc extends Phaser.Sprite {
                 this.npcDialogueLine = this.npcDialogue.length - 1;
             }
             this.canInteractText.setText(this.npcDialogue[this.npcDialogueLine]);
-            if (this.npcDialogueLine >= this.npcDialogue.length - 1) {
-                this.friendly = false;
-            }
         } else if (!this.canInteract) {
             this.canInteractText.setText("");
             if (this.npcDialogueLine > 0) {
@@ -300,6 +317,8 @@ class MasterNpc extends Phaser.Sprite {
     }
 
     idle() {
-        this.npcState = npcStateEnum.idle;
+        if (this.canIdle[this.npcState]) {
+            this.npcState = npcStateEnum.idle;
+        }
     }
 }

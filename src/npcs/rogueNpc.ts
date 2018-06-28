@@ -73,32 +73,23 @@ class RogueNpc extends MasterNpc {
 
         if (!this.friendly) {
             this.handleInput();
-        }
-
-        if (!this.friendly) {
+            this.stopMovingTo();
+            this.idle();
             this.canInteract = false;
         }
 
         this.interaction();
 
-        this.checkForHit();
+        this.checkForHitting();
+
+        this.checkForGettingHit();
 
         this.handleDeath();
 
         this.updateHitbox();
     }
 
-    updateHitbox() {
-        this.hitBoxes.forEach((v: Phaser.Sprite) => {
-            if (this.width < 0) {
-                v.scale.setTo(-1, 1);
-            } else {
-                v.scale.setTo(1, 1);
-            }
-        });
-    }
-
-    checkForHit() {
+    checkForHitting() {
         if (this.animations.currentAnim.name === "attack1" &&
             this.animations.frame >= 34 &&
             this.animations.frame <= 36 &&
@@ -106,26 +97,9 @@ class RogueNpc extends MasterNpc {
         ) {
             this.player.takeDamage(this.stats.attack * 50, this.x);
         }
-
-        if (this.player && this.player.playerState === playerStateEnum.attack1) {
-            if (this.game.physics.arcade.overlap(this, this.player.hitBox1)) {
-                this.friendly = false;
-                this.takeDamage(this.player.stats.attack * 50, this.player.x);
-            }
-        }
     }
 
-    // tslint:disable-next-line:cyclomatic-complexity
     handleInput() {
-        if (this.npcState === npcStateEnum.movingWalk) {
-            if (this.game.physics.arcade.distanceToXY(this, this.targetX, this.targetY) < 5) {
-                this.x = this.targetX;
-                this.y = this.targetY;
-                this.body.velocity.setTo(0, 0);
-                this.npcState = npcStateEnum.idle;
-            }
-        }
-
         if (this.player) {
             const distance = this.game.physics.arcade.distanceBetween(this, this.player);
             if (distance < Math.abs(this.hitBox1.width) && this.canAttack[this.npcState]) {
@@ -134,9 +108,26 @@ class RogueNpc extends MasterNpc {
                 this.chase();
             }
         }
+    }
 
-        if (this.canIdle[this.npcState]) {
-            this.idle();
+    interaction() {
+        if (!this.canInteractText) {
+            this.canInteractText = this.game.add.text(this.x - this.width, this.y - this.height, "", this.DialogueStyle);
+            this.canInteractText.setTextBounds(30, 20, 0, 0);
+        }
+        if (this.canInteract) {
+            if (this.npcDialogueLine >= this.npcDialogue.length) {
+                this.npcDialogueLine = this.npcDialogue.length - 1;
+            }
+            this.canInteractText.setText(this.npcDialogue[this.npcDialogueLine]);
+            if (this.npcDialogueLine >= this.npcDialogue.length - 1) {
+                this.friendly = false;
+            }
+        } else if (!this.canInteract) {
+            this.canInteractText.setText("");
+            if (this.npcDialogueLine > 0) {
+                this.npcDialogueLine = 1;
+            }
         }
     }
 }
