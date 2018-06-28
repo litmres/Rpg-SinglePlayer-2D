@@ -28,6 +28,15 @@ class MasterLevel extends Phaser.State {
         }
     }
 
+    enablePhysics() {
+        this.physics.enable(this.platforms, Phaser.Physics.ARCADE);
+        this.physics.enable(this.gates, Phaser.Physics.ARCADE);
+    }
+
+    updateFpsTimer() {
+        this.game.time.advancedTiming = true;
+    }
+
     addGroups() {
         this.enemies = this.game.add.group();
         this.platforms = this.game.add.group();

@@ -1103,6 +1103,13 @@ var MasterLevel = /** @class */ (function (_super) {
             this.debug();
         }
     };
+    MasterLevel.prototype.enablePhysics = function () {
+        this.physics.enable(this.platforms, Phaser.Physics.ARCADE);
+        this.physics.enable(this.gates, Phaser.Physics.ARCADE);
+    };
+    MasterLevel.prototype.updateFpsTimer = function () {
+        this.game.time.advancedTiming = true;
+    };
     MasterLevel.prototype.addGroups = function () {
         this.enemies = this.game.add.group();
         this.platforms = this.game.add.group();
@@ -1206,8 +1213,8 @@ var Level0 = /** @class */ (function (_super) {
             platform.body.immovable = true;
         });
         this.npcs.add(new RogueNpc(this.game, 600, ground.y - ground.height));
-        this.game.time.advancedTiming = true;
-        this.game.physics.enable(this.platforms, Phaser.Physics.ARCADE);
+        this.updateFpsTimer();
+        this.enablePhysics();
     };
     Level0.prototype.create = function () {
         this.game.stage.backgroundColor = this.background;
@@ -1255,8 +1262,8 @@ var Level1 = /** @class */ (function (_super) {
         this.enemies.add(new RogueEnemy(this.game, 600, ground.y - ground.height));
         this.enemies.add(new AdventurerEnemy(this.game, 300, ground.y - ground.height * 2));
         this.bonfires.add(new Bonfire(this.game, 500, ground.y - ground.height));
-        this.physics.enable(this.platforms, Phaser.Physics.ARCADE);
-        this.physics.enable(this.gates, Phaser.Physics.ARCADE);
+        this.updateFpsTimer();
+        this.enablePhysics();
     };
     Level1.prototype.create = function () {
         this.game.stage.backgroundColor = this.background;

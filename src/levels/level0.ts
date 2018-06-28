@@ -24,9 +24,9 @@ class Level0 extends MasterLevel {
 
         this.npcs.add(new RogueNpc(this.game, 600, ground.y - ground.height));
 
-        this.game.time.advancedTiming = true;
+        this.updateFpsTimer();
 
-        this.game.physics.enable(this.platforms, Phaser.Physics.ARCADE);
+        this.enablePhysics();
     }
 
     create() {
