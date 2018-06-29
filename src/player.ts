@@ -132,7 +132,7 @@ class Player extends Phaser.Sprite {
             stamina: this.maxHealth,
             attack: 1,
             defense: 1,
-            movespeed: 150,
+            movespeed: 130,
             luck: 1,
         };
         this.controls = {
@@ -367,13 +367,13 @@ class Player extends Phaser.Sprite {
     EnterNextLevel() {
         this.scale.setTo(1, 1);
         this.playerState = playerStateEnum.autoWalkTo;
-        this.movePlayerTo(this.game.width + this.width, this.y, 0.2, 700, playerStateEnum.idle, "nextLevel");
+        this.movePlayerTo(this.game.width + this.width, this.y, this.stats.movespeed, 700, playerStateEnum.idle, "nextLevel");
     }
 
     EnterPreviousLevel() {
         this.scale.setTo(-1, 1);
         this.playerState = playerStateEnum.autoWalkTo;
-        this.movePlayerTo(this.width, this.y, 0.2, 700, playerStateEnum.idle, "previousLevel");
+        this.movePlayerTo(this.width, this.y, this.stats.movespeed, 700, playerStateEnum.idle, "previousLevel");
     }
     /*
     EnterThisFromPreviousLevel(){
