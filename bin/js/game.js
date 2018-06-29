@@ -1290,6 +1290,7 @@ var Level0 = /** @class */ (function (_super) {
         this.background = this.game.add.image(0, 0, "darkbackground");
         this.background.height = this.game.height;
         this.background.width = this.game.width;
+        this.game.world.sendToBack(this.background);
         this.game.add.text(100, 0, "Everything you see is a Placeholder");
         this.platforms.enableBody = true;
         var ground = this.platforms.create(0, this.game.height, "floor");

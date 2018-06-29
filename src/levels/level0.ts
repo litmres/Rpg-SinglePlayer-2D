@@ -9,6 +9,7 @@ class Level0 extends MasterLevel {
         this.background = this.game.add.image(0, 0, "darkbackground");
         this.background.height = this.game.height;
         this.background.width = this.game.width;
+        this.game.world.sendToBack(this.background);
 
         this.game.add.text(100, 0, "Everything you see is a Placeholder");
 
