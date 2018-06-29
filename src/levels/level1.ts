@@ -38,8 +38,8 @@ class Level1 extends MasterLevel {
         });
 
         this.enemies.add(new RogueEnemy(this.game, 600, ground.y - ground.height));
-
-        this.enemies.add(new AdventurerEnemy(this.game, 300, ground.y - ground.height * 2));
+        this.enemies.add(new KoboldEnemy(this.game, 300, ground.y - ground.height * 2));
+        this.enemies.add(new AdventurerEnemy(this.game, 500, ground.y - ground.height * 2));
 
         this.bonfires.add(new Bonfire(this.game, 500, ground.y - ground.height));
 

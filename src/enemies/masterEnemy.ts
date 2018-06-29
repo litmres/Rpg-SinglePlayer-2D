@@ -5,6 +5,9 @@ class MasterEnemy extends Phaser.Sprite {
     player: Player;
     targetX = 0;
     targetY = 0;
+    defaultScaleWidth = 1;
+    defaultScaleHeight = 1;
+    defaultDirection = 1;
     maxWanderRange = 100;
     spawnPositionX: number;
     spawnPositionY: number;
@@ -100,7 +103,7 @@ class MasterEnemy extends Phaser.Sprite {
             stamina: this.maxHealth,
             attack: 1,
             defense: 1,
-            movespeed: 120,
+            movespeed: 150,
             luck: 1,
         };
         this.hitBoxes = this.game.add.group();
@@ -122,9 +125,9 @@ class MasterEnemy extends Phaser.Sprite {
     updateHitbox() {
         this.hitBoxes.forEach((v: Phaser.Sprite) => {
             if (this.width < 0) {
-                v.scale.setTo(-1, 1);
+                v.scale.setTo(this.defaultDirection * this.defaultScaleWidth * -1, this.defaultScaleHeight);
             } else {
-                v.scale.setTo(1, 1);
+                v.scale.setTo(this.defaultDirection * this.defaultScaleWidth, this.defaultScaleHeight);
             }
         });
     }
@@ -158,11 +161,11 @@ class MasterEnemy extends Phaser.Sprite {
     knockBack(objPositionX: number) {
         this.enemyState = enemyStateEnum.knockBack;
         if (this.x > objPositionX) {
-            this.scale.setTo(-1, 1);
-            this.moveNpcTowards(this.x - this.width, this.y, 0.2, 700, enemyStateEnum.idle);
+            this.updateScale(-1);
+            this.moveNpcTowards(this.x - this.width * this.defaultDirection, this.y, 0.2, 700, enemyStateEnum.idle);
         } else {
-            this.scale.setTo(1, 1);
-            this.moveNpcTowards(this.x - this.width, this.y, 0.2, 700, enemyStateEnum.idle);
+            this.updateScale(1);
+            this.moveNpcTowards(this.x - this.width * this.defaultDirection, this.y, 0.2, 700, enemyStateEnum.idle);
         }
     }
 
@@ -213,9 +216,9 @@ class MasterEnemy extends Phaser.Sprite {
 
     attack() {
         if (this.player.x > this.x) {
-            this.scale.setTo(1, 1);
+            this.scale.setTo(this.defaultDirection * this.defaultScaleWidth, this.defaultScaleHeight);
         } else {
-            this.scale.setTo(-1, 1);
+            this.scale.setTo(this.defaultDirection * this.defaultScaleWidth * -1, this.defaultScaleHeight);
         }
         this.enemyState = enemyStateEnum.attack1;
     }
@@ -223,9 +226,9 @@ class MasterEnemy extends Phaser.Sprite {
     chase() {
         this.enemyState = enemyStateEnum.movingChase;
         if (this.player.x > this.x) {
-            this.scale.setTo(1, 1);
+            this.updateScale(1);
         } else {
-            this.scale.setTo(-1, 1);
+            this.updateScale(-1);
         }
         this.game.physics.arcade.moveToXY(this, this.player.x, this.y, this.stats.movespeed);
     }
@@ -256,9 +259,9 @@ class MasterEnemy extends Phaser.Sprite {
         this.targetY = toY;
 
         if (this.targetX > this.x) {
-            this.scale.setTo(1, 1);
+            this.updateScale(1);
         } else {
-            this.scale.setTo(-1, 1);
+            this.updateScale(-1);
         }
     }
 
@@ -282,6 +285,10 @@ class MasterEnemy extends Phaser.Sprite {
         if (this.canIdle[this.enemyState]) {
             this.enemyState = enemyStateEnum.idle;
         }
+    }
+
+    updateScale(direction = 1) {
+        this.scale.setTo(this.defaultDirection * this.defaultScaleWidth * direction, this.defaultScaleHeight);
     }
 }
 

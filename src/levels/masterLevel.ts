@@ -9,7 +9,7 @@ class MasterLevel extends Phaser.State {
     npcs!: Phaser.Group;
     bonfires!: Phaser.Group;
     gates!: Phaser.Group;
-    debugMode = false;
+    debugMode = true;
 
     update() {
         this.game.physics.arcade.collide(this.player, this.platforms);
