@@ -75,6 +75,7 @@ class Player extends Phaser.Sprite {
     stats: playerStatsInterface;
     playerHealthBar: any = null;
     playerStaminaBar: any = null;
+    playerOverlay: any = null;
     bodyWidth: number;
     bodyHeight: number;
     controls: any;
@@ -208,9 +209,7 @@ class Player extends Phaser.Sprite {
         this.hitBox1.name = "attack1";
 
 
-
-        this.healthBar();
-        this.staminaBar();
+        this.overlay();
     }
 
     update() {
@@ -320,7 +319,7 @@ class Player extends Phaser.Sprite {
         }
 
         if (this.controls.I.justPressed()) {
-            new Inventory(this.game, this.game.camera.x + this.game.camera.width / 2, this.game.camera.y + this.game.camera.height / 2, this);
+            new Inventory(this.game, this.game.camera.x, this.game.camera.y, this);
             console.log(this.equipment);
         }
     }
@@ -445,31 +444,46 @@ class Player extends Phaser.Sprite {
         }
     }
 
+    overlay() {
+        if (!this.playerOverlay) {
+            this.playerOverlay = this.game.add.image(50, 50, "overlay");
+            this.healthBar();
+            this.staminaBar();
+            this.game.world.bringToTop(this.playerOverlay);
+        }
+    }
+
     healthBar() {
         if (!this.playerHealthBar) {
-            this.playerHealthBar = this.game.add.sprite(50, 50, "healthbar");
-            this.playerHealthBar.height = 15;
+            const x = this.playerOverlay.x + 52;
+            const y = this.playerOverlay.y + 7;
+            this.playerHealthBar = this.game.add.image(x, y, "healthbar");
+            this.playerHealthBar.height = 30;
+            this.playerHealthBar.maxWidth = 300;
+            this.playerHealthBar.width = 300;
         }
     }
 
     updateHealthBar() {
         if (this.stats) {
-            this.playerHealthBar.width = this.stats.health * 2;
+            this.playerHealthBar.width = this.playerHealthBar.maxWidth / this.stats.maxHealth * this.stats.health;
         }
     }
 
     updateStaminaBar() {
         if (this.stats) {
-            this.playerStaminaBar.width = this.stats.stamina * 2;
+            this.playerStaminaBar.width = this.playerHealthBar.maxWidth / this.stats.maxStamina * this.stats.stamina;
         }
     }
 
     staminaBar() {
         if (!this.playerStaminaBar && this.playerHealthBar) {
-            const x = this.playerHealthBar.x;
-            const y = this.playerHealthBar.y + this.playerHealthBar.width;
-            this.playerStaminaBar = this.game.add.sprite(x, y, "staminabar");
-            this.playerStaminaBar.height = 15;
+            const x = this.playerOverlay.x + 52;
+            const y = this.playerOverlay.y + 43;
+            this.playerStaminaBar = this.game.add.image(x, y, "staminabar");
+            this.playerStaminaBar.height = 10;
+            this.playerStaminaBar.maxWidth = 288;
+            this.playerStaminaBar.width = 288;
         }
     }
 

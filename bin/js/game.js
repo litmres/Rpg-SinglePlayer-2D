@@ -836,41 +836,64 @@ var Inventory = /** @class */ (function (_super) {
             ringSlots: [],
             beltSlots: [],
         };
+        _this.anchor.setTo(0.5, 0.5);
         _this.player = player;
+        _this.x = _this.game.camera.x + _this.game.camera.width / 2;
+        _this.y = _this.game.camera.y + _this.game.camera.height / 2;
         _this.game.input.keyboard.addKey(Phaser.Keyboard.I).onDown.addOnce(function () {
             _this.destroyInventory();
         });
-        _this.backgroundImage = _this.game.add.image(0, 0, "inventory");
+        _this.backgroundImage = _this.game.add.image(_this.x, _this.y, "inventory");
+        _this.backgroundImage.anchor.setTo(0.5, 0.5);
         _this.backgroundImage.width = _this.game.camera.width / 2;
         _this.backgroundImage.height = _this.game.camera.height / 2;
-        _this.addRingSlots(_this.InventoryEquipment.ringSlots, 4, _this.game.add.image(0, 0, "ringslot"));
-        _this.addBeltSlots(_this.InventoryEquipment.beltSlots, 4, _this.game.add.image(0, 0, "beltslot"));
+        _this.addRingSlots(_this.InventoryEquipment.ringSlots, 4);
+        _this.addBeltSlots(_this.InventoryEquipment.beltSlots, 4);
         return _this;
     }
-    Inventory.prototype.addRingSlots = function (obj, amount, image) {
+    Inventory.prototype.addRingSlots = function (obj, amount) {
         for (var ii = 0; ii < amount; ii++) {
+            var image = this.game.add.image(0, 0, "ringslot");
             obj.push({
                 backgroundImage: image,
                 item: this.player.equipment.equiptRings[ii],
-                x: 50,
-                y: 50,
                 trigger: function () {
                     console.log("hi");
                 }
             });
+            image.width = 30;
+            image.height = 30;
+            image.x = (this.backgroundImage.x - this.backgroundImage.width / 2) + ii * (image.width + 20) + 10;
+            image.y = this.backgroundImage.y;
+            image.inputEnabled = true;
+            if (obj[ii].item) {
+                var itemImage = this.game.add.image(image.x, image.y, "ringslot");
+                itemImage.width = image.width;
+                itemImage.height = image.height;
+                itemImage.events.onInputOver.add(this.showToolTip, this);
+                itemImage.events.onInputOut.add(this.hideToolTip, this);
+            }
+            image.events.onInputUp.add(obj[ii].trigger, this);
         }
     };
-    Inventory.prototype.addBeltSlots = function (obj, amount, image) {
+    Inventory.prototype.addBeltSlots = function (obj, amount) {
         for (var ii = 0; ii < amount; ii++) {
+            var image = this.game.add.image(0, 0, "beltslot");
             obj.push({
                 backgroundImage: image,
-                item: this.player.equipment.equiptRings[ii],
-                x: 80,
-                y: 80,
+                item: this.player.equipment.equiptBelts[ii],
                 trigger: function () {
-                    console.log("hi");
+                    console.log("bye");
                 }
             });
+            image.width = 30;
+            image.height = 30;
+            image.x = (this.backgroundImage.x - this.backgroundImage.width / 2) + ii * (image.width + 20) + 10;
+            image.y = this.backgroundImage.y + image.height * 2;
+            image.inputEnabled = true;
+            image.events.onInputOver.add(this.showToolTip, this);
+            image.events.onInputOut.add(this.hideToolTip, this);
+            image.events.onInputUp.add(obj[ii].trigger, this);
         }
     };
     Inventory.prototype.showToolTip = function () {
@@ -1663,6 +1686,7 @@ var Player = /** @class */ (function (_super) {
         });
         _this.playerHealthBar = null;
         _this.playerStaminaBar = null;
+        _this.playerOverlay = null;
         _this.currentRoom = 0;
         _this.EnterLevelHandler = {
             Next: false,
@@ -1780,8 +1804,7 @@ var Player = /** @class */ (function (_super) {
         _this.game.physics.enable(_this.hitBoxes, Phaser.Physics.ARCADE);
         _this.hitBox1.body.setSize(20, 10);
         _this.hitBox1.name = "attack1";
-        _this.healthBar();
-        _this.staminaBar();
+        _this.overlay();
         return _this;
     }
     Player.prototype.update = function () {
@@ -1879,7 +1902,7 @@ var Player = /** @class */ (function (_super) {
             new PauseMenu(this.game, 0, 0, this);
         }
         if (this.controls.I.justPressed()) {
-            new Inventory(this.game, this.game.camera.x + this.game.camera.width / 2, this.game.camera.y + this.game.camera.height / 2, this);
+            new Inventory(this.game, this.game.camera.x, this.game.camera.y, this);
             console.log(this.equipment);
         }
     };
@@ -1995,28 +2018,42 @@ var Player = /** @class */ (function (_super) {
             this.lastCheckPoint = this.currentRoom;
         }
     };
+    Player.prototype.overlay = function () {
+        if (!this.playerOverlay) {
+            this.playerOverlay = this.game.add.image(50, 50, "overlay");
+            this.healthBar();
+            this.staminaBar();
+            this.game.world.bringToTop(this.playerOverlay);
+        }
+    };
     Player.prototype.healthBar = function () {
         if (!this.playerHealthBar) {
-            this.playerHealthBar = this.game.add.sprite(50, 50, "healthbar");
-            this.playerHealthBar.height = 15;
+            var x = this.playerOverlay.x + 52;
+            var y = this.playerOverlay.y + 7;
+            this.playerHealthBar = this.game.add.image(x, y, "healthbar");
+            this.playerHealthBar.height = 30;
+            this.playerHealthBar.maxWidth = 300;
+            this.playerHealthBar.width = 300;
         }
     };
     Player.prototype.updateHealthBar = function () {
         if (this.stats) {
-            this.playerHealthBar.width = this.stats.health * 2;
+            this.playerHealthBar.width = this.playerHealthBar.maxWidth / this.stats.maxHealth * this.stats.health;
         }
     };
     Player.prototype.updateStaminaBar = function () {
         if (this.stats) {
-            this.playerStaminaBar.width = this.stats.stamina * 2;
+            this.playerStaminaBar.width = this.playerHealthBar.maxWidth / this.stats.maxStamina * this.stats.stamina;
         }
     };
     Player.prototype.staminaBar = function () {
         if (!this.playerStaminaBar && this.playerHealthBar) {
-            var x = this.playerHealthBar.x;
-            var y = this.playerHealthBar.y + this.playerHealthBar.width;
-            this.playerStaminaBar = this.game.add.sprite(x, y, "staminabar");
-            this.playerStaminaBar.height = 15;
+            var x = this.playerOverlay.x + 52;
+            var y = this.playerOverlay.y + 43;
+            this.playerStaminaBar = this.game.add.image(x, y, "staminabar");
+            this.playerStaminaBar.height = 10;
+            this.playerStaminaBar.maxWidth = 288;
+            this.playerStaminaBar.width = 288;
         }
     };
     Player.prototype.resetVelocity = function () {
@@ -2116,6 +2153,7 @@ var PreloadState = /** @class */ (function (_super) {
             fill: "#ffffff",
         });
         this.game.stage.backgroundColor = 0xB20059;
+        this.game.load.image("overlay", "bin/assets/UI/overlay.png");
         this.game.load.image("healthbar", "bin/assets/UI/healthbar.png");
         this.game.load.image("staminabar", "bin/assets/UI/staminabar.png");
         this.game.load.image("darkbackground", "bin/assets/backgrounds/background.png");

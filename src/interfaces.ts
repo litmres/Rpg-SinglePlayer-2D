@@ -29,8 +29,6 @@ interface ItemSlot {
 	backgroundImage: Phaser.Image;
 	item: any;
 	trigger: () => void;
-	x: number;
-	y: number;
 }
 
 interface InventoryEquipment {
