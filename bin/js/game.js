@@ -84,571 +84,6 @@ var SimpleGame = /** @class */ (function (_super) {
 window.onload = function () {
     var game = new SimpleGame();
 };
-var Player = /** @class */ (function (_super) {
-    __extends(Player, _super);
-    function Player(game, x, y) {
-        var _a, _b, _c, _d, _e;
-        var _this = _super.call(this, game, x, y, "player", 0) || this;
-        _this.playerState = playerStateEnum.idle;
-        _this.lastCheckPoint = levelsEnum.level0;
-        _this.invincible = false;
-        _this.canWalk = (_a = {},
-            _a[playerStateEnum.movingWalk] = true,
-            _a[playerStateEnum.movingFall] = false,
-            _a[playerStateEnum.idle] = true,
-            _a[playerStateEnum.attack1] = false,
-            _a[playerStateEnum.attack2] = false,
-            _a[playerStateEnum.attack3] = false,
-            _a[playerStateEnum.death] = false,
-            _a[playerStateEnum.sit] = false,
-            _a[playerStateEnum.sitDown] = false,
-            _a[playerStateEnum.standUp] = false,
-            _a[playerStateEnum.movingStartWalk] = true,
-            _a[playerStateEnum.autoWalkTo] = false,
-            _a[playerStateEnum.knockBack] = false,
-            _a);
-        _this.canIdle = (_b = {},
-            _b[playerStateEnum.movingWalk] = true,
-            _b[playerStateEnum.movingFall] = false,
-            _b[playerStateEnum.idle] = false,
-            _b[playerStateEnum.attack1] = false,
-            _b[playerStateEnum.attack2] = false,
-            _b[playerStateEnum.attack3] = false,
-            _b[playerStateEnum.death] = false,
-            _b[playerStateEnum.sit] = false,
-            _b[playerStateEnum.sitDown] = false,
-            _b[playerStateEnum.standUp] = false,
-            _b[playerStateEnum.movingStartWalk] = true,
-            _b[playerStateEnum.autoWalkTo] = false,
-            _b[playerStateEnum.knockBack] = false,
-            _b);
-        _this.canAttack = (_c = {},
-            _c[playerStateEnum.movingWalk] = true,
-            _c[playerStateEnum.movingFall] = false,
-            _c[playerStateEnum.idle] = true,
-            _c[playerStateEnum.attack1] = false,
-            _c[playerStateEnum.attack2] = false,
-            _c[playerStateEnum.attack3] = false,
-            _c[playerStateEnum.death] = false,
-            _c[playerStateEnum.sit] = false,
-            _c[playerStateEnum.sitDown] = false,
-            _c[playerStateEnum.standUp] = false,
-            _c[playerStateEnum.movingStartWalk] = true,
-            _c[playerStateEnum.autoWalkTo] = false,
-            _c[playerStateEnum.knockBack] = false,
-            _c);
-        _this.canSitDown = (_d = {},
-            _d[playerStateEnum.movingWalk] = true,
-            _d[playerStateEnum.movingFall] = false,
-            _d[playerStateEnum.idle] = true,
-            _d[playerStateEnum.attack1] = false,
-            _d[playerStateEnum.attack2] = false,
-            _d[playerStateEnum.attack3] = false,
-            _d[playerStateEnum.death] = false,
-            _d[playerStateEnum.sit] = false,
-            _d[playerStateEnum.sitDown] = false,
-            _d[playerStateEnum.standUp] = false,
-            _d[playerStateEnum.movingStartWalk] = true,
-            _d[playerStateEnum.autoWalkTo] = false,
-            _d[playerStateEnum.knockBack] = false,
-            _d);
-        _this.pauseMenu = {
-            backgroundImage: null,
-            continueGame: null,
-            loadGame: null,
-            options: null,
-            githubLink: null,
-        };
-        _this.fpsCounter = _this.game.add.text(_this.game.camera.x, 0, "FPS: " + _this.game.time.fps, {
-            font: "24px Arial",
-            fill: "#fff"
-        });
-        _this.playerHealthBar = null;
-        _this.playerStaminaBar = null;
-        _this.currentRoom = 0;
-        _this.EnterLevelHandler = {
-            Next: false,
-            Previous: false,
-            Text: null,
-            EnterText: "Press E to go to Next Level",
-            PreviousText: "Press E to go to Previous Level",
-        };
-        _this.playerAnimations = (_e = {},
-            _e[playerStateEnum.movingWalk] = "walk",
-            _e[playerStateEnum.movingFall] = "fall",
-            _e[playerStateEnum.idle] = "idle",
-            _e[playerStateEnum.attack1] = "attack1",
-            _e[playerStateEnum.attack2] = "attack2",
-            _e[playerStateEnum.attack3] = "attack3",
-            _e[playerStateEnum.death] = "death",
-            _e[playerStateEnum.sit] = "sit",
-            _e[playerStateEnum.sitDown] = "sitdown",
-            _e[playerStateEnum.standUp] = "standup",
-            _e[playerStateEnum.movingStartWalk] = "walk",
-            _e[playerStateEnum.autoWalkTo] = "walk",
-            _e[playerStateEnum.knockBack] = "knockback",
-            _e);
-        _this.DialogueStyle = {
-            font: "bold 10px Arial",
-            fill: "#fff",
-            boundsAlignH: "center",
-            boundsAlignV: "middle"
-        };
-        _this.anchor.setTo(0.5, 0);
-        //this.scale.setTo(1.5, 1.5);
-        _this.game.physics.arcade.enableBody(_this);
-        _this.game.add.existing(_this);
-        _this.body.gravity.y = 1000;
-        _this.body.collideWorldBounds = true;
-        _this.game.physics.enable(_this, Phaser.Physics.ARCADE);
-        _this.bodyWidth = 12;
-        _this.bodyHeight = 24;
-        _this.body.setSize(_this.bodyWidth / _this.scale.x, _this.bodyHeight / _this.scale.y, (_this.width - _this.bodyWidth) / 2 - 3, 32);
-        _this.stats = {
-            level: 1,
-            maxHealth: _this.maxHealth,
-            health: _this.maxHealth,
-            maxStamina: _this.maxHealth,
-            stamina: _this.maxHealth,
-            attack: 1,
-            defense: 1,
-            movespeed: 130,
-            luck: 1,
-        };
-        _this.controls = {
-            UP: _this.game.input.keyboard.addKey(Phaser.Keyboard.W),
-            DOWN: _this.game.input.keyboard.addKey(Phaser.Keyboard.S),
-            LEFT: _this.game.input.keyboard.addKey(Phaser.Keyboard.A),
-            RIGHT: _this.game.input.keyboard.addKey(Phaser.Keyboard.D),
-            E: _this.game.input.keyboard.addKey(Phaser.Keyboard.E),
-            ESC: _this.game.input.keyboard.addKey(Phaser.Keyboard.ESC),
-            P: _this.game.input.keyboard.addKey(Phaser.Keyboard.P),
-            LMB: _this.game.input.activePointer.leftButton,
-            RMB: _this.game.input.activePointer.rightButton,
-        };
-        _this.game.input.onDown.add(function (pointer, event) {
-            if (!_this.game.paused) {
-                _this.handleAttack();
-            }
-        });
-        //stop rightclick from opening a menu
-        _this.game.canvas.oncontextmenu = function (e) {
-            e.preventDefault();
-        };
-        _this.game.input.keyboard.addKeyCapture([
-            Phaser.Keyboard.W,
-            Phaser.Keyboard.A,
-            Phaser.Keyboard.S,
-            Phaser.Keyboard.D,
-            Phaser.Keyboard.E
-        ]);
-        _this.animations.add("idle", [24, 25, 26, 27], 10, false);
-        _this.animations.add("startwalk", [1, 2, 3], 10, false).onComplete.add(function () {
-            _this.animations.stop();
-            _this.playerState = playerStateEnum.movingWalk;
-        });
-        _this.animations.add("walk", [28, 29, 30, 31], 10, true);
-        _this.animations.add("attack1", [20, 21, 22, 23], 10, false).onComplete.add(function () {
-            _this.animations.stop();
-            _this.playerState = playerStateEnum.idle;
-        });
-        _this.animations.add("attack2", [24, 25, 26], 10, false).onComplete.add(function () {
-            _this.animations.stop();
-            _this.playerState = playerStateEnum.idle;
-        });
-        _this.animations.add("attack3", [27, 28, 29], 10, false).onComplete.add(function () {
-            _this.animations.stop();
-            _this.playerState = playerStateEnum.idle;
-        });
-        _this.animations.add("sitdown", [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], 10, false).onComplete.add(function () {
-            _this.animations.stop();
-            _this.savePlayer(_this.x);
-            _this.playerState = playerStateEnum.sit;
-        });
-        _this.animations.add("sit", [9], 3, false);
-        _this.animations.add("standup", [9, 8, 7, 6, 5, 4, 3, 2, 1, 0], 10, false).onComplete.add(function () {
-            _this.animations.stop();
-            _this.playerState = playerStateEnum.idle;
-        });
-        _this.animations.add("death", [71, 72, 73, 74, 75, 76, 78, 79, 80, 81, 81, 82, 83], 10, false).onComplete.add(function () {
-            _this.kill();
-            _this.game.state.start("title");
-        });
-        _this.animations.add("knockback", [83], 10, true);
-        _this.hitBoxes = _this.game.add.group();
-        _this.addChild(_this.hitBoxes);
-        _this.hitBox1 = _this.hitBoxes.create(0, _this.height / 1.5);
-        _this.game.physics.enable(_this.hitBoxes, Phaser.Physics.ARCADE);
-        _this.hitBox1.body.setSize(20, 10);
-        _this.hitBox1.name = "attack1";
-        _this.healthBar();
-        _this.staminaBar();
-        return _this;
-    }
-    Player.prototype.update = function () {
-        this.resetVelocity();
-        this.animations.play(this.playerAnimations[this.playerState]);
-        this.handleInput();
-        this.updateHealthBar();
-        this.updateStaminaBar();
-        this.handleEnteringLevel();
-        this.handleDeath();
-        this.updateHitbox();
-        this.fpsCounter.setText("FPS: " + this.game.time.fps);
-    };
-    Player.prototype.updateHitbox = function () {
-        var _this = this;
-        this.hitBoxes.forEach(function (v) {
-            if (_this.width < 0) {
-                v.scale.setTo(-1, 1);
-            }
-            else {
-                v.scale.setTo(1, 1);
-            }
-        });
-    };
-    Player.prototype.handleDeath = function () {
-        if (this.stats.health <= 0 && this.playerState !== playerStateEnum.death) {
-            this.invincible = true;
-            this.playerState = playerStateEnum.death;
-        }
-    };
-    Player.prototype.takeDamage = function (damage, objPositionX) {
-        if (this.canTakeDamage()) {
-            this.stats.health -= this.calculateDamage(damage);
-            this.invincible = true;
-            if (this.stats.health > 0) {
-                this.game.time.events.add(1000, this.resetInvincable, this);
-                this.knockBack(objPositionX);
-            }
-        }
-    };
-    Player.prototype.knockBack = function (objPositionX) {
-        this.playerState = playerStateEnum.knockBack;
-        if (this.x > objPositionX) {
-            this.scale.setTo(-1, 1);
-            this.movePlayerTo(this.x - this.width, this.y, 0.2, 700, playerStateEnum.idle);
-        }
-        else {
-            this.scale.setTo(1, 1);
-            this.movePlayerTo(this.x - this.width, this.y, 0.2, 700, playerStateEnum.idle);
-        }
-    };
-    Player.prototype.resetInvincable = function () {
-        this.invincible = false;
-    };
-    Player.prototype.calculateDamage = function (damage) {
-        if (this.stats.health - damage < 0) {
-            return 0;
-        }
-        return damage;
-    };
-    Player.prototype.canTakeDamage = function () {
-        if (this.invincible || this.playerState === playerStateEnum.death) {
-            return false;
-        }
-        return true;
-    };
-    // tslint:disable-next-line:cyclomatic-complexity
-    Player.prototype.handleInput = function () {
-        if (this.controls.LEFT.isDown && this.canWalk[this.playerState]) {
-            this.moveLeft();
-        }
-        else if (this.controls.RIGHT.isDown && this.canWalk[this.playerState]) {
-            this.moveRight();
-        }
-        else if (this.controls.E.justPressed() && this.facingBonfire && this.canSitDown[this.playerState]) {
-            this.handleBonfire();
-        }
-        else if (this.controls.E.justPressed() && this.facingNpc) {
-            this.handleNpc();
-        }
-        else if (this.canIdle[this.playerState]) {
-            this.idle();
-        }
-        if ((this.controls.LEFT.justPressed() || this.controls.RIGHT.justPressed()) && this.playerState === playerStateEnum.sit) {
-            this.playerState = playerStateEnum.standUp;
-        }
-        if (this.controls.ESC.isDown || this.controls.P.isDown) {
-            this.handlePauseMenu();
-        }
-    };
-    // tslint:disable-next-line:cyclomatic-complexity
-    Player.prototype.handleEnteringLevel = function () {
-        if (!this.EnterLevelHandler.Text) {
-            this.EnterLevelHandler.Text = this.game.add.text(this.game.camera.x + (this.game.camera.width / 2), this.game.camera.height, "", this.DialogueStyle);
-            this.EnterLevelHandler.Text.setTextBounds(30, -20, 0, 0);
-        }
-        else {
-            this.EnterLevelHandler.Text.x = this.game.camera.x + (this.game.camera.width / 2);
-            this.EnterLevelHandler.Text.y = this.game.camera.height;
-        }
-        /*
-        if(this.x < 0 && this.playerState !== playerStateEnum.autoWalkTo){
-            this.EnterThisFromPreviousLevel();
-        }
-        if(this.x > this.game.width && this.playerState !== playerStateEnum.autoWalkTo){
-            this.EnterThisFromNextLevel();
-        }
-        */
-        if (this.game.physics.arcade.distanceToXY(this, this.game.width, this.y) < this.width) {
-            this.EnterLevelHandler.Next = true;
-        }
-        else {
-            this.EnterLevelHandler.Next = false;
-        }
-        if (this.game.physics.arcade.distanceToXY(this, 0, this.y) < -this.width && this.currentRoom > 0) {
-            this.EnterLevelHandler.Previous = true;
-        }
-        else {
-            this.EnterLevelHandler.Previous = false;
-        }
-        if (this.EnterLevelHandler.Next) {
-            this.EnterLevelHandler.Text.setText(this.EnterLevelHandler.EnterText);
-            if (this.controls.E.justPressed()) {
-                this.EnterNextLevel();
-            }
-        }
-        if (this.EnterLevelHandler.Previous) {
-            this.EnterLevelHandler.Text.setText(this.EnterLevelHandler.PreviousText);
-            if (this.controls.E.justPressed()) {
-                this.EnterPreviousLevel();
-            }
-        }
-        if (!this.EnterLevelHandler.Previous && !this.EnterLevelHandler.Next) {
-            this.EnterLevelHandler.Text.setText("");
-        }
-    };
-    Player.prototype.EnterNextLevel = function () {
-        this.scale.setTo(1, 1);
-        this.playerState = playerStateEnum.autoWalkTo;
-        this.movePlayerTo(this.game.width + this.width, this.y, this.stats.movespeed, 700, playerStateEnum.idle, "nextLevel");
-    };
-    Player.prototype.EnterPreviousLevel = function () {
-        this.scale.setTo(-1, 1);
-        this.playerState = playerStateEnum.autoWalkTo;
-        this.movePlayerTo(this.width, this.y, this.stats.movespeed, 700, playerStateEnum.idle, "previousLevel");
-    };
-    /*
-    EnterThisFromPreviousLevel(){
-        this.scale.setTo(1,1);
-        this.playerState = playerStateEnum.autoWalkTo;
-        this.movePlayerTo(this.width*2, this.y, 0.2, 700);
-    }
-
-    EnterThisFromNextLevel(){
-        this.scale.setTo(-1,1);
-        this.playerState = playerStateEnum.autoWalkTo;
-        this.movePlayerTo(this.game.width-(this.width*2), this.y, 0.2, 700);
-    }
-    */
-    Player.prototype.movePlayerTo = function (toX, toY, speed, time, endState, nextLevel) {
-        var _this = this;
-        if (time === void 0) { time = 0; }
-        if (endState === void 0) { endState = playerStateEnum.idle; }
-        if (nextLevel === void 0) { nextLevel = ""; }
-        this.game.physics.arcade.moveToXY(this, toX, toY, speed, time);
-        this.game.time.events.add(time, function () {
-            _this.body.velocity.x = 0;
-            _this.body.velocity.y = 0;
-            _this.x = toX;
-            _this.y = toY;
-            _this.playerState = endState;
-            if (nextLevel === "nextLevel") {
-                _this.nextLevel();
-            }
-            else if (nextLevel === "previousLevel") {
-                _this.previousLevel();
-            }
-        }, this);
-    };
-    Player.prototype.handleNpc = function () {
-        this.facingNpc.nextDialogueText();
-    };
-    Player.prototype.handleAttack = function () {
-        if (this.controls.LMB.justPressed() && this.canAttack[this.playerState]) {
-            this.playerState = playerStateEnum.attack1;
-        }
-        else if (this.controls.RMB.justPressed() && this.canAttack[this.playerState]) {
-            console.log("right mouse button");
-        }
-        if ((this.controls.LMB.justPressed() || this.controls.RMB.justPressed()) && this.playerState === playerStateEnum.sit) {
-            this.playerState = playerStateEnum.standUp;
-        }
-    };
-    Player.prototype.handleBonfire = function () {
-        if (this.facingBonfire.isLit) {
-            this.playerState = playerStateEnum.sitDown;
-        }
-        else if (!this.facingBonfire.isLit) {
-            this.facingBonfire.isLit = true;
-            this.lastCheckPoint = this.currentRoom;
-        }
-    };
-    Player.prototype.healthBar = function () {
-        if (!this.playerHealthBar) {
-            this.playerHealthBar = this.game.add.sprite(50, 50, "healthbar");
-            this.playerHealthBar.height = 15;
-        }
-    };
-    Player.prototype.updateHealthBar = function () {
-        if (this.stats) {
-            this.playerHealthBar.width = this.stats.health * 2;
-        }
-    };
-    Player.prototype.updateStaminaBar = function () {
-        if (this.stats) {
-            this.playerStaminaBar.width = this.stats.stamina * 2;
-        }
-    };
-    Player.prototype.staminaBar = function () {
-        if (!this.playerStaminaBar && this.playerHealthBar) {
-            var x = this.playerHealthBar.x;
-            var y = this.playerHealthBar.y + this.playerHealthBar.width;
-            this.playerStaminaBar = this.game.add.sprite(x, y, "staminabar");
-            this.playerStaminaBar.height = 15;
-        }
-    };
-    Player.prototype.resetVelocity = function () {
-        if (this.playerState !== playerStateEnum.autoWalkTo &&
-            this.playerState !== playerStateEnum.knockBack) {
-            this.body.velocity.x = 0;
-        }
-    };
-    Player.prototype.moveLeft = function () {
-        this.playerState = playerStateEnum.movingStartWalk;
-        this.scale.setTo(-1, 1);
-        this.body.velocity.x = -this.stats.movespeed;
-    };
-    Player.prototype.moveRight = function () {
-        this.playerState = playerStateEnum.movingStartWalk;
-        this.scale.setTo(1, 1);
-        this.body.velocity.x = this.stats.movespeed;
-    };
-    Player.prototype.idle = function () {
-        this.playerState = playerStateEnum.idle;
-    };
-    Player.prototype.handlePauseMenu = function () {
-        var _this = this;
-        this.game.paused = true;
-        this.pauseMenu.backgroundImage = this.game.add.image(0, 0, "wall");
-        this.pauseMenu.backgroundImage.width = this.game.camera.width;
-        this.pauseMenu.backgroundImage.height = this.game.camera.height;
-        var style = {
-            font: "bold 32px Arial",
-            fill: "#fff",
-            boundsAlignH: "center",
-            boundsAlignV: "middle"
-        };
-        this.pauseMenu.continueGame = this.game.add.text(0, 0, "Continue Game", style);
-        this.pauseMenu.saveGame = this.game.add.text(0, 50, "Save Game", style);
-        this.pauseMenu.loadGame = this.game.add.text(0, 100, "Load Game", style);
-        this.pauseMenu.options = this.game.add.text(0, 150, "Options", style);
-        this.pauseMenu.githubLink = this.game.add.text(0, 300, "Github", style);
-        var array = [
-            this.pauseMenu.continueGame,
-            this.pauseMenu.saveGame,
-            this.pauseMenu.loadGame,
-            this.pauseMenu.options,
-            this.pauseMenu.githubLink
-        ];
-        array.forEach(function (text) {
-            text.setShadow(3, 3, "rgba(0,0,0,0.5)", 2);
-            text.setTextBounds(0, 200, 800, 100);
-            text.inputEnabled = true;
-            text.events.onInputOver.addOnce(_this.pauseMenuGlow, _this);
-            text.events.onInputOut.addOnce(_this.pauseMenuStopGlow, _this);
-            text.events.onInputUp.addOnce(_this.pauseMenuFadeOut, _this);
-        });
-        this.game.input.keyboard.addKey(Phaser.Keyboard.ESC).onDown.addOnce(function () {
-            if (_this.game.paused) {
-                _this.pauseMenuFadeOut(_this.pauseMenu.continueGame);
-            }
-        });
-        this.game.input.keyboard.addKey(Phaser.Keyboard.P).onDown.addOnce(function () {
-            if (_this.game.paused) {
-                _this.pauseMenuFadeOut(_this.pauseMenu.continueGame);
-            }
-        });
-    };
-    Player.prototype.pauseMenuFadeOut = function (item) {
-        switch (item) {
-            case this.pauseMenu.continueGame:
-                this.continueTheGame();
-                break;
-            case this.pauseMenu.saveGame:
-                this.savePlayer(this.x);
-                alert("Game Saved");
-                break;
-            case this.pauseMenu.loadGame:
-                var loadedGame = JSON.parse(window.localStorage.getItem("player"));
-                if (loadedGame) {
-                    this.game.state.start("level" + loadedGame.currentRoom);
-                    this.continueTheGame();
-                }
-                else {
-                    alert("no Saved Game Found!");
-                }
-                break;
-            case this.pauseMenu.options:
-                break;
-            case this.pauseMenu.githubLink:
-                window.open("http://www.github.com/twofist");
-                break;
-            default:
-        }
-    };
-    Player.prototype.pauseMenuGlow = function (item) {
-        item.fill = "#ffff44";
-    };
-    Player.prototype.pauseMenuStopGlow = function (item) {
-        item.fill = "#fff";
-    };
-    Player.prototype.continueTheGame = function () {
-        this.destroyPauseMenu();
-        this.game.paused = false;
-    };
-    Player.prototype.destroyPauseMenu = function () {
-        for (var key in this.pauseMenu) {
-            if (this.pauseMenu[key]) {
-                this.pauseMenu[key].destroy();
-            }
-        }
-    };
-    Player.prototype.savePlayer = function (x, levelNumber) {
-        if (x === void 0) { x = 0; }
-        if (levelNumber === void 0) { levelNumber = this.currentRoom; }
-        var savePlayer = {
-            lastCheckPoint: this.lastCheckPoint,
-            currentRoom: levelNumber,
-            stats: this.stats,
-            y: this.y,
-            x: x,
-        };
-        window.localStorage.setItem("player", JSON.stringify(savePlayer));
-    };
-    Player.prototype.loadPlayer = function (playerStorage) {
-        if (playerStorage) {
-            this.stats = playerStorage.stats;
-            this.x = playerStorage.x;
-            this.y = playerStorage.y;
-            this.lastCheckPoint = playerStorage.lastCheckPoint;
-        }
-        else {
-            this.x = -this.width;
-            this.y = this.game.height - this.height * 2;
-        }
-    };
-    Player.prototype.nextLevel = function () {
-        this.savePlayer(0, this.currentRoom + 1);
-        this.game.state.start("level" + (this.currentRoom + 1), true, false);
-    };
-    Player.prototype.previousLevel = function () {
-        this.savePlayer(this.x, this.currentRoom - 1);
-        this.game.state.start("level" + (this.currentRoom - 1), true, false);
-    };
-    return Player;
-}(Phaser.Sprite));
 var MasterEnemy = /** @class */ (function (_super) {
     __extends(MasterEnemy, _super);
     function MasterEnemy(game, x, y, key, frame) {
@@ -1180,11 +615,13 @@ var MasterLevel = /** @class */ (function (_super) {
         this.game.physics.arcade.collide(this.enemies, this.platforms);
         this.game.physics.arcade.collide(this.npcs, this.platforms);
         this.game.physics.arcade.collide(this.bonfires, this.platforms);
+        this.game.physics.arcade.collide(this.items, this.platforms);
         this.game.physics.arcade.collide(this.player, this.gates);
         this.game.physics.arcade.collide(this.enemies, this.gates);
         this.game.physics.arcade.collide(this.npcs, this.gates);
         this.playerFacingBonfire();
         this.playerFacingNpc();
+        this.playerFacingItem();
         if (this.debugMode) {
             this.debug();
         }
@@ -1202,6 +639,7 @@ var MasterLevel = /** @class */ (function (_super) {
         this.gates = this.game.add.group();
         this.npcs = this.game.add.group();
         this.bonfires = this.game.add.group();
+        this.items = this.game.add.group();
     };
     MasterLevel.prototype.addPlayerToNpcs = function () {
         var _this = this;
@@ -1231,6 +669,19 @@ var MasterLevel = /** @class */ (function (_super) {
             else {
                 v.canInteract = false;
                 _this.player.facingNpc = null;
+            }
+        });
+    };
+    MasterLevel.prototype.playerFacingItem = function () {
+        var _this = this;
+        this.items.forEach(function (v) {
+            if (_this.game.physics.arcade.overlap(_this.player, v)) {
+                v.canInteract = true;
+                _this.player.facingItem = v;
+            }
+            else {
+                v.canInteract = false;
+                _this.player.facingItem = null;
             }
         });
     };
@@ -1274,6 +725,9 @@ var MasterLevel = /** @class */ (function (_super) {
         this.gates.forEach(function (v) {
             _this.game.debug.body(v);
         });
+        this.items.forEach(function (v) {
+            _this.game.debug.body(v);
+        });
     };
     return MasterLevel;
 }(Phaser.State));
@@ -1300,6 +754,7 @@ var Level0 = /** @class */ (function (_super) {
             platform.body.immovable = true;
         });
         this.npcs.add(new RogueNpc(this.game, 600, ground.y - ground.height));
+        this.items.add(new Item(this.game, 450, ground.y - ground.height, new Ring()));
         this.updateFpsTimer();
         this.enablePhysics();
     };
@@ -1365,6 +820,182 @@ var Level1 = /** @class */ (function (_super) {
     };
     return Level1;
 }(MasterLevel));
+var Inventory = /** @class */ (function (_super) {
+    __extends(Inventory, _super);
+    function Inventory(game, x, y, player) {
+        var _this = _super.call(this, game, x, y) || this;
+        _this.transparency = 1;
+        _this.MenuStyle = {
+            font: "bold 32px Arial",
+            fill: "#fff",
+            boundsAlignH: "center",
+            boundsAlignV: "middle"
+        };
+        _this.InventoryList = [];
+        _this.InventoryEquipment = {
+            ringSlots: [],
+            beltSlots: [],
+        };
+        _this.player = player;
+        _this.game.input.keyboard.addKey(Phaser.Keyboard.I).onDown.addOnce(function () {
+            _this.destroyInventory();
+        });
+        _this.backgroundImage = _this.game.add.image(0, 0, "inventory");
+        _this.backgroundImage.width = _this.game.camera.width / 2;
+        _this.backgroundImage.height = _this.game.camera.height / 2;
+        _this.addRingSlots(_this.InventoryEquipment.ringSlots, 4, _this.game.add.image(0, 0, "ringslot"));
+        _this.addBeltSlots(_this.InventoryEquipment.beltSlots, 4, _this.game.add.image(0, 0, "beltslot"));
+        return _this;
+    }
+    Inventory.prototype.addRingSlots = function (obj, amount, image) {
+        for (var ii = 0; ii < amount; ii++) {
+            obj.push({
+                backgroundImage: image,
+                item: this.player.equipment.equiptRings[ii],
+                x: 50,
+                y: 50,
+                trigger: function () {
+                    console.log("hi");
+                }
+            });
+        }
+    };
+    Inventory.prototype.addBeltSlots = function (obj, amount, image) {
+        for (var ii = 0; ii < amount; ii++) {
+            obj.push({
+                backgroundImage: image,
+                item: this.player.equipment.equiptRings[ii],
+                x: 80,
+                y: 80,
+                trigger: function () {
+                    console.log("hi");
+                }
+            });
+        }
+    };
+    Inventory.prototype.showToolTip = function () {
+    };
+    Inventory.prototype.hideToolTip = function () {
+    };
+    Inventory.prototype.destroyInventory = function () {
+        this.backgroundImage.destroy();
+    };
+    return Inventory;
+}(Phaser.Sprite));
+var PauseMenu = /** @class */ (function (_super) {
+    __extends(PauseMenu, _super);
+    function PauseMenu(game, x, y, player) {
+        var _this = _super.call(this, game, x, y) || this;
+        _this.MenuStyle = {
+            font: "bold 32px Arial",
+            fill: "#fff",
+            boundsAlignH: "center",
+            boundsAlignV: "middle"
+        };
+        _this.MenuText = {
+            "Continue Game": {
+                trigger: function () {
+                    _this.continueTheGame();
+                },
+                style: _this.MenuStyle,
+                text: null,
+                x: 0,
+                y: 0,
+            },
+            "Save Game": {
+                trigger: function () {
+                    _this.player.savePlayer(_this.player.x);
+                    alert("Game Saved");
+                },
+                style: _this.MenuStyle,
+                text: null,
+                x: 0,
+                y: 50,
+            },
+            "Load Game": {
+                trigger: function () {
+                    var loadedGame = JSON.parse(window.localStorage.getItem("player"));
+                    if (loadedGame) {
+                        _this.game.state.start("level" + loadedGame.currentRoom);
+                        _this.continueTheGame();
+                    }
+                    else {
+                        alert("no Saved Game Found!");
+                    }
+                },
+                style: _this.MenuStyle,
+                text: null,
+                x: 0,
+                y: 100,
+            },
+            "Options": {
+                trigger: function () {
+                    alert("Options not yet Implemented");
+                },
+                style: _this.MenuStyle,
+                text: null,
+                x: 0,
+                y: 150,
+            },
+            "Github": {
+                trigger: function () {
+                    window.open("http://www.github.com/twofist");
+                },
+                style: _this.MenuStyle,
+                text: null,
+                x: 0,
+                y: 300,
+            },
+        };
+        _this.player = player;
+        _this.game.paused = true;
+        _this.game.input.keyboard.addKey(Phaser.Keyboard.ESC).onDown.addOnce(function () {
+            _this.continueTheGame();
+        });
+        _this.game.input.keyboard.addKey(Phaser.Keyboard.P).onDown.addOnce(function () {
+            _this.continueTheGame();
+        });
+        _this.backgroundImage = _this.game.add.image(0, 0, "wall");
+        _this.backgroundImage.width = _this.game.camera.width;
+        _this.backgroundImage.height = _this.game.camera.height;
+        _this.addMenu();
+        return _this;
+    }
+    PauseMenu.prototype.addMenu = function () {
+        for (var key in this.MenuText) {
+            var obj = this.MenuText[key];
+            obj.text = this.game.add.text(obj.x, obj.y, key, obj.style);
+            obj.text.setShadow(3, 3, "rgba(0,0,0,0.5)", 2);
+            obj.text.setTextBounds(0, 200, 800, 100);
+            obj.text.inputEnabled = true;
+            obj.text.events.onInputOver.add(this.pauseMenuGlow, this);
+            obj.text.events.onInputOut.add(this.pauseMenuStopGlow, this);
+            obj.text.events.onInputUp.add(obj.trigger, this);
+        }
+    };
+    PauseMenu.prototype.pauseMenuGlow = function (item) {
+        item.fill = "#ffff44";
+    };
+    PauseMenu.prototype.pauseMenuStopGlow = function (item) {
+        item.fill = "#fff";
+    };
+    PauseMenu.prototype.continueTheGame = function () {
+        this.game.paused = false;
+        if (!this.game.paused) {
+            this.destroyPauseMenu();
+        }
+    };
+    PauseMenu.prototype.destroyPauseMenu = function () {
+        this.backgroundImage.destroy();
+        for (var key in this.MenuText) {
+            var obj = this.MenuText[key];
+            if (obj.text) {
+                obj.text.destroy();
+            }
+        }
+    };
+    return PauseMenu;
+}(Phaser.Sprite));
 var MasterNpc = /** @class */ (function (_super) {
     __extends(MasterNpc, _super);
     function MasterNpc(game, x, y, key, frame) {
@@ -1790,7 +1421,7 @@ var Bonfire = /** @class */ (function (_super) {
     function Bonfire(game, x, y) {
         var _this = _super.call(this, game, x, y, "bonfire", 0) || this;
         _this.bonfireDialogue = {
-            lit: "Press E to sit Down",
+            lit: "Press E to rest at bonfire",
             unlit: "Press E to light bonfire",
         };
         _this.canInteract = false;
@@ -1886,6 +1517,561 @@ var Gate = /** @class */ (function (_super) {
     };
     return Gate;
 }(Phaser.Sprite));
+var Item = /** @class */ (function (_super) {
+    __extends(Item, _super);
+    function Item(game, x, y, obj) {
+        var _this = _super.call(this, game, x, y, "item", 0) || this;
+        _this.canInteract = false;
+        _this.DialogueStyle = {
+            font: "bold 10px Arial",
+            fill: "#fff",
+            boundsAlignH: "center",
+            boundsAlignV: "middle"
+        };
+        _this.item = obj;
+        _this.anchor.setTo(0.5, 0);
+        game.physics.arcade.enableBody(_this);
+        game.add.existing(_this);
+        _this.body.collideWorldBounds = true;
+        game.physics.enable(_this, Phaser.Physics.ARCADE);
+        _this.animations.add("item", [0], 5, true);
+        return _this;
+    }
+    Item.prototype.update = function () {
+        this.animations.play("item");
+        this.interaction();
+    };
+    Item.prototype.interaction = function () {
+        if (!this.canInteractText) {
+            this.canInteractText = this.game.add.text(this.x - this.width, this.y - this.height, "", this.DialogueStyle);
+            this.canInteractText.setTextBounds(30, 20, 0, 0);
+        }
+        if (this.canInteract) {
+            this.canInteractText.setText("press E to pick up");
+        }
+        else if (!this.canInteract) {
+            this.canInteractText.setText("");
+        }
+    };
+    Item.prototype.remove = function () {
+        this.canInteract = false;
+        this.canInteractText.setText("");
+        this.destroy();
+    };
+    return Item;
+}(Phaser.Sprite));
+var Ring = /** @class */ (function () {
+    function Ring() {
+        this.effect = {};
+        this.itemType = "ring";
+        this.image = "ring";
+    }
+    return Ring;
+}());
+var Equipment = /** @class */ (function () {
+    function Equipment() {
+        this.ringSlots = [];
+        this.beltSlots = [];
+        this.equiptRings = [];
+        this.equiptBelts = [];
+    }
+    Equipment.prototype.addToInventory = function (item) {
+        if (item.itemType === "ring") {
+            this.ringSlots.push(item);
+        }
+    };
+    Equipment.prototype.equiptRing = function (item) {
+        this.equiptRings.push(item);
+    };
+    Equipment.prototype.equiptBelt = function (item) {
+        this.equiptBelts.push(item);
+    };
+    return Equipment;
+}());
+var Player = /** @class */ (function (_super) {
+    __extends(Player, _super);
+    function Player(game, x, y) {
+        var _a, _b, _c, _d, _e;
+        var _this = _super.call(this, game, x, y, "player", 0) || this;
+        _this.playerState = playerStateEnum.idle;
+        _this.lastCheckPoint = levelsEnum.level0;
+        _this.invincible = false;
+        _this.equipment = new Equipment();
+        _this.canWalk = (_a = {},
+            _a[playerStateEnum.movingWalk] = true,
+            _a[playerStateEnum.movingFall] = false,
+            _a[playerStateEnum.idle] = true,
+            _a[playerStateEnum.attack1] = false,
+            _a[playerStateEnum.attack2] = false,
+            _a[playerStateEnum.attack3] = false,
+            _a[playerStateEnum.death] = false,
+            _a[playerStateEnum.sit] = false,
+            _a[playerStateEnum.sitDown] = false,
+            _a[playerStateEnum.standUp] = false,
+            _a[playerStateEnum.movingStartWalk] = true,
+            _a[playerStateEnum.autoWalkTo] = false,
+            _a[playerStateEnum.knockBack] = false,
+            _a);
+        _this.canIdle = (_b = {},
+            _b[playerStateEnum.movingWalk] = true,
+            _b[playerStateEnum.movingFall] = false,
+            _b[playerStateEnum.idle] = false,
+            _b[playerStateEnum.attack1] = false,
+            _b[playerStateEnum.attack2] = false,
+            _b[playerStateEnum.attack3] = false,
+            _b[playerStateEnum.death] = false,
+            _b[playerStateEnum.sit] = false,
+            _b[playerStateEnum.sitDown] = false,
+            _b[playerStateEnum.standUp] = false,
+            _b[playerStateEnum.movingStartWalk] = true,
+            _b[playerStateEnum.autoWalkTo] = false,
+            _b[playerStateEnum.knockBack] = false,
+            _b);
+        _this.canAttack = (_c = {},
+            _c[playerStateEnum.movingWalk] = true,
+            _c[playerStateEnum.movingFall] = false,
+            _c[playerStateEnum.idle] = true,
+            _c[playerStateEnum.attack1] = false,
+            _c[playerStateEnum.attack2] = false,
+            _c[playerStateEnum.attack3] = false,
+            _c[playerStateEnum.death] = false,
+            _c[playerStateEnum.sit] = false,
+            _c[playerStateEnum.sitDown] = false,
+            _c[playerStateEnum.standUp] = false,
+            _c[playerStateEnum.movingStartWalk] = true,
+            _c[playerStateEnum.autoWalkTo] = false,
+            _c[playerStateEnum.knockBack] = false,
+            _c);
+        _this.canSitDown = (_d = {},
+            _d[playerStateEnum.movingWalk] = true,
+            _d[playerStateEnum.movingFall] = false,
+            _d[playerStateEnum.idle] = true,
+            _d[playerStateEnum.attack1] = false,
+            _d[playerStateEnum.attack2] = false,
+            _d[playerStateEnum.attack3] = false,
+            _d[playerStateEnum.death] = false,
+            _d[playerStateEnum.sit] = false,
+            _d[playerStateEnum.sitDown] = false,
+            _d[playerStateEnum.standUp] = false,
+            _d[playerStateEnum.movingStartWalk] = true,
+            _d[playerStateEnum.autoWalkTo] = false,
+            _d[playerStateEnum.knockBack] = false,
+            _d);
+        _this.fpsCounter = _this.game.add.text(_this.game.camera.x, 0, "FPS: " + _this.game.time.fps, {
+            font: "24px Arial",
+            fill: "#fff"
+        });
+        _this.playerHealthBar = null;
+        _this.playerStaminaBar = null;
+        _this.currentRoom = 0;
+        _this.EnterLevelHandler = {
+            Next: false,
+            Previous: false,
+            Text: null,
+            EnterText: "Press E to go to Next Level",
+            PreviousText: "Press E to go to Previous Level",
+        };
+        _this.playerAnimations = (_e = {},
+            _e[playerStateEnum.movingWalk] = "walk",
+            _e[playerStateEnum.movingFall] = "fall",
+            _e[playerStateEnum.idle] = "idle",
+            _e[playerStateEnum.attack1] = "attack1",
+            _e[playerStateEnum.attack2] = "attack2",
+            _e[playerStateEnum.attack3] = "attack3",
+            _e[playerStateEnum.death] = "death",
+            _e[playerStateEnum.sit] = "sit",
+            _e[playerStateEnum.sitDown] = "sitdown",
+            _e[playerStateEnum.standUp] = "standup",
+            _e[playerStateEnum.movingStartWalk] = "walk",
+            _e[playerStateEnum.autoWalkTo] = "walk",
+            _e[playerStateEnum.knockBack] = "knockback",
+            _e);
+        _this.DialogueStyle = {
+            font: "bold 10px Arial",
+            fill: "#fff",
+            boundsAlignH: "center",
+            boundsAlignV: "middle"
+        };
+        _this.anchor.setTo(0.5, 0);
+        //this.scale.setTo(1.5, 1.5);
+        _this.game.physics.arcade.enableBody(_this);
+        _this.game.add.existing(_this);
+        _this.body.gravity.y = 1000;
+        _this.body.collideWorldBounds = true;
+        _this.game.physics.enable(_this, Phaser.Physics.ARCADE);
+        _this.bodyWidth = 12;
+        _this.bodyHeight = 24;
+        _this.body.setSize(_this.bodyWidth / _this.scale.x, _this.bodyHeight / _this.scale.y, (_this.width - _this.bodyWidth) / 2 - 3, 32);
+        _this.stats = {
+            level: 1,
+            maxHealth: _this.maxHealth,
+            health: _this.maxHealth,
+            maxStamina: _this.maxHealth,
+            stamina: _this.maxHealth,
+            attack: 1,
+            defense: 1,
+            movespeed: 130,
+            luck: 1,
+        };
+        _this.controls = {
+            UP: _this.game.input.keyboard.addKey(Phaser.Keyboard.W),
+            DOWN: _this.game.input.keyboard.addKey(Phaser.Keyboard.S),
+            LEFT: _this.game.input.keyboard.addKey(Phaser.Keyboard.A),
+            RIGHT: _this.game.input.keyboard.addKey(Phaser.Keyboard.D),
+            E: _this.game.input.keyboard.addKey(Phaser.Keyboard.E),
+            ESC: _this.game.input.keyboard.addKey(Phaser.Keyboard.ESC),
+            P: _this.game.input.keyboard.addKey(Phaser.Keyboard.P),
+            I: _this.game.input.keyboard.addKey(Phaser.Keyboard.I),
+            LMB: _this.game.input.activePointer.leftButton,
+            RMB: _this.game.input.activePointer.rightButton,
+        };
+        _this.game.input.onDown.add(function (pointer, event) {
+            if (!_this.game.paused) {
+                _this.handleAttack();
+            }
+        });
+        //stop rightclick from opening a menu
+        _this.game.canvas.oncontextmenu = function (e) {
+            e.preventDefault();
+        };
+        _this.game.input.keyboard.addKeyCapture([
+            Phaser.Keyboard.W,
+            Phaser.Keyboard.A,
+            Phaser.Keyboard.S,
+            Phaser.Keyboard.D,
+            Phaser.Keyboard.E
+        ]);
+        _this.animations.add("idle", [24, 25, 26, 27], 10, false);
+        _this.animations.add("startwalk", [1, 2, 3], 10, false).onComplete.add(function () {
+            _this.animations.stop();
+            _this.playerState = playerStateEnum.movingWalk;
+        });
+        _this.animations.add("walk", [28, 29, 30, 31], 10, true);
+        _this.animations.add("attack1", [20, 21, 22, 23], 10, false).onComplete.add(function () {
+            _this.animations.stop();
+            _this.playerState = playerStateEnum.idle;
+        });
+        _this.animations.add("attack2", [24, 25, 26], 10, false).onComplete.add(function () {
+            _this.animations.stop();
+            _this.playerState = playerStateEnum.idle;
+        });
+        _this.animations.add("attack3", [27, 28, 29], 10, false).onComplete.add(function () {
+            _this.animations.stop();
+            _this.playerState = playerStateEnum.idle;
+        });
+        _this.animations.add("sitdown", [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], 10, false).onComplete.add(function () {
+            _this.animations.stop();
+            _this.savePlayer(_this.x);
+            _this.playerState = playerStateEnum.sit;
+        });
+        _this.animations.add("sit", [9], 3, false);
+        _this.animations.add("standup", [9, 8, 7, 6, 5, 4, 3, 2, 1, 0], 10, false).onComplete.add(function () {
+            _this.animations.stop();
+            _this.playerState = playerStateEnum.idle;
+        });
+        _this.animations.add("death", [71, 72, 73, 74, 75, 76, 78, 79, 80, 81, 81, 82, 83], 10, false).onComplete.add(function () {
+            _this.kill();
+            _this.game.state.start("title");
+        });
+        _this.animations.add("knockback", [83], 10, true);
+        _this.hitBoxes = _this.game.add.group();
+        _this.addChild(_this.hitBoxes);
+        _this.hitBox1 = _this.hitBoxes.create(0, _this.height / 1.5);
+        _this.game.physics.enable(_this.hitBoxes, Phaser.Physics.ARCADE);
+        _this.hitBox1.body.setSize(20, 10);
+        _this.hitBox1.name = "attack1";
+        _this.healthBar();
+        _this.staminaBar();
+        return _this;
+    }
+    Player.prototype.update = function () {
+        this.resetVelocity();
+        this.animations.play(this.playerAnimations[this.playerState]);
+        this.handleInput();
+        this.updateHealthBar();
+        this.updateStaminaBar();
+        this.handleEnteringLevel();
+        this.handleDeath();
+        this.updateHitbox();
+        this.fpsCounter.setText("FPS: " + this.game.time.fps);
+    };
+    Player.prototype.handleItem = function () {
+        this.equipment.addToInventory(this.facingItem.item);
+        this.facingItem.remove();
+    };
+    Player.prototype.updateHitbox = function () {
+        var _this = this;
+        this.hitBoxes.forEach(function (v) {
+            if (_this.width < 0) {
+                v.scale.setTo(-1, 1);
+            }
+            else {
+                v.scale.setTo(1, 1);
+            }
+        });
+    };
+    Player.prototype.handleDeath = function () {
+        if (this.stats.health <= 0 && this.playerState !== playerStateEnum.death) {
+            this.invincible = true;
+            this.playerState = playerStateEnum.death;
+        }
+    };
+    Player.prototype.takeDamage = function (damage, objPositionX) {
+        if (this.canTakeDamage()) {
+            this.stats.health -= this.calculateDamage(damage);
+            this.invincible = true;
+            if (this.stats.health > 0) {
+                this.game.time.events.add(1000, this.resetInvincable, this);
+                this.knockBack(objPositionX);
+            }
+        }
+    };
+    Player.prototype.knockBack = function (objPositionX) {
+        this.playerState = playerStateEnum.knockBack;
+        if (this.x > objPositionX) {
+            this.scale.setTo(-1, 1);
+            this.movePlayerTo(this.x - this.width, this.y, 0.2, 700, playerStateEnum.idle);
+        }
+        else {
+            this.scale.setTo(1, 1);
+            this.movePlayerTo(this.x - this.width, this.y, 0.2, 700, playerStateEnum.idle);
+        }
+    };
+    Player.prototype.resetInvincable = function () {
+        this.invincible = false;
+    };
+    Player.prototype.calculateDamage = function (damage) {
+        if (this.stats.health - damage < 0) {
+            return 0;
+        }
+        return damage;
+    };
+    Player.prototype.canTakeDamage = function () {
+        if (this.invincible || this.playerState === playerStateEnum.death) {
+            return false;
+        }
+        return true;
+    };
+    // tslint:disable-next-line:cyclomatic-complexity
+    Player.prototype.handleInput = function () {
+        if (this.controls.LEFT.isDown && this.canWalk[this.playerState]) {
+            this.moveLeft();
+        }
+        else if (this.controls.RIGHT.isDown && this.canWalk[this.playerState]) {
+            this.moveRight();
+        }
+        else if (this.controls.E.justPressed() && this.facingBonfire && this.canSitDown[this.playerState]) {
+            this.handleBonfire();
+        }
+        else if (this.controls.E.justPressed() && this.facingNpc) {
+            this.handleNpc();
+        }
+        else if (this.controls.E.justPressed() && this.facingItem) {
+            this.handleItem();
+        }
+        else if (this.canIdle[this.playerState]) {
+            this.idle();
+        }
+        if ((this.controls.LEFT.justPressed() || this.controls.RIGHT.justPressed()) && this.playerState === playerStateEnum.sit) {
+            this.playerState = playerStateEnum.standUp;
+        }
+        if (this.controls.ESC.isDown || this.controls.P.isDown) {
+            new PauseMenu(this.game, 0, 0, this);
+        }
+        if (this.controls.I.justPressed()) {
+            new Inventory(this.game, this.game.camera.x + this.game.camera.width / 2, this.game.camera.y + this.game.camera.height / 2, this);
+            console.log(this.equipment);
+        }
+    };
+    // tslint:disable-next-line:cyclomatic-complexity
+    Player.prototype.handleEnteringLevel = function () {
+        if (!this.EnterLevelHandler.Text) {
+            this.EnterLevelHandler.Text = this.game.add.text(this.game.camera.x + (this.game.camera.width / 2), this.game.camera.height, "", this.DialogueStyle);
+            this.EnterLevelHandler.Text.setTextBounds(30, -20, 0, 0);
+        }
+        else {
+            this.EnterLevelHandler.Text.x = this.game.camera.x + (this.game.camera.width / 2);
+            this.EnterLevelHandler.Text.y = this.game.camera.height;
+        }
+        /*
+        if(this.x < 0 && this.playerState !== playerStateEnum.autoWalkTo){
+            this.EnterThisFromPreviousLevel();
+        }
+        if(this.x > this.game.width && this.playerState !== playerStateEnum.autoWalkTo){
+            this.EnterThisFromNextLevel();
+        }
+        */
+        if (this.game.physics.arcade.distanceToXY(this, this.game.width, this.y) < this.width) {
+            this.EnterLevelHandler.Next = true;
+        }
+        else {
+            this.EnterLevelHandler.Next = false;
+        }
+        if (this.game.physics.arcade.distanceToXY(this, 0, this.y) < -this.width && this.currentRoom > 0) {
+            this.EnterLevelHandler.Previous = true;
+        }
+        else {
+            this.EnterLevelHandler.Previous = false;
+        }
+        if (this.EnterLevelHandler.Next) {
+            this.EnterLevelHandler.Text.setText(this.EnterLevelHandler.EnterText);
+            if (this.controls.E.justPressed()) {
+                this.EnterNextLevel();
+            }
+        }
+        if (this.EnterLevelHandler.Previous) {
+            this.EnterLevelHandler.Text.setText(this.EnterLevelHandler.PreviousText);
+            if (this.controls.E.justPressed()) {
+                this.EnterPreviousLevel();
+            }
+        }
+        if (!this.EnterLevelHandler.Previous && !this.EnterLevelHandler.Next) {
+            this.EnterLevelHandler.Text.setText("");
+        }
+    };
+    Player.prototype.EnterNextLevel = function () {
+        this.scale.setTo(1, 1);
+        this.playerState = playerStateEnum.autoWalkTo;
+        this.movePlayerTo(this.game.width + this.width, this.y, this.stats.movespeed, 700, playerStateEnum.idle, "nextLevel");
+    };
+    Player.prototype.EnterPreviousLevel = function () {
+        this.scale.setTo(-1, 1);
+        this.playerState = playerStateEnum.autoWalkTo;
+        this.movePlayerTo(this.width, this.y, this.stats.movespeed, 700, playerStateEnum.idle, "previousLevel");
+    };
+    /*
+    EnterThisFromPreviousLevel(){
+        this.scale.setTo(1,1);
+        this.playerState = playerStateEnum.autoWalkTo;
+        this.movePlayerTo(this.width*2, this.y, 0.2, 700);
+    }
+
+    EnterThisFromNextLevel(){
+        this.scale.setTo(-1,1);
+        this.playerState = playerStateEnum.autoWalkTo;
+        this.movePlayerTo(this.game.width-(this.width*2), this.y, 0.2, 700);
+    }
+    */
+    Player.prototype.movePlayerTo = function (toX, toY, speed, time, endState, nextLevel) {
+        var _this = this;
+        if (time === void 0) { time = 0; }
+        if (endState === void 0) { endState = playerStateEnum.idle; }
+        if (nextLevel === void 0) { nextLevel = ""; }
+        this.game.physics.arcade.moveToXY(this, toX, toY, speed, time);
+        this.game.time.events.add(time, function () {
+            _this.body.velocity.x = 0;
+            _this.body.velocity.y = 0;
+            _this.x = toX;
+            _this.y = toY;
+            _this.playerState = endState;
+            if (nextLevel === "nextLevel") {
+                _this.nextLevel();
+            }
+            else if (nextLevel === "previousLevel") {
+                _this.previousLevel();
+            }
+        }, this);
+    };
+    Player.prototype.handleNpc = function () {
+        this.facingNpc.nextDialogueText();
+    };
+    Player.prototype.handleAttack = function () {
+        if (this.controls.LMB.justPressed() && this.canAttack[this.playerState]) {
+            this.playerState = playerStateEnum.attack1;
+        }
+        else if (this.controls.RMB.justPressed() && this.canAttack[this.playerState]) {
+            console.log("right mouse button");
+        }
+        if ((this.controls.LMB.justPressed() || this.controls.RMB.justPressed()) && this.playerState === playerStateEnum.sit) {
+            this.playerState = playerStateEnum.standUp;
+        }
+    };
+    Player.prototype.handleBonfire = function () {
+        if (this.facingBonfire.isLit) {
+            this.playerState = playerStateEnum.sitDown;
+        }
+        else if (!this.facingBonfire.isLit) {
+            this.facingBonfire.isLit = true;
+            this.lastCheckPoint = this.currentRoom;
+        }
+    };
+    Player.prototype.healthBar = function () {
+        if (!this.playerHealthBar) {
+            this.playerHealthBar = this.game.add.sprite(50, 50, "healthbar");
+            this.playerHealthBar.height = 15;
+        }
+    };
+    Player.prototype.updateHealthBar = function () {
+        if (this.stats) {
+            this.playerHealthBar.width = this.stats.health * 2;
+        }
+    };
+    Player.prototype.updateStaminaBar = function () {
+        if (this.stats) {
+            this.playerStaminaBar.width = this.stats.stamina * 2;
+        }
+    };
+    Player.prototype.staminaBar = function () {
+        if (!this.playerStaminaBar && this.playerHealthBar) {
+            var x = this.playerHealthBar.x;
+            var y = this.playerHealthBar.y + this.playerHealthBar.width;
+            this.playerStaminaBar = this.game.add.sprite(x, y, "staminabar");
+            this.playerStaminaBar.height = 15;
+        }
+    };
+    Player.prototype.resetVelocity = function () {
+        if (this.playerState !== playerStateEnum.autoWalkTo &&
+            this.playerState !== playerStateEnum.knockBack) {
+            this.body.velocity.x = 0;
+        }
+    };
+    Player.prototype.moveLeft = function () {
+        this.playerState = playerStateEnum.movingStartWalk;
+        this.scale.setTo(-1, 1);
+        this.body.velocity.x = -this.stats.movespeed;
+    };
+    Player.prototype.moveRight = function () {
+        this.playerState = playerStateEnum.movingStartWalk;
+        this.scale.setTo(1, 1);
+        this.body.velocity.x = this.stats.movespeed;
+    };
+    Player.prototype.idle = function () {
+        this.playerState = playerStateEnum.idle;
+    };
+    Player.prototype.savePlayer = function (x, levelNumber) {
+        if (x === void 0) { x = 0; }
+        if (levelNumber === void 0) { levelNumber = this.currentRoom; }
+        var savePlayer = {
+            lastCheckPoint: this.lastCheckPoint,
+            currentRoom: levelNumber,
+            stats: this.stats,
+            y: this.y,
+            x: x,
+        };
+        window.localStorage.setItem("player", JSON.stringify(savePlayer));
+    };
+    Player.prototype.loadPlayer = function (playerStorage) {
+        if (playerStorage) {
+            this.stats = playerStorage.stats;
+            this.x = playerStorage.x;
+            this.y = playerStorage.y;
+            this.lastCheckPoint = playerStorage.lastCheckPoint;
+        }
+        else {
+            this.x = -this.width;
+            this.y = this.game.height - this.height * 2;
+        }
+    };
+    Player.prototype.nextLevel = function () {
+        this.savePlayer(0, this.currentRoom + 1);
+        this.game.state.start("level" + (this.currentRoom + 1), true, false);
+    };
+    Player.prototype.previousLevel = function () {
+        this.savePlayer(this.x, this.currentRoom - 1);
+        this.game.state.start("level" + (this.currentRoom - 1), true, false);
+    };
+    return Player;
+}(Phaser.Sprite));
 var BootState = /** @class */ (function (_super) {
     __extends(BootState, _super);
     function BootState() {
@@ -1937,6 +2123,11 @@ var PreloadState = /** @class */ (function (_super) {
         this.game.load.image("wall", "bin/assets/foundations/wall.png");
         this.game.load.image("gate", "bin/assets/foundations/gate.png");
         this.game.load.image("ceiling", "bin/assets/foundations/ceiling.png");
+        this.game.load.image("item", "bin/assets/items/item.png");
+        this.game.load.image("ring", "bin/assets/items/ring.png");
+        this.game.load.image("ringslot", "bin/assets/UI/ringslot.png");
+        this.game.load.image("inventory", "bin/assets/UI/inventory.png");
+        this.game.load.image("beltslot", "bin/assets/UI/beltslot.png");
         this.game.load.spritesheet("rogue", "bin/assets/rogue/rogue.png", 32, 32);
         this.game.load.spritesheet("bonfire", "bin/assets/bonfire/bonfire.png", 500, 740);
         this.game.load.spritesheet("chest", "bin/assets/chest/chest.png", 30, 30);
@@ -1973,73 +2164,74 @@ var TitleState = /** @class */ (function (_super) {
     __extends(TitleState, _super);
     function TitleState() {
         var _this = _super !== null && _super.apply(this, arguments) || this;
-        _this.style = {
+        _this.MenuStyle = {
             font: "bold 32px Arial",
             fill: "#fff",
             boundsAlignH: "center",
             boundsAlignV: "middle"
         };
+        _this.MenuText = {
+            "Start New Game": {
+                trigger: function () {
+                    window.localStorage.setItem("player", "null");
+                    _this.switchState("level" + levelsEnum.level0);
+                },
+                style: _this.MenuStyle,
+                text: null,
+                x: 0,
+                y: 0,
+            },
+            "Load Game": {
+                trigger: function () {
+                    var loadedGame = JSON.parse(window.localStorage.getItem("player"));
+                    if (loadedGame) {
+                        _this.switchState("level" + loadedGame.currentRoom);
+                    }
+                    else {
+                        alert("no Saved Game Found!");
+                    }
+                },
+                style: _this.MenuStyle,
+                text: null,
+                x: 0,
+                y: 50,
+            },
+            "Options": {
+                trigger: function () {
+                    alert("Options not yet Implemented");
+                },
+                style: _this.MenuStyle,
+                text: null,
+                x: 0,
+                y: 100,
+            },
+            "Github": {
+                trigger: function () {
+                    window.open("http://www.github.com/twofist");
+                },
+                style: _this.MenuStyle,
+                text: null,
+                x: 0,
+                y: 300,
+            },
+        };
         return _this;
     }
     TitleState.prototype.preload = function () {
-        this.background = 0x055550;
-        this.startGame = this.game.add.text(0, 0, "Start New Game", this.style);
-        this.loadGame = this.game.add.text(0, 50, "Load Game", this.style);
-        this.Options = this.game.add.text(0, 100, "Options", this.style);
-        this.githubLink = this.game.add.text(0, 300, "Github", this.style);
+        this.backgroundImage = 0x055550;
+        for (var key in this.MenuText) {
+            var obj = this.MenuText[key];
+            obj.text = this.game.add.text(obj.x, obj.y, key, obj.style);
+            obj.text.setShadow(3, 3, "rgba(0,0,0,0.5)", 2);
+            obj.text.setTextBounds(0, 200, 800, 100);
+            obj.text.inputEnabled = true;
+            obj.text.events.onInputOver.add(this.glow, this);
+            obj.text.events.onInputOut.add(this.stopGlow, this);
+            obj.text.events.onInputUp.add(obj.trigger, this);
+        }
     };
     TitleState.prototype.create = function () {
-        var _this = this;
-        this.game.stage.backgroundColor = this.background;
-        var array = [
-            this.startGame,
-            this.loadGame,
-            this.Options,
-            this.githubLink
-        ];
-        array.forEach(function (text) {
-            text.setShadow(3, 3, "rgba(0,0,0,0.5)", 2);
-            text.setTextBounds(0, 200, 800, 100);
-            text.inputEnabled = true;
-            text.events.onInputOver.add(_this.glow, _this);
-            text.events.onInputOut.add(_this.stopGlow, _this);
-            text.events.onInputUp.add(_this.fadeOut, _this);
-        });
-    };
-    TitleState.prototype.fadeOut = function (item) {
-        switch (item) {
-            case this.startGame:
-                this.startTheGame();
-                break;
-            case this.loadGame:
-                this.loadTheGame();
-                break;
-            case this.Options:
-                this.optionsMenu();
-                break;
-            case this.githubLink:
-                this.openGithubLink();
-                break;
-            default:
-        }
-    };
-    TitleState.prototype.startTheGame = function () {
-        window.localStorage.setItem("player", "null");
-        this.switchState("level" + levelsEnum.level0);
-    };
-    TitleState.prototype.loadTheGame = function () {
-        var loadedGame = JSON.parse(window.localStorage.getItem("player"));
-        if (loadedGame) {
-            this.switchState("level" + loadedGame.currentRoom);
-        }
-        else {
-            alert("no Saved Game Found!");
-        }
-    };
-    TitleState.prototype.optionsMenu = function () {
-    };
-    TitleState.prototype.openGithubLink = function () {
-        window.open("http://www.github.com/twofist");
+        this.game.stage.backgroundColor = this.backgroundImage;
     };
     TitleState.prototype.glow = function (item) {
         item.fill = "#ffff44";

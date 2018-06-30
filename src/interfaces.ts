@@ -6,6 +6,38 @@ interface savePlayerInterface {
 	x: number;
 }
 
+interface MenuStyle {
+	font: string;
+	fill: string;
+	boundsAlignH: string;
+	boundsAlignV: string;
+}
+
+interface MenuOption {
+	trigger: () => void;
+	style: MenuStyle;
+	text: Phaser.Text | null;
+	x: number;
+	y: number;
+}
+
+interface Menu {
+	[key: string]: MenuOption;
+}
+
+interface ItemSlot {
+	backgroundImage: Phaser.Image;
+	item: any;
+	trigger: () => void;
+	x: number;
+	y: number;
+}
+
+interface InventoryEquipment {
+	ringSlots: ItemSlot[];
+	beltSlots: ItemSlot[];
+}
+
 interface playerStatsInterface {
 	level: number;
 	maxHealth: number;

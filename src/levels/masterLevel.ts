@@ -9,6 +9,7 @@ class MasterLevel extends Phaser.State {
     npcs!: Phaser.Group;
     bonfires!: Phaser.Group;
     gates!: Phaser.Group;
+    items!: Phaser.Group;
     debugMode = true;
 
     update() {
@@ -16,12 +17,14 @@ class MasterLevel extends Phaser.State {
         this.game.physics.arcade.collide(this.enemies, this.platforms);
         this.game.physics.arcade.collide(this.npcs, this.platforms);
         this.game.physics.arcade.collide(this.bonfires, this.platforms);
+        this.game.physics.arcade.collide(this.items, this.platforms);
         this.game.physics.arcade.collide(this.player, this.gates);
         this.game.physics.arcade.collide(this.enemies, this.gates);
         this.game.physics.arcade.collide(this.npcs, this.gates);
 
         this.playerFacingBonfire();
         this.playerFacingNpc();
+        this.playerFacingItem();
 
         if (this.debugMode) {
             this.debug();
@@ -43,6 +46,7 @@ class MasterLevel extends Phaser.State {
         this.gates = this.game.add.group();
         this.npcs = this.game.add.group();
         this.bonfires = this.game.add.group();
+        this.items = this.game.add.group();
     }
 
     addPlayerToNpcs() {
@@ -71,6 +75,18 @@ class MasterLevel extends Phaser.State {
             } else {
                 v.canInteract = false;
                 this.player.facingNpc = null;
+            }
+        });
+    }
+
+    playerFacingItem() {
+        this.items.forEach((v: Item) => {
+            if (this.game.physics.arcade.overlap(this.player, v)) {
+                v.canInteract = true;
+                this.player.facingItem = v;
+            } else {
+                v.canInteract = false;
+                this.player.facingItem = null;
             }
         });
     }
@@ -112,6 +128,9 @@ class MasterLevel extends Phaser.State {
             this.game.debug.body(v);
         });
         this.gates.forEach((v: Gate) => {
+            this.game.debug.body(v);
+        });
+        this.items.forEach((v: Item) => {
             this.game.debug.body(v);
         });
     }
