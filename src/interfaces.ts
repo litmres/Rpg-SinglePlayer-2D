@@ -28,6 +28,7 @@ interface Menu {
 interface ItemSlot {
 	backgroundImage: Phaser.Image;
 	item: any;
+	itemImage: Phaser.Image | null;
 	trigger: () => void;
 }
 

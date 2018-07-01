@@ -37,9 +37,9 @@ class PreloadState extends Phaser.State {
         this.game.load.image("gate", "bin/assets/foundations/gate.png");
         this.game.load.image("ceiling", "bin/assets/foundations/ceiling.png");
         this.game.load.image("ring", "bin/assets/items/ring.png");
-        this.game.load.image("ringslot", "bin/assets/UI/ringslot.png");
+        this.game.load.image("inventoryslot", "bin/assets/UI/inventoryslot.png");
         this.game.load.image("inventory", "bin/assets/UI/inventory.png");
-        this.game.load.image("beltslot", "bin/assets/UI/beltslot.png");
+        this.game.load.image("inventorybar", "bin/assets/UI/inventorybar.png");
         this.game.load.image("bubble", "bin/assets/UI/bubble.png");
 
         this.game.load.spritesheet("item", "bin/assets/items/item.png", 15, 15);

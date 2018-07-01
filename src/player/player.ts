@@ -313,7 +313,7 @@ class Player extends Phaser.Sprite {
         }
 
         if (this.controls.I.justPressed()) {
-            new Inventory(this.game, this.game.camera.x, this.game.camera.y, this);
+            new Inventory(this.game, this.game.camera.x + this.game.camera.width / 4, this.game.camera.y + this.game.camera.height / 4, this);
             console.log(this.equipment);
         }
     }

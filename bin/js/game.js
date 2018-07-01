@@ -823,7 +823,7 @@ var Level1 = /** @class */ (function (_super) {
 var Inventory = /** @class */ (function (_super) {
     __extends(Inventory, _super);
     function Inventory(game, x, y, player) {
-        var _this = _super.call(this, game, x, y) || this;
+        var _this = _super.call(this, game, x, y, "") || this;
         _this.transparency = 1;
         _this.MenuStyle = {
             font: "bold 32px Arial",
@@ -832,79 +832,75 @@ var Inventory = /** @class */ (function (_super) {
             boundsAlignV: "middle"
         };
         _this.InventoryList = [];
-        _this.InventoryEquipment = {
-            ringSlots: [],
-            beltSlots: [],
-        };
-        _this.anchor.setTo(0.5, 0.5);
+        _this.x = x;
+        _this.y = y;
         _this.player = player;
-        _this.x = _this.game.camera.x + _this.game.camera.width / 2;
-        _this.y = _this.game.camera.y + _this.game.camera.height / 2;
         _this.game.input.keyboard.addKey(Phaser.Keyboard.I).onDown.addOnce(function () {
             _this.destroyInventory();
         });
-        _this.backgroundImage = _this.game.add.image(_this.x, _this.y, "inventory");
-        _this.backgroundImage.anchor.setTo(0.5, 0.5);
-        _this.backgroundImage.width = _this.game.camera.width / 2;
-        _this.backgroundImage.height = _this.game.camera.height / 2;
-        _this.addRingSlots(_this.InventoryEquipment.ringSlots, 4);
-        _this.addBeltSlots(_this.InventoryEquipment.beltSlots, 4);
+        _this.inventoryBars = _this.game.add.group();
+        var bar1 = new InventoryBar(_this.game, _this.x, _this.y, _this.player, "armor", 4);
+        var bar2 = new InventoryBar(_this.game, bar1.x, bar1.y + bar1.height, _this.player, "ring", 4);
+        var bar3 = new InventoryBar(_this.game, bar2.x, bar2.y + bar2.height, _this.player, "belt", 4);
+        _this.inventoryBars.add(bar1);
+        _this.inventoryBars.add(bar2);
+        _this.inventoryBars.add(bar3);
         return _this;
     }
-    Inventory.prototype.addRingSlots = function (obj, amount) {
+    Inventory.prototype.destroyInventory = function () {
+        console.log("destroying");
+    };
+    return Inventory;
+}(Phaser.Image));
+var InventoryBar = /** @class */ (function (_super) {
+    __extends(InventoryBar, _super);
+    function InventoryBar(game, x, y, player, slotType, amount) {
+        var _this = _super.call(this, game, x, y, "inventorybar") || this;
+        _this.slots = {
+            type: "",
+            amount: 0,
+            array: [],
+        };
+        _this.scale.setTo(0.5, 0.5);
+        _this.player = player;
+        _this.slots = {
+            type: slotType,
+            amount: amount,
+            array: [],
+        };
+        _this.addSlots(_this.slots.array, amount);
+        return _this;
+    }
+    InventoryBar.prototype.addSlots = function (obj, amount) {
         for (var ii = 0; ii < amount; ii++) {
-            var image = this.game.add.image(0, 0, "ringslot");
+            var image = this.game.add.image(0, 0, "inventoryslot");
             obj.push({
                 backgroundImage: image,
-                item: this.player.equipment.equiptRings[ii],
+                item: this.player.equipment.getEquiptItem(this.slots.type, ii),
+                itemImage: null,
                 trigger: function () {
                     console.log("hi");
                 }
             });
-            image.width = 30;
-            image.height = 30;
-            image.x = (this.backgroundImage.x - this.backgroundImage.width / 2) + ii * (image.width + 20) + 10;
-            image.y = this.backgroundImage.y;
+            image.x = this.x + ii * (image.width + 20) + 10;
+            image.y = this.y + image.height / 3;
             image.inputEnabled = true;
             if (obj[ii].item) {
-                var itemImage = this.game.add.image(image.x, image.y, "ringslot");
-                itemImage.width = image.width;
-                itemImage.height = image.height;
-                itemImage.events.onInputOver.add(this.showToolTip, this);
-                itemImage.events.onInputOut.add(this.hideToolTip, this);
+                obj[ii].itemImage = this.game.add.image(image.x, image.y, "ring");
+                obj[ii].itemImage.width = image.width;
+                obj[ii].itemImage.height = image.height;
+                obj[ii].itemImage.events.onInputOver.add(this.showToolTip, this);
+                obj[ii].itemImage.events.onInputOut.add(this.hideToolTip, this);
             }
             image.events.onInputUp.add(obj[ii].trigger, this);
         }
     };
-    Inventory.prototype.addBeltSlots = function (obj, amount) {
-        for (var ii = 0; ii < amount; ii++) {
-            var image = this.game.add.image(0, 0, "beltslot");
-            obj.push({
-                backgroundImage: image,
-                item: this.player.equipment.equiptBelts[ii],
-                trigger: function () {
-                    console.log("bye");
-                }
-            });
-            image.width = 30;
-            image.height = 30;
-            image.x = (this.backgroundImage.x - this.backgroundImage.width / 2) + ii * (image.width + 20) + 10;
-            image.y = this.backgroundImage.y + image.height * 2;
-            image.inputEnabled = true;
-            image.events.onInputOver.add(this.showToolTip, this);
-            image.events.onInputOut.add(this.hideToolTip, this);
-            image.events.onInputUp.add(obj[ii].trigger, this);
-        }
+    InventoryBar.prototype.showToolTip = function () {
     };
-    Inventory.prototype.showToolTip = function () {
+    InventoryBar.prototype.hideToolTip = function () {
     };
-    Inventory.prototype.hideToolTip = function () {
-    };
-    Inventory.prototype.destroyInventory = function () {
-        this.backgroundImage.destroy();
-    };
-    return Inventory;
-}(Phaser.Sprite));
+    return InventoryBar;
+}(Phaser.Image));
 var PauseMenu = /** @class */ (function (_super) {
     __extends(PauseMenu, _super);
     function PauseMenu(game, x, y, player) {
@@ -1596,12 +1592,20 @@ var Equipment = /** @class */ (function () {
     function Equipment() {
         this.ringSlots = [];
         this.beltSlots = [];
-        this.equiptRings = [];
+        this.armorSlots = [];
+        this.equiptRings = [new Ring()];
         this.equiptBelts = [];
+        this.equiptArmors = [];
     }
     Equipment.prototype.addToInventory = function (item) {
         if (item.itemType === "ring") {
             this.ringSlots.push(item);
+        }
+        if (item.itemType === "armor") {
+            this.armorSlots.push(item);
+        }
+        if (item.itemType === "belt") {
+            this.beltSlots.push(item);
         }
     };
     Equipment.prototype.equiptRing = function (item) {
@@ -1609,6 +1613,21 @@ var Equipment = /** @class */ (function () {
     };
     Equipment.prototype.equiptBelt = function (item) {
         this.equiptBelts.push(item);
+    };
+    Equipment.prototype.equiptArmor = function (item) {
+        this.equiptArmors.push(item);
+    };
+    Equipment.prototype.getEquiptItem = function (type, num) {
+        if (type === "ring") {
+            return this.equiptRings[num];
+        }
+        if (type === "belt") {
+            return this.equiptBelts[num];
+        }
+        if (type === "armor") {
+            return this.equiptArmors[num];
+        }
+        return null;
     };
     return Equipment;
 }());
@@ -1938,7 +1957,7 @@ var Player = /** @class */ (function (_super) {
             new PauseMenu(this.game, 0, 0, this);
         }
         if (this.controls.I.justPressed()) {
-            new Inventory(this.game, this.game.camera.x, this.game.camera.y, this);
+            new Inventory(this.game, this.game.camera.x + this.game.camera.width / 4, this.game.camera.y + this.game.camera.height / 4, this);
             console.log(this.equipment);
         }
     };
@@ -2160,9 +2179,9 @@ var PreloadState = /** @class */ (function (_super) {
         this.game.load.image("gate", "bin/assets/foundations/gate.png");
         this.game.load.image("ceiling", "bin/assets/foundations/ceiling.png");
         this.game.load.image("ring", "bin/assets/items/ring.png");
-        this.game.load.image("ringslot", "bin/assets/UI/ringslot.png");
+        this.game.load.image("inventoryslot", "bin/assets/UI/inventoryslot.png");
         this.game.load.image("inventory", "bin/assets/UI/inventory.png");
-        this.game.load.image("beltslot", "bin/assets/UI/beltslot.png");
+        this.game.load.image("inventorybar", "bin/assets/UI/inventorybar.png");
         this.game.load.image("bubble", "bin/assets/UI/bubble.png");
         this.game.load.spritesheet("item", "bin/assets/items/item.png", 15, 15);
         this.game.load.spritesheet("rogue", "bin/assets/rogue/rogue.png", 32, 32);
