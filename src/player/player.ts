@@ -3,6 +3,7 @@ class Player extends Phaser.Sprite {
     lastCheckPoint: levelsEnum = levelsEnum.level0;
     invincible = false;
     equipment = new Equipment();
+    inventory: Inventory | null;
     canWalk: playerAllowanceInterface = {
         [playerStateEnum.movingWalk]: true,
         [playerStateEnum.movingFall]: false,
@@ -110,6 +111,7 @@ class Player extends Phaser.Sprite {
         super(game, x, y, "player", 0);
         this.anchor.setTo(0.5, 0);
         //this.scale.setTo(1.5, 1.5);
+        this.inventory = null;
         this.game.physics.arcade.enableBody(this);
         this.game.add.existing(this);
         this.body.gravity.y = 1000;
@@ -312,9 +314,8 @@ class Player extends Phaser.Sprite {
             new PauseMenu(this.game, 0, 0, this);
         }
 
-        if (this.controls.I.justPressed()) {
-            new Inventory(this.game, this.game.camera.x + this.game.camera.width / 4, this.game.camera.y + this.game.camera.height / 4, this);
-            console.log(this.equipment);
+        if (this.controls.I.isDown && !this.inventory) {
+            this.inventory = new Inventory(this.game, this.game.camera.x + this.game.camera.width / 4, this.game.camera.y + this.game.camera.height / 4, this);
         }
     }
 

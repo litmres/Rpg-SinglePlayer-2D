@@ -14,10 +14,10 @@ class Inventory extends Phaser.Image {
 
     inventoryBars: Phaser.Group;
 
+    inventoryStats: Phaser.Group;
+
     constructor(game: Phaser.Game, x: number, y: number, player: Player) {
         super(game, x, y, "");
-        this.x = x;
-        this.y = y;
         this.player = player;
 
         this.game.input.keyboard.addKey(Phaser.Keyboard.I).onDown.addOnce(() => {
@@ -32,11 +32,22 @@ class Inventory extends Phaser.Image {
         this.inventoryBars.add(bar2);
         this.inventoryBars.add(bar3);
 
-
+        this.inventoryStats = this.game.add.group();
+        const stats = new InventoryStats(this.game, bar1.x + bar1.width, bar1.y, this.player);
+        this.inventoryStats.add(stats);
     }
 
     destroyInventory() {
-        console.log("destroying");
+        this.inventoryBars.forEach((v: InventoryBar) => {
+            v.destroy();
+        });
+        this.inventoryStats.forEach((v: InventoryStats) => {
+            v.destroy();
+        });
+        setTimeout(() => {
+            this.player.inventory = null;
+        }, 100);
+        this.destroy();
     }
 }
 

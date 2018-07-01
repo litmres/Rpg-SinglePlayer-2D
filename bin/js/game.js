@@ -832,8 +832,6 @@ var Inventory = /** @class */ (function (_super) {
             boundsAlignV: "middle"
         };
         _this.InventoryList = [];
-        _this.x = x;
-        _this.y = y;
         _this.player = player;
         _this.game.input.keyboard.addKey(Phaser.Keyboard.I).onDown.addOnce(function () {
             _this.destroyInventory();
@@ -845,10 +843,23 @@ var Inventory = /** @class */ (function (_super) {
         _this.inventoryBars.add(bar1);
         _this.inventoryBars.add(bar2);
         _this.inventoryBars.add(bar3);
+        _this.inventoryStats = _this.game.add.group();
+        var stats = new InventoryStats(_this.game, bar1.x + bar1.width, bar1.y, _this.player);
+        _this.inventoryStats.add(stats);
         return _this;
     }
     Inventory.prototype.destroyInventory = function () {
-        console.log("destroying");
+        var _this = this;
+        this.inventoryBars.forEach(function (v) {
+            v.destroy();
+        });
+        this.inventoryStats.forEach(function (v) {
+            v.destroy();
+        });
+        setTimeout(function () {
+            _this.player.inventory = null;
+        }, 100);
+        this.destroy();
     };
     return Inventory;
 }(Phaser.Image));
@@ -868,7 +879,13 @@ var InventoryBar = /** @class */ (function (_super) {
             amount: amount,
             array: [],
         };
+        _this.itemSlot = _this.game.add.group();
+        _this.equiptSlot = _this.game.add.group();
         _this.addSlots(_this.slots.array, amount);
+        _this.addChild(_this.itemSlot);
+        _this.itemSlot.scale.setTo(2, 2);
+        _this.addChild(_this.equiptSlot);
+        _this.equiptSlot.scale.setTo(2, 2);
         return _this;
     }
     InventoryBar.prototype.addSlots = function (obj, amount) {
@@ -882,8 +899,8 @@ var InventoryBar = /** @class */ (function (_super) {
                     console.log("hi");
                 }
             });
-            image.x = this.x + ii * (image.width + 20) + 10;
-            image.y = this.y + image.height / 3;
+            image.x += ii * (image.width + 20) + 10;
+            image.y += image.height / 3;
             image.inputEnabled = true;
             if (obj[ii].item) {
                 obj[ii].itemImage = this.game.add.image(image.x, image.y, "ring");
@@ -891,8 +908,10 @@ var InventoryBar = /** @class */ (function (_super) {
                 obj[ii].itemImage.height = image.height;
                 obj[ii].itemImage.events.onInputOver.add(this.showToolTip, this);
                 obj[ii].itemImage.events.onInputOut.add(this.hideToolTip, this);
+                this.equiptSlot.add(obj[ii].itemImage);
             }
             image.events.onInputUp.add(obj[ii].trigger, this);
+            this.itemSlot.add(image);
         }
     };
     InventoryBar.prototype.showToolTip = function () {
@@ -900,6 +919,49 @@ var InventoryBar = /** @class */ (function (_super) {
     InventoryBar.prototype.hideToolTip = function () {
     };
     return InventoryBar;
+}(Phaser.Image));
+var InventoryStats = /** @class */ (function (_super) {
+    __extends(InventoryStats, _super);
+    function InventoryStats(game, x, y, player) {
+        var _this = _super.call(this, game, x, y, "inventory") || this;
+        _this.nameStyle = {
+            font: "bold 10px Arial",
+            fill: "#fff",
+            boundsAlignH: "left",
+            boundsAlignV: "middle"
+        };
+        _this.valueStyle = {
+            font: "bold 10px Arial",
+            fill: "#fff",
+            align: "right",
+            boundsAlignH: "right",
+            boundsAlignV: "middle"
+        };
+        _this.scale.setTo(0.5, 0.5);
+        _this.player = player;
+        _this.nameText = _this.game.add.group();
+        _this.valueText = _this.game.add.group();
+        _this.createText();
+        _this.addChild(_this.nameText);
+        _this.addChild(_this.valueText);
+        _this.nameText.scale.setTo(2, 2);
+        _this.valueText.scale.setTo(2, 2);
+        return _this;
+    }
+    InventoryStats.prototype.createText = function () {
+        var ii = 0;
+        var offsetx = 10;
+        var offsety = 10;
+        for (var key in this.player.stats) {
+            ii++;
+            var name_1 = this.game.add.text(offsetx, ii * offsety, "" + key, this.nameStyle);
+            this.nameText.add(name_1);
+            var value = this.game.add.text(this.width, ii * offsety, "" + this.player.stats[key], this.valueStyle);
+            value.x -= value.width + offsetx;
+            this.valueText.add(value);
+        }
+    };
+    return InventoryStats;
 }(Phaser.Image));
 var PauseMenu = /** @class */ (function (_super) {
     __extends(PauseMenu, _super);
@@ -1773,6 +1835,7 @@ var Player = /** @class */ (function (_super) {
         };
         _this.anchor.setTo(0.5, 0);
         //this.scale.setTo(1.5, 1.5);
+        _this.inventory = null;
         _this.game.physics.arcade.enableBody(_this);
         _this.game.add.existing(_this);
         _this.body.gravity.y = 1000;
@@ -1956,9 +2019,8 @@ var Player = /** @class */ (function (_super) {
         if (this.controls.ESC.isDown || this.controls.P.isDown) {
             new PauseMenu(this.game, 0, 0, this);
         }
-        if (this.controls.I.justPressed()) {
-            new Inventory(this.game, this.game.camera.x + this.game.camera.width / 4, this.game.camera.y + this.game.camera.height / 4, this);
-            console.log(this.equipment);
+        if (this.controls.I.isDown && !this.inventory) {
+            this.inventory = new Inventory(this.game, this.game.camera.x + this.game.camera.width / 4, this.game.camera.y + this.game.camera.height / 4, this);
         }
     };
     // tslint:disable-next-line:cyclomatic-complexity
