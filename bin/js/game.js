@@ -1625,6 +1625,17 @@ var OverlayBar = /** @class */ (function (_super) {
         _this.staminaBar = _this.game.add.image(_this.x + 52, _this.y + 43, "staminabar");
         _this.staminaBar.height = 10;
         _this.staminaBar.width = _this.maxStamBar;
+        _this.emitter = _this.game.add.emitter(_this.healthBar.x + _this.healthBar.width / 2, _this.healthBar.y + _this.healthBar.height - 5, 20);
+        _this.emitter.makeParticles("bubble");
+        //this.emitter.setSize(this.healthBar.width, this.healthBar.height);
+        _this.emitter.width = _this.healthBar.width - 20;
+        _this.emitter.height = _this.healthBar.height / 2;
+        _this.emitter.minParticleScale = 0.02;
+        _this.emitter.maxParticleScale = 0.02;
+        _this.emitter.minParticleSpeed.setTo(-10, -5);
+        _this.emitter.maxParticleSpeed.setTo(10, -1);
+        _this.emitter.gravity = 0;
+        _this.emitter.start(false, 2000, 500);
         return _this;
     }
     OverlayBar.prototype.update = function () {
@@ -2152,6 +2163,7 @@ var PreloadState = /** @class */ (function (_super) {
         this.game.load.image("ringslot", "bin/assets/UI/ringslot.png");
         this.game.load.image("inventory", "bin/assets/UI/inventory.png");
         this.game.load.image("beltslot", "bin/assets/UI/beltslot.png");
+        this.game.load.image("bubble", "bin/assets/UI/bubble.png");
         this.game.load.spritesheet("item", "bin/assets/items/item.png", 15, 15);
         this.game.load.spritesheet("rogue", "bin/assets/rogue/rogue.png", 32, 32);
         this.game.load.spritesheet("bonfire", "bin/assets/bonfire/bonfire.png", 500, 740);
