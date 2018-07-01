@@ -73,9 +73,7 @@ class Player extends Phaser.Sprite {
         fill: "#fff"
     });
     stats: playerStatsInterface;
-    playerHealthBar: any = null;
-    playerStaminaBar: any = null;
-    playerOverlay: any = null;
+    playerOverlay: Phaser.Group;
     bodyWidth: number;
     bodyHeight: number;
     controls: any;
@@ -197,8 +195,6 @@ class Player extends Phaser.Sprite {
         });
         this.animations.add("knockback", [83], 10, true);
 
-
-
         this.hitBoxes = this.game.add.group();
 
         this.addChild(this.hitBoxes);
@@ -208,8 +204,9 @@ class Player extends Phaser.Sprite {
         this.hitBox1.body.setSize(20, 10);
         this.hitBox1.name = "attack1";
 
-
-        this.overlay();
+        this.playerOverlay = this.game.add.group();
+        this.playerOverlay.add(new OverlayBar(this.game, 50, 50, this));
+        this.game.world.bringToTop(this.playerOverlay);
     }
 
     update() {
@@ -219,9 +216,6 @@ class Player extends Phaser.Sprite {
         this.animations.play(this.playerAnimations[this.playerState]);
 
         this.handleInput();
-
-        this.updateHealthBar();
-        this.updateStaminaBar();
 
         this.handleEnteringLevel();
 
@@ -441,49 +435,6 @@ class Player extends Phaser.Sprite {
         } else if (!this.facingBonfire!.isLit) {
             this.facingBonfire!.isLit = true;
             this.lastCheckPoint = this.currentRoom;
-        }
-    }
-
-    overlay() {
-        if (!this.playerOverlay) {
-            this.playerOverlay = this.game.add.image(50, 50, "overlay");
-            this.healthBar();
-            this.staminaBar();
-            this.game.world.bringToTop(this.playerOverlay);
-        }
-    }
-
-    healthBar() {
-        if (!this.playerHealthBar) {
-            const x = this.playerOverlay.x + 52;
-            const y = this.playerOverlay.y + 7;
-            this.playerHealthBar = this.game.add.image(x, y, "healthbar");
-            this.playerHealthBar.height = 30;
-            this.playerHealthBar.maxWidth = 300;
-            this.playerHealthBar.width = 300;
-        }
-    }
-
-    updateHealthBar() {
-        if (this.stats) {
-            this.playerHealthBar.width = this.playerHealthBar.maxWidth / this.stats.maxHealth * this.stats.health;
-        }
-    }
-
-    updateStaminaBar() {
-        if (this.stats) {
-            this.playerStaminaBar.width = this.playerHealthBar.maxWidth / this.stats.maxStamina * this.stats.stamina;
-        }
-    }
-
-    staminaBar() {
-        if (!this.playerStaminaBar && this.playerHealthBar) {
-            const x = this.playerOverlay.x + 52;
-            const y = this.playerOverlay.y + 43;
-            this.playerStaminaBar = this.game.add.image(x, y, "staminabar");
-            this.playerStaminaBar.height = 10;
-            this.playerStaminaBar.maxWidth = 288;
-            this.playerStaminaBar.width = 288;
         }
     }
 

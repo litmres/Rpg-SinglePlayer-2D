@@ -1612,6 +1612,33 @@ var Equipment = /** @class */ (function () {
     };
     return Equipment;
 }());
+var OverlayBar = /** @class */ (function (_super) {
+    __extends(OverlayBar, _super);
+    function OverlayBar(game, x, y, player) {
+        var _this = _super.call(this, game, x, y, "overlay") || this;
+        _this.maxHpBar = 300;
+        _this.maxStamBar = 288;
+        _this.player = player;
+        _this.healthBar = _this.game.add.image(_this.x + 52, _this.y + 7, "healthbar");
+        _this.healthBar.height = 30;
+        _this.healthBar.width = _this.maxHpBar;
+        _this.staminaBar = _this.game.add.image(_this.x + 52, _this.y + 43, "staminabar");
+        _this.staminaBar.height = 10;
+        _this.staminaBar.width = _this.maxStamBar;
+        return _this;
+    }
+    OverlayBar.prototype.update = function () {
+        this.updateHealthBar(this.player.stats.maxHealth, this.player.stats.health);
+        this.updateStaminaBar(this.player.stats.maxStamina, this.player.stats.stamina);
+    };
+    OverlayBar.prototype.updateHealthBar = function (max, current) {
+        this.healthBar.width = this.maxHpBar / max * current;
+    };
+    OverlayBar.prototype.updateStaminaBar = function (max, current) {
+        this.staminaBar.width = this.maxStamBar / max * current;
+    };
+    return OverlayBar;
+}(Phaser.Image));
 var Player = /** @class */ (function (_super) {
     __extends(Player, _super);
     function Player(game, x, y) {
@@ -1685,9 +1712,6 @@ var Player = /** @class */ (function (_super) {
             font: "24px Arial",
             fill: "#fff"
         });
-        _this.playerHealthBar = null;
-        _this.playerStaminaBar = null;
-        _this.playerOverlay = null;
         _this.currentRoom = 0;
         _this.EnterLevelHandler = {
             Next: false,
@@ -1805,15 +1829,15 @@ var Player = /** @class */ (function (_super) {
         _this.game.physics.enable(_this.hitBoxes, Phaser.Physics.ARCADE);
         _this.hitBox1.body.setSize(20, 10);
         _this.hitBox1.name = "attack1";
-        _this.overlay();
+        _this.playerOverlay = _this.game.add.group();
+        _this.playerOverlay.add(new OverlayBar(_this.game, 50, 50, _this));
+        _this.game.world.bringToTop(_this.playerOverlay);
         return _this;
     }
     Player.prototype.update = function () {
         this.resetVelocity();
         this.animations.play(this.playerAnimations[this.playerState]);
         this.handleInput();
-        this.updateHealthBar();
-        this.updateStaminaBar();
         this.handleEnteringLevel();
         this.handleDeath();
         this.updateHitbox();
@@ -2017,44 +2041,6 @@ var Player = /** @class */ (function (_super) {
         else if (!this.facingBonfire.isLit) {
             this.facingBonfire.isLit = true;
             this.lastCheckPoint = this.currentRoom;
-        }
-    };
-    Player.prototype.overlay = function () {
-        if (!this.playerOverlay) {
-            this.playerOverlay = this.game.add.image(50, 50, "overlay");
-            this.healthBar();
-            this.staminaBar();
-            this.game.world.bringToTop(this.playerOverlay);
-        }
-    };
-    Player.prototype.healthBar = function () {
-        if (!this.playerHealthBar) {
-            var x = this.playerOverlay.x + 52;
-            var y = this.playerOverlay.y + 7;
-            this.playerHealthBar = this.game.add.image(x, y, "healthbar");
-            this.playerHealthBar.height = 30;
-            this.playerHealthBar.maxWidth = 300;
-            this.playerHealthBar.width = 300;
-        }
-    };
-    Player.prototype.updateHealthBar = function () {
-        if (this.stats) {
-            this.playerHealthBar.width = this.playerHealthBar.maxWidth / this.stats.maxHealth * this.stats.health;
-        }
-    };
-    Player.prototype.updateStaminaBar = function () {
-        if (this.stats) {
-            this.playerStaminaBar.width = this.playerHealthBar.maxWidth / this.stats.maxStamina * this.stats.stamina;
-        }
-    };
-    Player.prototype.staminaBar = function () {
-        if (!this.playerStaminaBar && this.playerHealthBar) {
-            var x = this.playerOverlay.x + 52;
-            var y = this.playerOverlay.y + 43;
-            this.playerStaminaBar = this.game.add.image(x, y, "staminabar");
-            this.playerStaminaBar.height = 10;
-            this.playerStaminaBar.maxWidth = 288;
-            this.playerStaminaBar.width = 288;
         }
     };
     Player.prototype.resetVelocity = function () {
