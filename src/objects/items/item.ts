@@ -13,14 +13,15 @@ class Item extends Phaser.Sprite {
         this.item = obj;
         this.anchor.setTo(0.5, 0);
         game.physics.arcade.enableBody(this);
+        this.body.gravity.y = 1000;
         game.add.existing(this);
         this.body.collideWorldBounds = true;
         game.physics.enable(this, Phaser.Physics.ARCADE);
-        this.animations.add("item", [0], 5, true);
+        this.animations.add("idle", [0, 1, 2, 3, 4, 5, 6, 7], 5, true);
     }
 
     update() {
-        this.animations.play("item");
+        this.animations.play("idle");
 
         this.interaction();
     }

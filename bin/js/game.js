@@ -1554,14 +1554,15 @@ var Item = /** @class */ (function (_super) {
         _this.item = obj;
         _this.anchor.setTo(0.5, 0);
         game.physics.arcade.enableBody(_this);
+        _this.body.gravity.y = 1000;
         game.add.existing(_this);
         _this.body.collideWorldBounds = true;
         game.physics.enable(_this, Phaser.Physics.ARCADE);
-        _this.animations.add("item", [0], 5, true);
+        _this.animations.add("idle", [0, 1, 2, 3, 4, 5, 6, 7], 5, true);
         return _this;
     }
     Item.prototype.update = function () {
-        this.animations.play("item");
+        this.animations.play("idle");
         this.interaction();
     };
     Item.prototype.interaction = function () {
@@ -2161,11 +2162,11 @@ var PreloadState = /** @class */ (function (_super) {
         this.game.load.image("wall", "bin/assets/foundations/wall.png");
         this.game.load.image("gate", "bin/assets/foundations/gate.png");
         this.game.load.image("ceiling", "bin/assets/foundations/ceiling.png");
-        this.game.load.image("item", "bin/assets/items/item.png");
         this.game.load.image("ring", "bin/assets/items/ring.png");
         this.game.load.image("ringslot", "bin/assets/UI/ringslot.png");
         this.game.load.image("inventory", "bin/assets/UI/inventory.png");
         this.game.load.image("beltslot", "bin/assets/UI/beltslot.png");
+        this.game.load.spritesheet("item", "bin/assets/items/item.png", 15, 15);
         this.game.load.spritesheet("rogue", "bin/assets/rogue/rogue.png", 32, 32);
         this.game.load.spritesheet("bonfire", "bin/assets/bonfire/bonfire.png", 500, 740);
         this.game.load.spritesheet("chest", "bin/assets/chest/chest.png", 30, 30);
