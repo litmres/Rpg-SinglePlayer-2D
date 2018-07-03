@@ -1,78 +1,74 @@
 class TitleState extends Phaser.State {
-    background!: number | Phaser.Image;
-    logo!: Phaser.Sprite;
-    startGame!: Phaser.Text;
-    loadGame!: Phaser.Text;
-    githubLink!: Phaser.Text;
-    Options!: Phaser.Text;
-    style = {
+    backgroundImage!: Phaser.Image | number;
+
+    MenuStyle: MenuStyle = {
         font: "bold 32px Arial",
         fill: "#fff",
         boundsAlignH: "center",
         boundsAlignV: "middle"
     };
 
+    MenuText: Menu = {
+        "Start New Game": {
+            trigger: () => {
+                window.localStorage.setItem("player", "null");
+                this.switchState("level" + levelsEnum.level0);
+            },
+            style: this.MenuStyle,
+            text: null,
+            x: 0,
+            y: 0,
+        },
+        "Load Game": {
+            trigger: () => {
+                const loadedGame = JSON.parse(window.localStorage.getItem("player")!);
+                if (loadedGame) {
+                    this.switchState("level" + loadedGame.currentRoom);
+                } else {
+                    alert("no Saved Game Found!");
+                }
+            },
+            style: this.MenuStyle,
+            text: null,
+            x: 0,
+            y: 50,
+        },
+        "Options": {
+            trigger: () => {
+                alert("Options not yet Implemented");
+            },
+            style: this.MenuStyle,
+            text: null,
+            x: 0,
+            y: 100,
+        },
+        "Github": {
+            trigger: () => {
+                window.open("http://www.github.com/twofist");
+            },
+            style: this.MenuStyle,
+            text: null,
+            x: 0,
+            y: 300,
+        },
+    };
+
     preload() {
-        this.background = 0x055550;
-        this.startGame = this.game.add.text(0, 0, "Start New Game", this.style);
-        this.loadGame = this.game.add.text(0, 50, "Load Game", this.style);
-        this.Options = this.game.add.text(0, 100, "Options", this.style);
-        this.githubLink = this.game.add.text(0, 300, "Github", this.style);
+        this.backgroundImage = 0x055550;
+        for (const key in this.MenuText) {
+            const obj = this.MenuText[key];
+            obj.text = this.game.add.text(obj.x, obj.y, key, obj.style);
+            obj.text.setShadow(3, 3, "rgba(0,0,0,0.5)", 2);
+            obj.text.setTextBounds(0, 200, 800, 100);
+            obj.text.inputEnabled = true;
+            obj.text.events.onInputOver.add(this.glow, this);
+            obj.text.events.onInputOut.add(this.stopGlow, this);
+            obj.text.events.onInputUp.add(obj.trigger, this);
+        }
     }
 
     create() {
-        this.game.stage.backgroundColor = this.background;
-        const array = [
-            this.startGame,
-            this.loadGame,
-            this.Options,
-            this.githubLink
-        ];
-
-        array.forEach((text) => {
-            text.setShadow(3, 3, "rgba(0,0,0,0.5)", 2);
-            text.setTextBounds(0, 200, 800, 100);
-            text.inputEnabled = true;
-            text.events.onInputOver.add(this.glow, this);
-            text.events.onInputOut.add(this.stopGlow, this);
-            text.events.onInputUp.add(this.fadeOut, this);
-        });
-    }
-
-    fadeOut(item: Phaser.Text) {
-        switch (item) {
-            case this.startGame: this.startTheGame();
-                break;
-            case this.loadGame: this.loadTheGame();
-                break;
-            case this.Options: this.optionsMenu();
-                break;
-            case this.githubLink: this.openGithubLink();
-                break;
-            default:
-        }
-    }
-
-    startTheGame() {
-        window.localStorage.setItem("player", "null");
-        this.switchState("level" + levelsEnum.level0);
-    }
-
-    loadTheGame() {
-        const loadedGame = JSON.parse(window.localStorage.getItem("player")!);
-        if (loadedGame) {
-            this.switchState("level" + loadedGame.currentRoom);
-        } else {
-            alert("no Saved Game Found!");
-        }
-    }
-
-    optionsMenu() {
-
-    }
-
-    openGithubLink() {
-        window.open("http://www.github.com/twofist");
+        this.game.stage.backgroundColor = this.backgroundImage;
     }
 
     glow(item: Phaser.Text) {

@@ -28,6 +28,7 @@ class PreloadState extends Phaser.State {
             fill: "#ffffff",
         });
         this.game.stage.backgroundColor = 0xB20059;
+        this.game.load.image("overlay", "bin/assets/UI/overlay.png");
         this.game.load.image("healthbar", "bin/assets/UI/healthbar.png");
         this.game.load.image("staminabar", "bin/assets/UI/staminabar.png");
         this.game.load.image("darkbackground", "bin/assets/backgrounds/background.png");
@@ -35,7 +36,13 @@ class PreloadState extends Phaser.State {
         this.game.load.image("wall", "bin/assets/foundations/wall.png");
         this.game.load.image("gate", "bin/assets/foundations/gate.png");
         this.game.load.image("ceiling", "bin/assets/foundations/ceiling.png");
+        this.game.load.image("ring", "bin/assets/items/ring.png");
+        this.game.load.image("inventoryslot", "bin/assets/UI/inventoryslot.png");
+        this.game.load.image("inventory", "bin/assets/UI/inventory.png");
+        this.game.load.image("inventorybar", "bin/assets/UI/inventorybar.png");
+        this.game.load.image("bubble", "bin/assets/UI/bubble.png");
 
+        this.game.load.spritesheet("item", "bin/assets/items/item.png", 15, 15);
         this.game.load.spritesheet("rogue", "bin/assets/rogue/rogue.png", 32, 32);
         this.game.load.spritesheet("bonfire", "bin/assets/bonfire/bonfire.png", 500, 740);
         this.game.load.spritesheet("chest", "bin/assets/chest/chest.png", 30, 30);

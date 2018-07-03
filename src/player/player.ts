@@ -2,6 +2,8 @@ class Player extends Phaser.Sprite {
     playerState: playerStateEnum = playerStateEnum.idle;
     lastCheckPoint: levelsEnum = levelsEnum.level0;
     invincible = false;
+    equipment = new Equipment();
+    inventory: Inventory | null;
     canWalk: playerAllowanceInterface = {
         [playerStateEnum.movingWalk]: true,
         [playerStateEnum.movingFall]: false,
@@ -62,24 +64,17 @@ class Player extends Phaser.Sprite {
         [playerStateEnum.autoWalkTo]: false,
         [playerStateEnum.knockBack]: false,
     };
-    facingNpc: any;
-    facingBonfire: any;
+    facingNpc: MasterNpc | null | undefined;
+    facingBonfire: Bonfire | null | undefined;
+    facingItem: Item | null | undefined;
     hitBoxes: Phaser.Group;
     hitBox1: Phaser.Sprite;
-    pauseMenu: any = {
-        backgroundImage: null,
-        continueGame: null,
-        loadGame: null,
-        options: null,
-        githubLink: null,
-    };
     fpsCounter: Phaser.Text = this.game.add.text(this.game.camera.x, 0, "FPS: " + this.game.time.fps, {
         font: "24px Arial",
         fill: "#fff"
     });
     stats: playerStatsInterface;
-    playerHealthBar: any = null;
-    playerStaminaBar: any = null;
+    playerOverlay: Phaser.Group;
     bodyWidth: number;
     bodyHeight: number;
     controls: any;
@@ -116,6 +111,7 @@ class Player extends Phaser.Sprite {
         super(game, x, y, "player", 0);
         this.anchor.setTo(0.5, 0);
         //this.scale.setTo(1.5, 1.5);
+        this.inventory = null;
         this.game.physics.arcade.enableBody(this);
         this.game.add.existing(this);
         this.body.gravity.y = 1000;
@@ -143,6 +139,7 @@ class Player extends Phaser.Sprite {
             E: this.game.input.keyboard.addKey(Phaser.Keyboard.E),
             ESC: this.game.input.keyboard.addKey(Phaser.Keyboard.ESC),
             P: this.game.input.keyboard.addKey(Phaser.Keyboard.P),
+            I: this.game.input.keyboard.addKey(Phaser.Keyboard.I),
             LMB: this.game.input.activePointer.leftButton,
             RMB: this.game.input.activePointer.rightButton,
         };
@@ -200,8 +197,6 @@ class Player extends Phaser.Sprite {
         });
         this.animations.add("knockback", [83], 10, true);
 
-
-
         this.hitBoxes = this.game.add.group();
 
         this.addChild(this.hitBoxes);
@@ -211,10 +206,9 @@ class Player extends Phaser.Sprite {
         this.hitBox1.body.setSize(20, 10);
         this.hitBox1.name = "attack1";
 
-
-
-        this.healthBar();
-        this.staminaBar();
+        this.playerOverlay = this.game.add.group();
+        this.playerOverlay.add(new OverlayBar(this.game, 50, 50, this));
+        this.game.world.bringToTop(this.playerOverlay);
     }
 
     update() {
@@ -225,9 +219,6 @@ class Player extends Phaser.Sprite {
 
         this.handleInput();
 
-        this.updateHealthBar();
-        this.updateStaminaBar();
-
         this.handleEnteringLevel();
 
         this.handleDeath();
@@ -235,6 +226,11 @@ class Player extends Phaser.Sprite {
         this.updateHitbox();
 
         this.fpsCounter.setText("FPS: " + this.game.time.fps);
+    }
+
+    handleItem() {
+        this.equipment.addToInventory(this.facingItem!.item);
+        this.facingItem!.remove();
     }
 
     updateHitbox() {
@@ -304,6 +300,8 @@ class Player extends Phaser.Sprite {
             this.handleBonfire();
         } else if (this.controls.E.justPressed() && this.facingNpc) {
             this.handleNpc();
+        } else if (this.controls.E.justPressed() && this.facingItem) {
+            this.handleItem();
         } else if (this.canIdle[this.playerState]) {
             this.idle();
         }
@@ -313,7 +311,11 @@ class Player extends Phaser.Sprite {
         }
 
         if (this.controls.ESC.isDown || this.controls.P.isDown) {
-            this.handlePauseMenu();
+            new PauseMenu(this.game, 0, 0, this);
+        }
+
+        if (this.controls.I.isDown && !this.inventory) {
+            this.inventory = new Inventory(this.game, this.game.camera.x + this.game.camera.width / 4, this.game.camera.y + this.game.camera.height / 4, this);
         }
     }
 
@@ -413,7 +415,7 @@ class Player extends Phaser.Sprite {
     }
 
     handleNpc() {
-        this.facingNpc.nextDialogueText();
+        this.facingNpc!.nextDialogueText();
     }
 
     handleAttack() {
@@ -429,39 +431,11 @@ class Player extends Phaser.Sprite {
     }
 
     handleBonfire() {
-        if (this.facingBonfire.isLit) {
+        if (this.facingBonfire!.isLit) {
             this.playerState = playerStateEnum.sitDown;
-        } else if (!this.facingBonfire.isLit) {
-            this.facingBonfire.isLit = true;
+        } else if (!this.facingBonfire!.isLit) {
+            this.facingBonfire!.isLit = true;
             this.lastCheckPoint = this.currentRoom;
-        }
-    }
-
-    healthBar() {
-        if (!this.playerHealthBar) {
-            this.playerHealthBar = this.game.add.sprite(50, 50, "healthbar");
-            this.playerHealthBar.height = 15;
-        }
-    }
-
-    updateHealthBar() {
-        if (this.stats) {
-            this.playerHealthBar.width = this.stats.health * 2;
-        }
-    }
-
-    updateStaminaBar() {
-        if (this.stats) {
-            this.playerStaminaBar.width = this.stats.stamina * 2;
-        }
-    }
-
-    staminaBar() {
-        if (!this.playerStaminaBar && this.playerHealthBar) {
-            const x = this.playerHealthBar.x;
-            const y = this.playerHealthBar.y + this.playerHealthBar.width;
-            this.playerStaminaBar = this.game.add.sprite(x, y, "staminabar");
-            this.playerStaminaBar.height = 15;
         }
     }
 
@@ -487,97 +461,6 @@ class Player extends Phaser.Sprite {
 
     idle() {
         this.playerState = playerStateEnum.idle;
-    }
-
-    handlePauseMenu() {
-        this.game.paused = true;
-        this.pauseMenu.backgroundImage = this.game.add.image(0, 0, "wall");
-        this.pauseMenu.backgroundImage.width = this.game.camera.width;
-        this.pauseMenu.backgroundImage.height = this.game.camera.height;
-        const style = {
-            font: "bold 32px Arial",
-            fill: "#fff",
-            boundsAlignH: "center",
-            boundsAlignV: "middle"
-        };
-        this.pauseMenu.continueGame = this.game.add.text(0, 0, "Continue Game", style);
-        this.pauseMenu.saveGame = this.game.add.text(0, 50, "Save Game", style);
-        this.pauseMenu.loadGame = this.game.add.text(0, 100, "Load Game", style);
-        this.pauseMenu.options = this.game.add.text(0, 150, "Options", style);
-        this.pauseMenu.githubLink = this.game.add.text(0, 300, "Github", style);
-
-        const array = [
-            this.pauseMenu.continueGame,
-            this.pauseMenu.saveGame,
-            this.pauseMenu.loadGame,
-            this.pauseMenu.options,
-            this.pauseMenu.githubLink
-        ];
-
-        array.forEach((text) => {
-            text.setShadow(3, 3, "rgba(0,0,0,0.5)", 2);
-            text.setTextBounds(0, 200, 800, 100);
-            text.inputEnabled = true;
-            text.events.onInputOver.addOnce(this.pauseMenuGlow, this);
-            text.events.onInputOut.addOnce(this.pauseMenuStopGlow, this);
-            text.events.onInputUp.addOnce(this.pauseMenuFadeOut, this);
-        });
-
-        this.game.input.keyboard.addKey(Phaser.Keyboard.ESC).onDown.addOnce(() => {
-            if (this.game.paused) {
-                this.pauseMenuFadeOut(this.pauseMenu.continueGame);
-            }
-        });
-
-        this.game.input.keyboard.addKey(Phaser.Keyboard.P).onDown.addOnce(() => {
-            if (this.game.paused) {
-                this.pauseMenuFadeOut(this.pauseMenu.continueGame);
-            }
-        });
-    }
-
-    pauseMenuFadeOut(item: Phaser.Text) {
-        switch (item) {
-            case this.pauseMenu.continueGame: this.continueTheGame();
-                break;
-            case this.pauseMenu.saveGame: this.savePlayer(this.x);
-                alert("Game Saved");
-                break;
-            case this.pauseMenu.loadGame: const loadedGame = JSON.parse(window.localStorage.getItem("player")!);
-                if (loadedGame) {
-                    this.game.state.start("level" + loadedGame.currentRoom);
-                    this.continueTheGame();
-                } else {
-                    alert("no Saved Game Found!");
-                }
-                break;
-            case this.pauseMenu.options:
-                break;
-            case this.pauseMenu.githubLink: window.open("http://www.github.com/twofist");
-                break;
-            default:
-        }
-    }
-
-    pauseMenuGlow(item: Phaser.Text) {
-        item.fill = "#ffff44";
-    }
-
-    pauseMenuStopGlow(item: Phaser.Text) {
-        item.fill = "#fff";
-    }
-
-    continueTheGame() {
-        this.destroyPauseMenu();
-        this.game.paused = false;
-    }
-
-    destroyPauseMenu() {
-        for (const key in this.pauseMenu) {
-            if (this.pauseMenu[key]) {
-                this.pauseMenu[key].destroy();
-            }
-        }
     }
 
     savePlayer(x = 0, levelNumber = this.currentRoom) {
