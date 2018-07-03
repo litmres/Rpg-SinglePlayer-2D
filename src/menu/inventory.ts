@@ -28,9 +28,11 @@ class Inventory extends Phaser.Image {
         const bar1 = new InventoryBar(this.game, this.x, this.y, this.player, "armor", 4);
         const bar2 = new InventoryBar(this.game, bar1.x, bar1.y + bar1.height, this.player, "ring", 4);
         const bar3 = new InventoryBar(this.game, bar2.x, bar2.y + bar2.height, this.player, "belt", 4);
+        const bar4 = new InventoryBar(this.game, bar2.x, bar3.y + bar3.height, this.player, "belt", 4);
         this.inventoryBars.add(bar1);
         this.inventoryBars.add(bar2);
         this.inventoryBars.add(bar3);
+        this.inventoryBars.add(bar4);
 
         this.inventoryStats = this.game.add.group();
         const stats = new InventoryStats(this.game, bar1.x + bar1.width, bar1.y, this.player);
@@ -38,9 +40,9 @@ class Inventory extends Phaser.Image {
     }
 
     destroyInventory() {
-        this.inventoryBars.forEach((v: InventoryBar) => {
-            v.destroy();
-        });
+        //silly phaser bug skips randomly when doing foreach so filter instead
+        this.inventoryBars.filter((v: InventoryBar) => true).callAll("destroy");
+
         this.inventoryStats.forEach((v: InventoryStats) => {
             v.destroy();
         });

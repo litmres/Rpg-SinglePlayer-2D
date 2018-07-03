@@ -840,9 +840,11 @@ var Inventory = /** @class */ (function (_super) {
         var bar1 = new InventoryBar(_this.game, _this.x, _this.y, _this.player, "armor", 4);
         var bar2 = new InventoryBar(_this.game, bar1.x, bar1.y + bar1.height, _this.player, "ring", 4);
         var bar3 = new InventoryBar(_this.game, bar2.x, bar2.y + bar2.height, _this.player, "belt", 4);
+        var bar4 = new InventoryBar(_this.game, bar2.x, bar3.y + bar3.height, _this.player, "belt", 4);
         _this.inventoryBars.add(bar1);
         _this.inventoryBars.add(bar2);
         _this.inventoryBars.add(bar3);
+        _this.inventoryBars.add(bar4);
         _this.inventoryStats = _this.game.add.group();
         var stats = new InventoryStats(_this.game, bar1.x + bar1.width, bar1.y, _this.player);
         _this.inventoryStats.add(stats);
@@ -850,9 +852,8 @@ var Inventory = /** @class */ (function (_super) {
     }
     Inventory.prototype.destroyInventory = function () {
         var _this = this;
-        this.inventoryBars.forEach(function (v) {
-            v.destroy();
-        });
+        //silly phaser bug skips randomly when doing foreach so filter instead
+        this.inventoryBars.filter(function (v) { return true; }).callAll("destroy");
         this.inventoryStats.forEach(function (v) {
             v.destroy();
         });
