@@ -34,7 +34,7 @@ class Level0 extends MasterLevel {
 
     create() {
         this.game.stage.backgroundColor = this.background;
-        this.game.world.setBounds(0, 0, this.game.width, this.game.height);
+        this.game.world.setBounds(0, 0, this.game.world.width + 1000, this.game.world.height);
         this.player = new Player(this.game, 0, 0);
         this.player.y -= this.player.height * 2;
         this.player.currentRoom = this.levelNumber;

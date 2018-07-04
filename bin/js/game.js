@@ -760,7 +760,7 @@ var Level0 = /** @class */ (function (_super) {
     };
     Level0.prototype.create = function () {
         this.game.stage.backgroundColor = this.background;
-        this.game.world.setBounds(0, 0, this.game.width, this.game.height);
+        this.game.world.setBounds(0, 0, this.game.world.width + 1000, this.game.world.height);
         this.player = new Player(this.game, 0, 0);
         this.player.y -= this.player.height * 2;
         this.player.currentRoom = this.levelNumber;
@@ -810,7 +810,7 @@ var Level1 = /** @class */ (function (_super) {
     };
     Level1.prototype.create = function () {
         this.game.stage.backgroundColor = this.background;
-        this.game.world.setBounds(0, 0, this.game.width, this.game.height);
+        this.game.world.setBounds(0, 0, this.game.world.width, this.game.world.height);
         this.player = new Player(this.game, 0, 0);
         this.player.currentRoom = this.levelNumber;
         this.player.loadPlayer(this.playerStorage);
@@ -1834,6 +1834,7 @@ var Player = /** @class */ (function (_super) {
             boundsAlignH: "center",
             boundsAlignV: "middle"
         };
+        _this.game.camera.follow(_this, Phaser.Camera.FOLLOW_LOCKON, 0.1, 0.1);
         _this.anchor.setTo(0.5, 0);
         //this.scale.setTo(1.5, 1.5);
         _this.inventory = null;

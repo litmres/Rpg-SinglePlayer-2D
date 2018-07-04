@@ -50,7 +50,7 @@ class Level1 extends MasterLevel {
 
     create() {
         this.game.stage.backgroundColor = this.background;
-        this.game.world.setBounds(0, 0, this.game.width, this.game.height);
+        this.game.world.setBounds(0, 0, this.game.world.width, this.game.world.height);
         this.player = new Player(this.game, 0, 0);
         this.player.currentRoom = this.levelNumber;
         this.player.loadPlayer(this.playerStorage);

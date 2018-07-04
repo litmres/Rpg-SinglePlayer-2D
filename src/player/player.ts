@@ -109,6 +109,7 @@ class Player extends Phaser.Sprite {
     };
     constructor(game: Phaser.Game, x: number, y: number) {
         super(game, x, y, "player", 0);
+        this.game.camera.follow(this, Phaser.Camera.FOLLOW_LOCKON, 0.1, 0.1);
         this.anchor.setTo(0.5, 0);
         //this.scale.setTo(1.5, 1.5);
         this.inventory = null;
