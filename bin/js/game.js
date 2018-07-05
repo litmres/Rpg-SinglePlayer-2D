@@ -760,7 +760,7 @@ var Level0 = /** @class */ (function (_super) {
     };
     Level0.prototype.create = function () {
         this.game.stage.backgroundColor = this.background;
-        this.game.world.setBounds(0, 0, this.game.world.width + 1000, this.game.world.height);
+        this.game.world.setBounds(0, 0, this.game.width + 1000, this.game.height);
         this.player = new Player(this.game, 0, 0);
         this.player.y -= this.player.height * 2;
         this.player.currentRoom = this.levelNumber;
@@ -1697,16 +1697,18 @@ var Equipment = /** @class */ (function () {
 var OverlayBar = /** @class */ (function (_super) {
     __extends(OverlayBar, _super);
     function OverlayBar(game, x, y, player) {
-        var _this = _super.call(this, game, x, y, "overlay") || this;
+        var _this = _super.call(this, game, x, y, "") || this;
         _this.maxHpBar = 300;
         _this.maxStamBar = 288;
         _this.player = player;
-        _this.healthBar = _this.game.add.image(_this.x + 52, _this.y + 7, "healthbar");
+        _this.healthBar = _this.game.add.image(52, 7, "healthbar");
         _this.healthBar.height = 30;
         _this.healthBar.width = _this.maxHpBar;
-        _this.staminaBar = _this.game.add.image(_this.x + 52, _this.y + 43, "staminabar");
+        _this.addChild(_this.healthBar);
+        _this.staminaBar = _this.game.add.image(52, 43, "staminabar");
         _this.staminaBar.height = 10;
         _this.staminaBar.width = _this.maxStamBar;
+        _this.addChild(_this.staminaBar);
         _this.emitter = _this.game.add.emitter(_this.healthBar.x + _this.healthBar.width / 2, _this.healthBar.y + _this.healthBar.height - 5, 20);
         _this.emitter.makeParticles("bubble");
         //this.emitter.setSize(this.healthBar.width, this.healthBar.height);
@@ -1718,6 +1720,9 @@ var OverlayBar = /** @class */ (function (_super) {
         _this.emitter.maxParticleSpeed.setTo(10, -1);
         _this.emitter.gravity = 0;
         _this.emitter.start(false, 2000, 500);
+        _this.overlay = _this.game.add.image(0, 0, "overlay");
+        _this.addChild(_this.overlay);
+        _this.fixedToCamera = true;
         return _this;
     }
     OverlayBar.prototype.update = function () {
@@ -1927,6 +1932,7 @@ var Player = /** @class */ (function (_super) {
         _this.playerOverlay = _this.game.add.group();
         _this.playerOverlay.add(new OverlayBar(_this.game, 50, 50, _this));
         _this.game.world.bringToTop(_this.playerOverlay);
+        _this.fpsCounter.fixedToCamera = true;
         return _this;
     }
     Player.prototype.update = function () {
@@ -2338,6 +2344,7 @@ var TitleState = /** @class */ (function (_super) {
         return _this;
     }
     TitleState.prototype.preload = function () {
+        this.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
         this.backgroundImage = 0x055550;
         for (var key in this.MenuText) {
             var obj = this.MenuText[key];

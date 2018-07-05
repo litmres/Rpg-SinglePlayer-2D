@@ -210,6 +210,7 @@ class Player extends Phaser.Sprite {
         this.playerOverlay = this.game.add.group();
         this.playerOverlay.add(new OverlayBar(this.game, 50, 50, this));
         this.game.world.bringToTop(this.playerOverlay);
+        this.fpsCounter.fixedToCamera = true;
     }
 
     update() {
