@@ -38,6 +38,9 @@ class Level2 extends MasterLevel {
             platform.body.immovable = true;
         });
 
+        this.enemies.add(new Slime(this.game, 300, ground.y - ground.height));
+        this.enemies.add(new SlimeBoss(this.game, 600, ground.y - ground.height));
+
         this.updateFpsTimer();
 
         this.enablePhysics();

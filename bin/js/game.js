@@ -606,6 +606,221 @@ var RogueEnemy = /** @class */ (function (_super) {
     };
     return RogueEnemy;
 }(MasterEnemy));
+/// <reference path="./masterEnemy.ts"/>
+var Slime = /** @class */ (function (_super) {
+    __extends(Slime, _super);
+    function Slime(game, x, y) {
+        var _this = _super.call(this, game, x, y, "slime", 0) || this;
+        _this.wanderRange = 100;
+        _this.maxWanderRange = 100;
+        _this.aggroRange = 100;
+        _this.defaultDirection = -1;
+        _this.bodyWidth = 16;
+        _this.bodyHeight = 32;
+        _this.body.setSize(_this.bodyWidth / _this.scale.x, _this.bodyHeight / _this.scale.y, (_this.width - _this.bodyWidth) / 2, _this.height - _this.bodyHeight);
+        _this.stats = {
+            level: 1,
+            maxHealth: _this.maxHealth,
+            health: _this.maxHealth,
+            maxStamina: _this.maxHealth,
+            stamina: _this.maxHealth,
+            attack: 1,
+            defense: 1,
+            movespeed: 50,
+            luck: 1,
+        };
+        _this.animations.add("idle", [0, 1, 2, 3], 10, false).onComplete.add(function () {
+            var rndNumber = _this.game.rnd.integerInRange(1, 100);
+            if (rndNumber > 90) {
+                _this.enemyState = enemyStateEnum.idleSpecial;
+            }
+            else if (!_this.friendly && rndNumber > 20 && rndNumber < 90) {
+                _this.wander();
+            }
+        });
+        _this.animations.add("idlespecial", [0, 1, 2, 3], 10, false).onComplete.add(function () {
+            _this.animations.stop();
+            _this.enemyState = enemyStateEnum.idle;
+        });
+        _this.animations.add("walk", [4, 5, 6, 7], 10, true);
+        _this.animations.add("attack1", [8, 9, 10, 11, 12], 10, false).onComplete.add(function () {
+            _this.animations.stop();
+            _this.enemyState = enemyStateEnum.idle;
+        });
+        _this.animations.add("death", [17, 18, 19, 20], 10, false).onComplete.add(function () {
+            _this.kill();
+        });
+        _this.health = _this.maxHealth;
+        _this.hitBox1 = _this.hitBoxes.create(0, _this.height / 2);
+        _this.game.physics.enable(_this.hitBoxes, Phaser.Physics.ARCADE);
+        _this.hitBox1.body.setSize(15, 10);
+        _this.hitBox1.name = "attack1";
+        return _this;
+    }
+    Slime.prototype.update = function () {
+        this.resetVelocity();
+        this.animations.play(this.enemyAnimations[this.enemyState]);
+        if (!this.friendly) {
+            this.handleInput();
+            this.stopMovingTo();
+            this.idle();
+        }
+        this.checkForHitting();
+        this.checkForGettingHit();
+        this.handleDeath();
+        this.updateHitbox();
+    };
+    Slime.prototype.checkForHitting = function () {
+        if (this.animations.currentAnim.name === "attack1" &&
+            this.animations.frame >= 34 &&
+            this.animations.frame <= 36 &&
+            this.game.physics.arcade.overlap(this.hitBox1, this.player)) {
+            this.player.takeDamage(this.stats.attack * 20, this.x);
+        }
+    };
+    Slime.prototype.handleInput = function () {
+        if (this.player) {
+            var distance = this.game.physics.arcade.distanceBetween(this, this.player);
+            if (distance < Math.abs(this.hitBox1.width) && this.canAttack[this.enemyState]) {
+                this.attack();
+            }
+            else if (distance < this.aggroRange && this.canChase[this.enemyState]) {
+                this.chase();
+            }
+        }
+    };
+    return Slime;
+}(MasterEnemy));
+/// <reference path="./masterEnemy.ts"/>
+var SlimeBaby = /** @class */ (function (_super) {
+    __extends(SlimeBaby, _super);
+    function SlimeBaby(game, x, y, parentBoss) {
+        var _this = _super.call(this, game, x, y, "slime", 0) || this;
+        _this.defaultDirection = -1;
+        _this.parentBoss = parentBoss;
+        _this.bodyWidth = 16;
+        _this.bodyHeight = 32;
+        _this.body.setSize(_this.bodyWidth / _this.scale.x, _this.bodyHeight / _this.scale.y, (_this.width - _this.bodyWidth) / 2, _this.height - _this.bodyHeight);
+        _this.maxHealth = 1;
+        _this.stats = {
+            level: 1,
+            maxHealth: _this.maxHealth,
+            health: _this.maxHealth,
+            maxStamina: _this.maxHealth,
+            stamina: _this.maxHealth,
+            attack: 1,
+            defense: 1,
+            movespeed: 40,
+            luck: 1,
+        };
+        _this.animations.add("idle", [0, 1, 2, 3], 10, false).onComplete.add(function () {
+        });
+        _this.animations.add("walk", [4, 5, 6, 7], 10, true);
+        _this.animations.add("death", [17, 18, 19, 20], 10, false).onComplete.add(function () {
+            _this.kill();
+        });
+        _this.health = _this.maxHealth;
+        return _this;
+    }
+    SlimeBaby.prototype.update = function () {
+        this.resetVelocity();
+        this.animations.play(this.enemyAnimations[this.enemyState]);
+        this.moveToParent();
+        this.checkForGettingHit();
+        this.handleDeath();
+        this.updateHitbox();
+    };
+    SlimeBaby.prototype.moveToParent = function () {
+        this.enemyState = enemyStateEnum.movingWalk;
+        this.moveNpcTowards(this.parentBoss.x, this.parentBoss.y, this.stats.movespeed, 5000);
+    };
+    return SlimeBaby;
+}(MasterEnemy));
+/// <reference path="./masterEnemy.ts"/>
+var SlimeBoss = /** @class */ (function (_super) {
+    __extends(SlimeBoss, _super);
+    function SlimeBoss(game, x, y) {
+        var _this = _super.call(this, game, x, y, "slimeboss", 0) || this;
+        _this.wanderRange = 100;
+        _this.maxWanderRange = 100;
+        _this.aggroRange = 100;
+        _this.defaultDirection = -1;
+        _this.bodyWidth = 16;
+        _this.bodyHeight = 32;
+        _this.body.setSize(_this.bodyWidth / _this.scale.x, _this.bodyHeight / _this.scale.y, (_this.width - _this.bodyWidth) / 2, _this.height - _this.bodyHeight);
+        _this.stats = {
+            level: 1,
+            maxHealth: _this.maxHealth,
+            health: _this.maxHealth,
+            maxStamina: _this.maxHealth,
+            stamina: _this.maxHealth,
+            attack: 1,
+            defense: 1,
+            movespeed: 60,
+            luck: 1,
+        };
+        _this.animations.add("idle", [0, 1, 2, 3], 10, false).onComplete.add(function () {
+            var rndNumber = _this.game.rnd.integerInRange(1, 100);
+            if (rndNumber > 90) {
+                _this.enemyState = enemyStateEnum.idleSpecial;
+            }
+            else if (!_this.friendly && rndNumber > 20 && rndNumber < 90) {
+                _this.wander();
+            }
+        });
+        _this.animations.add("idlespecial", [10, 11, 12, 13, 14, 15, 16, 17, 18, 19], 10, false).onComplete.add(function () {
+            _this.animations.stop();
+            _this.enemyState = enemyStateEnum.idle;
+        });
+        _this.animations.add("walk", [4, 5, 6, 7], 10, true);
+        _this.animations.add("attack1", [0], 10, false).onComplete.add(function () {
+            _this.animations.stop();
+            _this.enemyState = enemyStateEnum.idle;
+        });
+        _this.animations.add("death", [17, 18, 19, 20], 10, false).onComplete.add(function () {
+            _this.kill();
+        });
+        _this.health = _this.maxHealth;
+        _this.hitBox1 = _this.hitBoxes.create(0, _this.height / 2);
+        _this.game.physics.enable(_this.hitBoxes, Phaser.Physics.ARCADE);
+        _this.hitBox1.body.setSize(15, 10);
+        _this.hitBox1.name = "attack1";
+        return _this;
+    }
+    SlimeBoss.prototype.update = function () {
+        this.resetVelocity();
+        this.animations.play(this.enemyAnimations[this.enemyState]);
+        if (!this.friendly) {
+            this.handleInput();
+            this.stopMovingTo();
+            this.idle();
+        }
+        this.checkForHitting();
+        this.checkForGettingHit();
+        this.handleDeath();
+        this.updateHitbox();
+    };
+    SlimeBoss.prototype.checkForHitting = function () {
+        if (this.animations.currentAnim.name === "attack1" &&
+            this.animations.frame >= 34 &&
+            this.animations.frame <= 36 &&
+            this.game.physics.arcade.overlap(this.hitBox1, this.player)) {
+            this.player.takeDamage(this.stats.attack * 20, this.x);
+        }
+    };
+    SlimeBoss.prototype.handleInput = function () {
+        if (this.player) {
+            var distance = this.game.physics.arcade.distanceBetween(this, this.player);
+            if (distance < Math.abs(this.hitBox1.width) && this.canAttack[this.enemyState]) {
+                this.attack();
+            }
+            else if (distance < this.aggroRange && this.canChase[this.enemyState]) {
+                this.chase();
+            }
+        }
+    };
+    return SlimeBoss;
+}(MasterEnemy));
 var MasterLevel = /** @class */ (function (_super) {
     __extends(MasterLevel, _super);
     function MasterLevel() {
@@ -850,6 +1065,8 @@ var Level2 = /** @class */ (function (_super) {
         this.gates.forEach(function (platform) {
             platform.body.immovable = true;
         });
+        this.enemies.add(new Slime(this.game, 300, ground.y - ground.height));
+        this.enemies.add(new SlimeBoss(this.game, 600, ground.y - ground.height));
         this.updateFpsTimer();
         this.enablePhysics();
     };
@@ -2319,7 +2536,8 @@ var PreloadState = /** @class */ (function (_super) {
         this.game.load.spritesheet("redogre", "bin/assets/redogre/redogre.png", 32, 32);
         this.game.load.spritesheet("satyr", "bin/assets/satyr/satyr.png", 32, 32);
         this.game.load.spritesheet("shade", "bin/assets/shade/shade.png", 32, 32);
-        this.game.load.spritesheet("slime", "bin/assets/slime/slime.png", 32, 32);
+        this.game.load.spritesheet("slime", "bin/assets/slime/slime.png", 32, 25);
+        this.game.load.spritesheet("slimeboss", "bin/assets/slime/slime.png", 32, 25);
         this.game.load.spritesheet("wasp", "bin/assets/wasp/wasp.png", 32, 32);
         this.game.load.spritesheet("werewolf", "bin/assets/werewolf/werewolf.png", 32, 32);
         this.game.load.spritesheet("yeti", "bin/assets/yeti/yeti.png", 32, 32);
