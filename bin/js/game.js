@@ -740,6 +740,7 @@ var Level0 = /** @class */ (function (_super) {
         return _this;
     }
     Level0.prototype.preload = function () {
+        this.game.world.setBounds(0, 0, this.game.width, this.game.height);
         this.addGroups();
         this.background = this.game.add.image(0, 0, "darkbackground");
         this.background.height = this.game.height;
@@ -747,9 +748,9 @@ var Level0 = /** @class */ (function (_super) {
         this.game.world.sendToBack(this.background);
         this.game.add.text(100, 0, "Everything you see is a Placeholder");
         this.platforms.enableBody = true;
-        var ground = this.platforms.create(0, this.game.height, "floor");
+        var ground = this.platforms.create(0, this.game.world.bounds.height, "floor");
         ground.y -= ground.height;
-        ground.width = this.game.width;
+        ground.width = this.game.world.bounds.width;
         this.platforms.forEach(function (platform) {
             platform.body.immovable = true;
         });
@@ -760,7 +761,6 @@ var Level0 = /** @class */ (function (_super) {
     };
     Level0.prototype.create = function () {
         this.game.stage.backgroundColor = this.background;
-        this.game.world.setBounds(0, 0, this.game.width + 1000, this.game.height);
         this.player = new Player(this.game, 0, 0);
         this.player.y -= this.player.height * 2;
         this.player.currentRoom = this.levelNumber;
@@ -780,18 +780,19 @@ var Level1 = /** @class */ (function (_super) {
         return _this;
     }
     Level1.prototype.preload = function () {
+        this.game.world.setBounds(0, 0, this.game.world.width + 1000, this.game.world.height);
         this.addGroups();
         this.background = 0x49801;
         this.platforms.enableBody = true;
-        var ground = this.platforms.create(0, this.game.height, "floor");
+        var ground = this.platforms.create(0, this.game.world.bounds.height, "floor");
         ground.y -= ground.height;
-        ground.width = this.game.width;
+        ground.width = this.game.world.bounds.width;
         var ceiling = this.platforms.create(0, 0, "ceiling");
-        ceiling.width = this.game.width;
+        ceiling.width = this.game.world.bounds.width;
         var wall = this.platforms.create(0, ceiling.height, "wall");
-        wall.height = this.game.height - wall.height * 2 - ceiling.height * 2;
+        wall.height = this.game.world.bounds.height - wall.height * 2 - ceiling.height * 2;
         var wall2 = this.platforms.create(this.game.width - wall.width, ceiling.height, "wall");
-        wall2.height = this.game.height - wall2.height * 2 - ceiling.height * 2;
+        wall2.height = this.game.world.bounds.height - wall2.height * 2 - ceiling.height * 2;
         this.gates.enableBody = true;
         this.gates.add(new Gate(this.game, wall.x, wall.height));
         this.gates.add(new Gate(this.game, wall2.x, wall2.height));
@@ -810,7 +811,6 @@ var Level1 = /** @class */ (function (_super) {
     };
     Level1.prototype.create = function () {
         this.game.stage.backgroundColor = this.background;
-        this.game.world.setBounds(0, 0, this.game.world.width, this.game.world.height);
         this.player = new Player(this.game, 0, 0);
         this.player.currentRoom = this.levelNumber;
         this.player.loadPlayer(this.playerStorage);
@@ -1709,17 +1709,6 @@ var OverlayBar = /** @class */ (function (_super) {
         _this.staminaBar.height = 10;
         _this.staminaBar.width = _this.maxStamBar;
         _this.addChild(_this.staminaBar);
-        _this.emitter = _this.game.add.emitter(_this.healthBar.x + _this.healthBar.width / 2, _this.healthBar.y + _this.healthBar.height - 5, 20);
-        _this.emitter.makeParticles("bubble");
-        //this.emitter.setSize(this.healthBar.width, this.healthBar.height);
-        _this.emitter.width = _this.healthBar.width - 20;
-        _this.emitter.height = _this.healthBar.height / 2;
-        _this.emitter.minParticleScale = 0.02;
-        _this.emitter.maxParticleScale = 0.02;
-        _this.emitter.minParticleSpeed.setTo(-10, -5);
-        _this.emitter.maxParticleSpeed.setTo(10, -1);
-        _this.emitter.gravity = 0;
-        _this.emitter.start(false, 2000, 500);
         _this.overlay = _this.game.add.image(0, 0, "overlay");
         _this.addChild(_this.overlay);
         _this.fixedToCamera = true;

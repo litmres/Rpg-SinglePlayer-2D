@@ -4,24 +4,25 @@ class Level1 extends MasterLevel {
     levelNumber = levelsEnum.level1;
 
     preload() {
+        this.game.world.setBounds(0, 0, this.game.world.width + 1000, this.game.world.height);
         this.addGroups();
 
         this.background = 0x49801;
 
         this.platforms.enableBody = true;
 
-        const ground = this.platforms.create(0, this.game.height, "floor");
+        const ground = this.platforms.create(0, this.game.world.bounds.height, "floor");
         ground.y -= ground.height;
-        ground.width = this.game.width;
+        ground.width = this.game.world.bounds.width;
 
         const ceiling = this.platforms.create(0, 0, "ceiling");
-        ceiling.width = this.game.width;
+        ceiling.width = this.game.world.bounds.width;
 
         const wall = this.platforms.create(0, ceiling.height, "wall");
-        wall.height = this.game.height - wall.height * 2 - ceiling.height * 2;
+        wall.height = this.game.world.bounds.height - wall.height * 2 - ceiling.height * 2;
 
         const wall2 = this.platforms.create(this.game.width - wall.width, ceiling.height, "wall");
-        wall2.height = this.game.height - wall2.height * 2 - ceiling.height * 2;
+        wall2.height = this.game.world.bounds.height - wall2.height * 2 - ceiling.height * 2;
 
         this.gates.enableBody = true;
 
@@ -50,7 +51,6 @@ class Level1 extends MasterLevel {
 
     create() {
         this.game.stage.backgroundColor = this.background;
-        this.game.world.setBounds(0, 0, this.game.world.width, this.game.world.height);
         this.player = new Player(this.game, 0, 0);
         this.player.currentRoom = this.levelNumber;
         this.player.loadPlayer(this.playerStorage);
