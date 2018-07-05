@@ -26,7 +26,7 @@ class Level0 extends MasterLevel {
 
         this.npcs.add(new RogueNpc(this.game, 600, ground.y - ground.height));
 
-        this.items.add(new Item(this.game, 450, ground.y - ground.height, new Ring()));
+        this.items.add(new Item(this.game, 450, ground.y - ground.height, new RingOfStrength()));
 
         this.updateFpsTimer();
 

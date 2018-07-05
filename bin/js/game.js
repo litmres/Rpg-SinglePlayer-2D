@@ -30,6 +30,10 @@ var playerStateEnum;
     playerStateEnum[playerStateEnum["autoWalkTo"] = 11] = "autoWalkTo";
     playerStateEnum[playerStateEnum["knockBack"] = 12] = "knockBack";
 })(playerStateEnum || (playerStateEnum = {}));
+var itemType;
+(function (itemType) {
+    itemType[itemType["ring"] = 0] = "ring";
+})(itemType || (itemType = {}));
 var enemyStateEnum;
 (function (enemyStateEnum) {
     enemyStateEnum[enemyStateEnum["movingWalk"] = 0] = "movingWalk";
@@ -76,6 +80,7 @@ var SimpleGame = /** @class */ (function (_super) {
         _this.state.add("title", new TitleState());
         _this.state.add("level0", new Level0());
         _this.state.add("level1", new Level1());
+        _this.state.add("level2", new Level2());
         _this.state.start("boot");
         return _this;
     }
@@ -755,7 +760,7 @@ var Level0 = /** @class */ (function (_super) {
             platform.body.immovable = true;
         });
         this.npcs.add(new RogueNpc(this.game, 600, ground.y - ground.height));
-        this.items.add(new Item(this.game, 450, ground.y - ground.height, new Ring()));
+        this.items.add(new Item(this.game, 450, ground.y - ground.height, new RingOfStrength()));
         this.updateFpsTimer();
         this.enablePhysics();
     };
@@ -793,13 +798,7 @@ var Level1 = /** @class */ (function (_super) {
         wall.height = this.game.world.bounds.height - wall.height * 2 - ceiling.height * 2;
         var wall2 = this.platforms.create(this.game.width - wall.width, ceiling.height, "wall");
         wall2.height = this.game.world.bounds.height - wall2.height * 2 - ceiling.height * 2;
-        this.gates.enableBody = true;
-        this.gates.add(new Gate(this.game, wall.x, wall.height));
-        this.gates.add(new Gate(this.game, wall2.x, wall2.height));
         this.platforms.forEach(function (platform) {
-            platform.body.immovable = true;
-        });
-        this.gates.forEach(function (platform) {
             platform.body.immovable = true;
         });
         this.enemies.add(new RogueEnemy(this.game, 600, ground.y - ground.height));
@@ -820,11 +819,55 @@ var Level1 = /** @class */ (function (_super) {
     };
     return Level1;
 }(MasterLevel));
+/// <reference path="./masterLevel.ts"/>
+var Level2 = /** @class */ (function (_super) {
+    __extends(Level2, _super);
+    function Level2() {
+        var _this = _super !== null && _super.apply(this, arguments) || this;
+        _this.levelNumber = levelsEnum.level2;
+        return _this;
+    }
+    Level2.prototype.preload = function () {
+        this.game.world.setBounds(0, 0, this.game.width, this.game.height);
+        this.addGroups();
+        this.background = 0x49801;
+        this.platforms.enableBody = true;
+        var ground = this.platforms.create(0, this.game.world.bounds.height, "floor");
+        ground.y -= ground.height;
+        ground.width = this.game.world.bounds.width;
+        var ceiling = this.platforms.create(0, 0, "ceiling");
+        ceiling.width = this.game.world.bounds.width;
+        var wall = this.platforms.create(0, ceiling.height, "wall");
+        wall.height = this.game.world.bounds.height - wall.height * 2 - ceiling.height * 2;
+        var wall2 = this.platforms.create(this.game.width - wall.width, ceiling.height, "wall");
+        wall2.height = this.game.world.bounds.height - wall2.height * 2 - ceiling.height * 2;
+        this.gates.enableBody = true;
+        this.gates.add(new Gate(this.game, wall.x, wall.height));
+        this.gates.add(new Gate(this.game, wall2.x, wall2.height));
+        this.platforms.forEach(function (platform) {
+            platform.body.immovable = true;
+        });
+        this.gates.forEach(function (platform) {
+            platform.body.immovable = true;
+        });
+        this.updateFpsTimer();
+        this.enablePhysics();
+    };
+    Level2.prototype.create = function () {
+        this.game.stage.backgroundColor = this.background;
+        this.player = new Player(this.game, 0, 0);
+        this.player.currentRoom = this.levelNumber;
+        this.player.loadPlayer(this.playerStorage);
+        this.addPlayerToEnemies();
+        this.addPlayerToNpcs();
+        this.addPlayerToGates();
+    };
+    return Level2;
+}(MasterLevel));
 var Inventory = /** @class */ (function (_super) {
     __extends(Inventory, _super);
     function Inventory(game, x, y, player) {
         var _this = _super.call(this, game, x, y, "") || this;
-        _this.transparency = 1;
         _this.MenuStyle = {
             font: "bold 32px Arial",
             fill: "#fff",
@@ -838,7 +881,7 @@ var Inventory = /** @class */ (function (_super) {
         });
         _this.inventoryBars = _this.game.add.group();
         var bar1 = new InventoryBar(_this.game, _this.x, _this.y, _this.player, "armor", 4);
-        var bar2 = new InventoryBar(_this.game, bar1.x, bar1.y + bar1.height, _this.player, "ring", 4);
+        var bar2 = new InventoryBar(_this.game, bar1.x, bar1.y + bar1.height, _this.player, itemType.ring, 4);
         var bar3 = new InventoryBar(_this.game, bar2.x, bar2.y + bar2.height, _this.player, "belt", 4);
         var bar4 = new InventoryBar(_this.game, bar2.x, bar3.y + bar3.height, _this.player, "belt", 4);
         _this.inventoryBars.add(bar1);
@@ -869,7 +912,7 @@ var InventoryBar = /** @class */ (function (_super) {
     function InventoryBar(game, x, y, player, slotType, amount) {
         var _this = _super.call(this, game, x, y, "inventorybar") || this;
         _this.slots = {
-            type: "",
+            type: 0,
             amount: 0,
             array: [],
         };
@@ -1643,25 +1686,36 @@ var Item = /** @class */ (function (_super) {
     };
     return Item;
 }(Phaser.Sprite));
-var Ring = /** @class */ (function () {
-    function Ring() {
+var MasterRing = /** @class */ (function () {
+    function MasterRing() {
         this.effect = {};
-        this.itemType = "ring";
+        this.itemType = itemType.ring;
         this.image = "ring";
     }
-    return Ring;
+    return MasterRing;
 }());
+var RingOfStrength = /** @class */ (function (_super) {
+    __extends(RingOfStrength, _super);
+    function RingOfStrength() {
+        var _this = _super !== null && _super.apply(this, arguments) || this;
+        _this.effect = {};
+        _this.itemType = itemType.ring;
+        _this.image = "ring";
+        return _this;
+    }
+    return RingOfStrength;
+}(MasterRing));
 var Equipment = /** @class */ (function () {
     function Equipment() {
         this.ringSlots = [];
         this.beltSlots = [];
         this.armorSlots = [];
-        this.equiptRings = [new Ring()];
+        this.equiptRings = [new RingOfStrength()];
         this.equiptBelts = [];
         this.equiptArmors = [];
     }
     Equipment.prototype.addToInventory = function (item) {
-        if (item.itemType === "ring") {
+        if (item.itemType === itemType.ring) {
             this.ringSlots.push(item);
         }
         if (item.itemType === "armor") {
@@ -1681,7 +1735,7 @@ var Equipment = /** @class */ (function () {
         this.equiptArmors.push(item);
     };
     Equipment.prototype.getEquiptItem = function (type, num) {
-        if (type === "ring") {
+        if (type === itemType.ring) {
             return this.equiptRings[num];
         }
         if (type === "belt") {
@@ -1828,7 +1882,7 @@ var Player = /** @class */ (function (_super) {
             boundsAlignH: "center",
             boundsAlignV: "middle"
         };
-        _this.game.camera.follow(_this, Phaser.Camera.FOLLOW_LOCKON, 0.1, 0.1);
+        _this.game.camera.follow(_this, Phaser.Camera.FOLLOW_LOCKON, 0.05, 0.05);
         _this.anchor.setTo(0.5, 0);
         //this.scale.setTo(1.5, 1.5);
         _this.inventory = null;

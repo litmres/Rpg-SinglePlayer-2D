@@ -19,6 +19,10 @@ enum playerStateEnum {
 	knockBack,
 }
 
+enum itemType {
+	ring = 0,
+}
+
 enum enemyStateEnum {
 	movingWalk = 0,
 	movingFall,

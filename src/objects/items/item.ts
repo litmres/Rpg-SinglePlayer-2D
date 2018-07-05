@@ -7,8 +7,8 @@ class Item extends Phaser.Sprite {
         boundsAlignH: "center",
         boundsAlignV: "middle"
     };
-    item: Ring;
-    constructor(game: Phaser.Game, x: number, y: number, obj: Ring) {
+    item: MasterRing;
+    constructor(game: Phaser.Game, x: number, y: number, obj: MasterRing) {
         super(game, x, y, "item", 0);
         this.item = obj;
         this.anchor.setTo(0.5, 0);
