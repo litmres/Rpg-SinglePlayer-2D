@@ -11,7 +11,7 @@ class Slime extends MasterEnemy {
     constructor(game: Phaser.Game, x: number, y: number) {
         super(game, x, y, "slime", 0);
         this.bodyWidth = 16;
-        this.bodyHeight = 32;
+        this.bodyHeight = 15;
         this.body.setSize(this.bodyWidth / this.scale.x, this.bodyHeight / this.scale.y, (this.width - this.bodyWidth) / 2, this.height - this.bodyHeight);
         this.stats = {
             level: 1,
@@ -74,8 +74,8 @@ class Slime extends MasterEnemy {
 
     checkForHitting() {
         if (this.animations.currentAnim.name === "attack1" &&
-            this.animations.frame >= 34 &&
-            this.animations.frame <= 36 &&
+            this.animations.frame >= 10 &&
+            this.animations.frame <= 11 &&
             this.game.physics.arcade.overlap(this.hitBox1, this.player)
         ) {
             this.player.takeDamage(this.stats.attack * 20, this.x);

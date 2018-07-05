@@ -616,7 +616,7 @@ var Slime = /** @class */ (function (_super) {
         _this.aggroRange = 100;
         _this.defaultDirection = -1;
         _this.bodyWidth = 16;
-        _this.bodyHeight = 32;
+        _this.bodyHeight = 15;
         _this.body.setSize(_this.bodyWidth / _this.scale.x, _this.bodyHeight / _this.scale.y, (_this.width - _this.bodyWidth) / 2, _this.height - _this.bodyHeight);
         _this.stats = {
             level: 1,
@@ -672,8 +672,8 @@ var Slime = /** @class */ (function (_super) {
     };
     Slime.prototype.checkForHitting = function () {
         if (this.animations.currentAnim.name === "attack1" &&
-            this.animations.frame >= 34 &&
-            this.animations.frame <= 36 &&
+            this.animations.frame >= 10 &&
+            this.animations.frame <= 11 &&
             this.game.physics.arcade.overlap(this.hitBox1, this.player)) {
             this.player.takeDamage(this.stats.attack * 20, this.x);
         }
@@ -741,12 +741,11 @@ var SlimeBoss = /** @class */ (function (_super) {
     __extends(SlimeBoss, _super);
     function SlimeBoss(game, x, y) {
         var _this = _super.call(this, game, x, y, "slimeboss", 0) || this;
-        _this.wanderRange = 100;
-        _this.maxWanderRange = 100;
-        _this.aggroRange = 100;
         _this.defaultDirection = -1;
+        _this.isDoingJumpAttack = false;
+        _this.ground = null;
         _this.bodyWidth = 16;
-        _this.bodyHeight = 32;
+        _this.bodyHeight = 15;
         _this.body.setSize(_this.bodyWidth / _this.scale.x, _this.bodyHeight / _this.scale.y, (_this.width - _this.bodyWidth) / 2, _this.height - _this.bodyHeight);
         _this.stats = {
             level: 1,
@@ -760,20 +759,14 @@ var SlimeBoss = /** @class */ (function (_super) {
             luck: 1,
         };
         _this.animations.add("idle", [0, 1, 2, 3], 10, false).onComplete.add(function () {
-            var rndNumber = _this.game.rnd.integerInRange(1, 100);
-            if (rndNumber > 90) {
-                _this.enemyState = enemyStateEnum.idleSpecial;
-            }
-            else if (!_this.friendly && rndNumber > 20 && rndNumber < 90) {
-                _this.wander();
-            }
         });
-        _this.animations.add("idlespecial", [10, 11, 12, 13, 14, 15, 16, 17, 18, 19], 10, false).onComplete.add(function () {
+        _this.animations.add("idlespecial", [0, 1, 2, 3], 10, false).onComplete.add(function () {
             _this.animations.stop();
             _this.enemyState = enemyStateEnum.idle;
         });
         _this.animations.add("walk", [4, 5, 6, 7], 10, true);
-        _this.animations.add("attack1", [0], 10, false).onComplete.add(function () {
+        _this.animations.add("jump", [27], 10, false);
+        _this.animations.add("attack1", [8, 9, 10, 11, 12], 10, false).onComplete.add(function () {
             _this.animations.stop();
             _this.enemyState = enemyStateEnum.idle;
         });
@@ -781,22 +774,13 @@ var SlimeBoss = /** @class */ (function (_super) {
             _this.kill();
         });
         _this.health = _this.maxHealth;
-        _this.hitBox1 = _this.hitBoxes.create(0, _this.height / 2);
-        _this.game.physics.enable(_this.hitBoxes, Phaser.Physics.ARCADE);
-        _this.hitBox1.body.setSize(15, 10);
-        _this.hitBox1.name = "attack1";
         return _this;
     }
     SlimeBoss.prototype.update = function () {
         this.resetVelocity();
         this.animations.play(this.enemyAnimations[this.enemyState]);
-        if (!this.friendly) {
-            this.handleInput();
-            this.stopMovingTo();
-            this.idle();
-        }
         this.checkForHitting();
-        this.checkForGettingHit();
+        this.handleInput();
         this.handleDeath();
         this.updateHitbox();
     };
@@ -808,16 +792,58 @@ var SlimeBoss = /** @class */ (function (_super) {
             this.player.takeDamage(this.stats.attack * 20, this.x);
         }
     };
-    SlimeBoss.prototype.handleInput = function () {
-        if (this.player) {
-            var distance = this.game.physics.arcade.distanceBetween(this, this.player);
-            if (distance < Math.abs(this.hitBox1.width) && this.canAttack[this.enemyState]) {
-                this.attack();
-            }
-            else if (distance < this.aggroRange && this.canChase[this.enemyState]) {
-                this.chase();
-            }
+    SlimeBoss.prototype.jumpToWall = function () {
+        var vy = this.game.rnd.integerInRange(-350, 700);
+        var vx = this.game.rnd.integerInRange(-500, 500);
+        this.body.velocity.y = vy;
+        this.body.velocity.x = vx;
+    };
+    SlimeBoss.prototype.resetVelocity = function () {
+        if (this.onGround() || this.onWall()) {
+            this.body.velocity.x = 0;
+            this.body.velocity.y = 0;
         }
+    };
+    SlimeBoss.prototype.handleInput = function () {
+        if (this.onGround() && this.canJumpToWall()) {
+            this.jumpToWall();
+        }
+        if (this.onWall() && this.canJumpAttack()) {
+            this.jumpAttack();
+        }
+        if (this.onGround() && this.canSplatter()) {
+            this.splatter();
+        }
+    };
+    SlimeBoss.prototype.onGround = function () {
+        if (this.game.physics.arcade.overlap(this, this.ground)) {
+            return true;
+        }
+        return false;
+    };
+    SlimeBoss.prototype.jumpAttack = function () {
+        this.isDoingJumpAttack = true;
+        if (this.isDoingJumpAttack && this.game.physics.arcade.overlap(this, this.player)) {
+            this.player.takeDamage(this.stats.attack * 20, this.x);
+        }
+    };
+    SlimeBoss.prototype.canJumpToWall = function () {
+    };
+    SlimeBoss.prototype.onWall = function () {
+        if (this.game.physics.arcade.overlap(this, this.walls)) {
+            return true;
+        }
+        return false;
+    };
+    SlimeBoss.prototype.canJumpAttack = function () {
+    };
+    SlimeBoss.prototype.canSplatter = function () {
+        if (this.onGround() && this.isDoingJumpAttack) {
+            this.splatter();
+        }
+    };
+    SlimeBoss.prototype.splatter = function () {
+        console.log("splat");
     };
     return SlimeBoss;
 }(MasterEnemy));
