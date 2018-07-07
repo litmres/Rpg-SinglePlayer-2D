@@ -53,6 +53,15 @@ enum npcStateEnum {
 	knockBack,
 }
 
+enum slimeBossStateEnum {
+	regenerating = 0,
+	jumpingToWall,
+	jumpingToPlayer,
+	splattered,
+	idle,
+	death,
+}
+
 enum levelsEnum {
 	level0 = 0,
 	level1,

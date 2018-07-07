@@ -49,6 +49,15 @@ interface playerStatsInterface {
 	luck: number;
 }
 
+interface slimeBossAnimationInterface {
+	[slimeBossStateEnum.jumpingToPlayer]: string;
+	[slimeBossStateEnum.jumpingToWall]: string;
+	[slimeBossStateEnum.idle]: string;
+	[slimeBossStateEnum.death]: string;
+	[slimeBossStateEnum.regenerating]: string;
+	[slimeBossStateEnum.splattered]: string;
+}
+
 interface playerAnimationInterface {
 	[playerStateEnum.movingWalk]: string;
 	[playerStateEnum.movingFall]: string;
@@ -144,4 +153,13 @@ interface enemyAllowanceInterface {
 interface gateInterface {
 	closed: boolean;
 	gate: Phaser.Image;
+}
+
+interface slimeBossAllowanceInterface {
+	[slimeBossStateEnum.jumpingToPlayer]: boolean;
+	[slimeBossStateEnum.jumpingToWall]: boolean;
+	[slimeBossStateEnum.idle]: boolean;
+	[slimeBossStateEnum.death]: boolean;
+	[slimeBossStateEnum.regenerating]: boolean;
+	[slimeBossStateEnum.splattered]: boolean;
 }
