@@ -801,6 +801,7 @@ var SlimeBoss = /** @class */ (function (_super) {
             _f);
         _this.defaultDirection = -1;
         _this.isDoingJumpAttack = false;
+        _this.goingToJump = false;
         _this.slimeBossState = slimeBossStateEnum.idle;
         _this.ground = ground;
         _this.walls = walls;
@@ -851,28 +852,51 @@ var SlimeBoss = /** @class */ (function (_super) {
     SlimeBoss.prototype.jumpToWall = function () {
         console.log("jumping to wall");
         this.slimeBossState = slimeBossStateEnum.jumpingToWall;
-        var vy = this.game.rnd.integerInRange(-500, -1000);
-        var arr = [this.game.rnd.integerInRange(300, 500), this.game.rnd.integerInRange(-300, -500)];
-        var vx = arr[this.game.rnd.integerInRange(0, 1)];
-        this.body.velocity.y = vy;
-        this.body.velocity.x = vx;
+        var arrayX = [];
+        var arrayY = [];
+        this.walls.forEach(function (v) {
+            arrayX.push(v.body.x);
+            arrayY.push(v.body.height);
+        });
+        var wall = this.game.rnd.integerInRange(0, this.walls.length - 1);
+        var tx = arrayX[wall];
+        var ty = this.game.rnd.integerInRange(500, 1000);
+        var angle = this.game.physics.arcade.angleToXY(this, this.x - tx, ty);
+        console.log(tx, ty);
+        console.log((this.centerX + Math.cos(angle) * this.width / 2));
+        console.log(-(this.centerY + Math.sin(angle) * this.height / 2));
+        this.body.velocity.x = -(this.centerX + Math.cos(angle) * this.width / 2);
+        this.body.velocity.y = -(this.centerY + Math.sin(angle) * this.height / 2);
+        this.goingToJump = false;
     };
     SlimeBoss.prototype.resetVelocity = function () {
         if (this.onGround()) {
+            this.body.gravity.y = 0;
             this.body.velocity.x = 0;
             this.body.velocity.y = 0;
         }
         if (this.onWall()) {
+            this.body.gravity.y = 0;
             this.body.velocity.x = 0;
             this.body.velocity.y = 0;
         }
+        if (!this.onWall() && !this.onGround()) {
+            this.body.gravity.y = 1000;
+        }
     };
     SlimeBoss.prototype.handleInput = function () {
-        if (this.canJumpToWall[this.slimeBossState] && this.onGround()) {
-            this.jumpToWall();
+        var _this = this;
+        if (this.canJumpToWall[this.slimeBossState] && this.onGround() && !this.goingToJump) {
+            this.goingToJump = true;
+            setTimeout(function () {
+                _this.jumpToWall();
+            }, 1000);
         }
-        if (this.canJumpToPlayer[this.slimeBossState] && this.onWall()) {
-            this.jumpAttack();
+        if (this.canJumpToPlayer[this.slimeBossState] && this.onWall() && !this.goingToJump) {
+            this.goingToJump = true;
+            setTimeout(function () {
+                _this.jumpAttack();
+            }, 1000);
         }
         if (this.canSplatter[this.slimeBossState]) {
             this.splatter();
@@ -901,6 +925,7 @@ var SlimeBoss = /** @class */ (function (_super) {
         if (this.isDoingJumpAttack && this.game.physics.arcade.overlap(this, this.player)) {
             this.player.takeDamage(this.stats.attack * 20, this.x);
         }
+        this.goingToJump = false;
     };
     SlimeBoss.prototype.jumpToPlayer = function () {
         this.slimeBossState = slimeBossStateEnum.jumpingToPlayer;
