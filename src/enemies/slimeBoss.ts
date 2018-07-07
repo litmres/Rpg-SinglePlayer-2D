@@ -57,8 +57,10 @@ class SlimeBoss extends MasterEnemy {
     ground: Phaser.Group;
     walls: Phaser.Group;
     goingToJump = false;
-    constructor(game: Phaser.Game, x: number, y: number, ground: Phaser.Group, walls: Phaser.Group) {
+    player: Player;
+    constructor(game: Phaser.Game, x: number, y: number, ground: Phaser.Group, walls: Phaser.Group, player: Player) {
         super(game, x, y, "slimeboss", 0);
+        this.player = player;
         this.slimeBossState = slimeBossStateEnum.idle;
         this.ground = ground;
         this.walls = walls;
@@ -94,6 +96,7 @@ class SlimeBoss extends MasterEnemy {
     }
 
     update() {
+        this.game.debug.body(this);
         this.resetVelocity();
 
         this.animations.play(this.slimeBossAnimations[this.slimeBossState]);
@@ -104,7 +107,26 @@ class SlimeBoss extends MasterEnemy {
 
         this.handleDeath();
 
+        this.handleRotation();
+
         this.updateHitbox();
+    }
+
+    handleRotation() {
+        if (this.onGround()) {
+            this.angle = 0;
+        }
+        if (this.onWall()) {
+            this.anchor.setTo(0.5, 0.5);
+            if (this.body.x < 300) {
+                this.updateScale(1, 1);
+                this.angle = 90;
+            } else {
+                this.updateScale(1, -1);
+                this.angle = 90;
+            }
+
+        }
     }
 
     checkForHitting() {
@@ -130,7 +152,7 @@ class SlimeBoss extends MasterEnemy {
         const wall = this.game.rnd.integerInRange(0, this.walls.length - 1);
         const tx = arrayX[wall];
         const ty = this.game.rnd.integerInRange(500, 1000);
-        const angle = this.game.physics.arcade.angleToXY(this, this.x - tx, ty);
+        const angle = this.game.physics.arcade.angleToXY(this, this.body.x - tx, ty);
 
         console.log(tx, ty);
         console.log((this.centerX + Math.cos(angle) * this.width / 2));
@@ -147,12 +169,12 @@ class SlimeBoss extends MasterEnemy {
             this.body.velocity.x = 0;
             this.body.velocity.y = 0;
         }
-        if (this.onWall()) {
+        if (this.onWall() && this.slimeBossState !== slimeBossStateEnum.jumpingToPlayer) {
             this.body.gravity.y = 0;
             this.body.velocity.x = 0;
             this.body.velocity.y = 0;
         }
-        if (!this.onWall() && !this.onGround()) {
+        if (!this.onWall() && !this.onGround() && this.slimeBossState !== slimeBossStateEnum.jumpingToPlayer) {
             this.body.gravity.y = 1000;
         }
     }
@@ -170,7 +192,7 @@ class SlimeBoss extends MasterEnemy {
                 this.jumpAttack();
             }, 1000);
         }
-        if (this.canSplatter[this.slimeBossState]) {
+        if (this.canSplatter[this.slimeBossState] && this.onGround()) {
             this.splatter();
         }
         if (this.canRegenerate[this.slimeBossState]) {
@@ -181,7 +203,7 @@ class SlimeBoss extends MasterEnemy {
     }
 
     idle() {
-        if (this.canDoNothing[this.slimeBossState]) {
+        if (this.onWall() && this.slimeBossState !== slimeBossStateEnum.jumpingToPlayer) {
             console.log("idling");
             this.slimeBossState = slimeBossStateEnum.idle;
         }
@@ -207,8 +229,14 @@ class SlimeBoss extends MasterEnemy {
 
     jumpToPlayer() {
         this.slimeBossState = slimeBossStateEnum.jumpingToPlayer;
-        const px = this.player.x;
-        const py = this.player.y;
+        const px = this.player.body.x;
+        const py = this.player.body.y;
+
+        this.game.physics.arcade.moveToXY(this, px, py, 1000, 1000);
+        setTimeout(() => {
+            this.x = px;
+            this.y = py;
+        }, 1000);
 
         console.log("jumpingto player");
     }
@@ -218,6 +246,6 @@ class SlimeBoss extends MasterEnemy {
     }
 
     splatter() {
-        console.log("splat");
+        this.slimeBossState = slimeBossStateEnum.splattered;
     }
 }

@@ -287,8 +287,8 @@ class MasterEnemy extends Phaser.Sprite {
         }
     }
 
-    updateScale(direction = 1) {
-        this.scale.setTo(this.defaultDirection * this.defaultScaleWidth * direction, this.defaultScaleHeight);
+    updateScale(direction = 1, upsideDown = 1) {
+        this.scale.setTo(this.defaultDirection * this.defaultScaleWidth * direction, this.defaultScaleHeight * upsideDown);
     }
 }
 

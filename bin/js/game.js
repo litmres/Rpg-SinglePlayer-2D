@@ -362,9 +362,10 @@ var MasterEnemy = /** @class */ (function (_super) {
             this.enemyState = enemyStateEnum.idle;
         }
     };
-    MasterEnemy.prototype.updateScale = function (direction) {
+    MasterEnemy.prototype.updateScale = function (direction, upsideDown) {
         if (direction === void 0) { direction = 1; }
-        this.scale.setTo(this.defaultDirection * this.defaultScaleWidth * direction, this.defaultScaleHeight);
+        if (upsideDown === void 0) { upsideDown = 1; }
+        this.scale.setTo(this.defaultDirection * this.defaultScaleWidth * direction, this.defaultScaleHeight * upsideDown);
     };
     return MasterEnemy;
 }(Phaser.Sprite));
@@ -748,7 +749,7 @@ var SlimeBaby = /** @class */ (function (_super) {
 /// <reference path="./masterEnemy.ts"/>
 var SlimeBoss = /** @class */ (function (_super) {
     __extends(SlimeBoss, _super);
-    function SlimeBoss(game, x, y, ground, walls) {
+    function SlimeBoss(game, x, y, ground, walls, player) {
         var _a, _b, _c, _d, _e, _f;
         var _this = _super.call(this, game, x, y, "slimeboss", 0) || this;
         _this.slimeBossAnimations = (_a = {},
@@ -802,6 +803,7 @@ var SlimeBoss = /** @class */ (function (_super) {
         _this.defaultDirection = -1;
         _this.isDoingJumpAttack = false;
         _this.goingToJump = false;
+        _this.player = player;
         _this.slimeBossState = slimeBossStateEnum.idle;
         _this.ground = ground;
         _this.walls = walls;
@@ -834,12 +836,30 @@ var SlimeBoss = /** @class */ (function (_super) {
         return _this;
     }
     SlimeBoss.prototype.update = function () {
+        this.game.debug.body(this);
         this.resetVelocity();
         this.animations.play(this.slimeBossAnimations[this.slimeBossState]);
         this.checkForHitting();
         this.handleInput();
         this.handleDeath();
+        this.handleRotation();
         this.updateHitbox();
+    };
+    SlimeBoss.prototype.handleRotation = function () {
+        if (this.onGround()) {
+            this.angle = 0;
+        }
+        if (this.onWall()) {
+            this.anchor.setTo(0.5, 0.5);
+            if (this.body.x < 300) {
+                this.updateScale(1, 1);
+                this.angle = 90;
+            }
+            else {
+                this.updateScale(1, -1);
+                this.angle = 90;
+            }
+        }
     };
     SlimeBoss.prototype.checkForHitting = function () {
         if (this.animations.currentAnim.name === "attack1" &&
@@ -861,7 +881,7 @@ var SlimeBoss = /** @class */ (function (_super) {
         var wall = this.game.rnd.integerInRange(0, this.walls.length - 1);
         var tx = arrayX[wall];
         var ty = this.game.rnd.integerInRange(500, 1000);
-        var angle = this.game.physics.arcade.angleToXY(this, this.x - tx, ty);
+        var angle = this.game.physics.arcade.angleToXY(this, this.body.x - tx, ty);
         console.log(tx, ty);
         console.log((this.centerX + Math.cos(angle) * this.width / 2));
         console.log(-(this.centerY + Math.sin(angle) * this.height / 2));
@@ -875,12 +895,12 @@ var SlimeBoss = /** @class */ (function (_super) {
             this.body.velocity.x = 0;
             this.body.velocity.y = 0;
         }
-        if (this.onWall()) {
+        if (this.onWall() && this.slimeBossState !== slimeBossStateEnum.jumpingToPlayer) {
             this.body.gravity.y = 0;
             this.body.velocity.x = 0;
             this.body.velocity.y = 0;
         }
-        if (!this.onWall() && !this.onGround()) {
+        if (!this.onWall() && !this.onGround() && this.slimeBossState !== slimeBossStateEnum.jumpingToPlayer) {
             this.body.gravity.y = 1000;
         }
     };
@@ -898,7 +918,7 @@ var SlimeBoss = /** @class */ (function (_super) {
                 _this.jumpAttack();
             }, 1000);
         }
-        if (this.canSplatter[this.slimeBossState]) {
+        if (this.canSplatter[this.slimeBossState] && this.onGround()) {
             this.splatter();
         }
         if (this.canRegenerate[this.slimeBossState]) {
@@ -907,7 +927,7 @@ var SlimeBoss = /** @class */ (function (_super) {
         this.idle();
     };
     SlimeBoss.prototype.idle = function () {
-        if (this.canDoNothing[this.slimeBossState]) {
+        if (this.onWall() && this.slimeBossState !== slimeBossStateEnum.jumpingToPlayer) {
             console.log("idling");
             this.slimeBossState = slimeBossStateEnum.idle;
         }
@@ -928,16 +948,22 @@ var SlimeBoss = /** @class */ (function (_super) {
         this.goingToJump = false;
     };
     SlimeBoss.prototype.jumpToPlayer = function () {
+        var _this = this;
         this.slimeBossState = slimeBossStateEnum.jumpingToPlayer;
-        var px = this.player.x;
-        var py = this.player.y;
+        var px = this.player.body.x;
+        var py = this.player.body.y;
+        this.game.physics.arcade.moveToXY(this, px, py, 1000, 1000);
+        setTimeout(function () {
+            _this.x = px;
+            _this.y = py;
+        }, 1000);
         console.log("jumpingto player");
     };
     SlimeBoss.prototype.onWall = function () {
         return this.game.physics.arcade.overlap(this, this.walls);
     };
     SlimeBoss.prototype.splatter = function () {
-        console.log("splat");
+        this.slimeBossState = slimeBossStateEnum.splattered;
     };
     return SlimeBoss;
 }(MasterEnemy));
@@ -1240,7 +1266,6 @@ var Level2 = /** @class */ (function (_super) {
             platform.body.immovable = true;
         });
         this.enemies.add(new Slime(this.game, 300, ground.y - ground.height));
-        new SlimeBoss(this.game, 600, 200, this.grounds, this.walls);
         this.updateFpsTimer();
         this.enablePhysics();
     };
@@ -1249,6 +1274,7 @@ var Level2 = /** @class */ (function (_super) {
         this.player = new Player(this.game, 0, 0);
         this.player.currentRoom = this.levelNumber;
         this.player.loadPlayer(this.playerStorage);
+        new SlimeBoss(this.game, 600, 200, this.grounds, this.walls, this.player);
         this.addPlayerToEnemies();
         this.addPlayerToNpcs();
         this.addPlayerToGates();
