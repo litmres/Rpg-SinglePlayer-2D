@@ -804,9 +804,9 @@ var SlimeBoss = /** @class */ (function (_super) {
         _this.slimeBossState = slimeBossStateEnum.idle;
         _this.ground = ground;
         _this.walls = walls;
-        _this.bodyWidth = 16;
-        _this.bodyHeight = 15;
-        _this.body.setSize(_this.bodyWidth / _this.scale.x, _this.bodyHeight / _this.scale.y, (_this.width - _this.bodyWidth) / 2, _this.height - _this.bodyHeight);
+        _this.bodyWidth = 75;
+        _this.bodyHeight = 60;
+        _this.body.setSize(_this.bodyWidth / _this.scale.x, _this.bodyHeight / _this.scale.y, (_this.width - _this.bodyWidth) / 2, _this.height - _this.bodyHeight - 6);
         _this.stats = {
             level: 1,
             maxHealth: _this.maxHealth,
@@ -821,13 +821,13 @@ var SlimeBoss = /** @class */ (function (_super) {
         _this.animations.add("idle", [0, 1, 2, 3], 10, false).onComplete.add(function () {
         });
         _this.animations.add("walk", [4, 5, 6, 7], 10, true);
-        _this.animations.add("jump", [27], 10, false);
+        _this.animations.add("jump", [26], 10, false);
         _this.animations.add("death", [17, 18, 19, 20], 10, false).onComplete.add(function () {
             _this.kill();
         });
         _this.animations.add("splatter", [17, 18, 19, 20], 10, false).onComplete.add(function () {
         });
-        _this.animations.add("regenerating", [21, 22, 23, 24, 25, 26], 10, false).onComplete.add(function () {
+        _this.animations.add("regenerating", [21, 22, 23, 24, 25], 10, false).onComplete.add(function () {
         });
         _this.health = _this.maxHealth;
         return _this;
@@ -850,13 +850,19 @@ var SlimeBoss = /** @class */ (function (_super) {
     };
     SlimeBoss.prototype.jumpToWall = function () {
         console.log("jumping to wall");
-        var vy = this.game.rnd.integerInRange(-350, 700);
-        var vx = this.game.rnd.integerInRange(-500, 500);
+        this.slimeBossState = slimeBossStateEnum.jumpingToWall;
+        var vy = this.game.rnd.integerInRange(-500, -1000);
+        var arr = [this.game.rnd.integerInRange(300, 500), this.game.rnd.integerInRange(-300, -500)];
+        var vx = arr[this.game.rnd.integerInRange(0, 1)];
         this.body.velocity.y = vy;
         this.body.velocity.x = vx;
     };
     SlimeBoss.prototype.resetVelocity = function () {
-        if (this.onGround() || this.onWall()) {
+        if (this.onGround()) {
+            this.body.velocity.x = 0;
+            this.body.velocity.y = 0;
+        }
+        if (this.onWall()) {
             this.body.velocity.x = 0;
             this.body.velocity.y = 0;
         }
@@ -878,16 +884,16 @@ var SlimeBoss = /** @class */ (function (_super) {
     };
     SlimeBoss.prototype.idle = function () {
         if (this.canDoNothing[this.slimeBossState]) {
+            console.log("idling");
             this.slimeBossState = slimeBossStateEnum.idle;
         }
     };
     SlimeBoss.prototype.regenerate = function () {
+        console.log("regenerating");
+        this.slimeBossState = slimeBossStateEnum.regenerating;
     };
     SlimeBoss.prototype.onGround = function () {
-        if (this.game.physics.arcade.overlap(this, this.ground)) {
-            return true;
-        }
-        return false;
+        return this.game.physics.arcade.overlap(this, this.ground);
     };
     SlimeBoss.prototype.jumpAttack = function () {
         this.jumpToPlayer();
@@ -897,15 +903,13 @@ var SlimeBoss = /** @class */ (function (_super) {
         }
     };
     SlimeBoss.prototype.jumpToPlayer = function () {
+        this.slimeBossState = slimeBossStateEnum.jumpingToPlayer;
         var px = this.player.x;
         var py = this.player.y;
         console.log("jumpingto player");
     };
     SlimeBoss.prototype.onWall = function () {
-        if (this.game.physics.arcade.overlap(this, this.walls)) {
-            return true;
-        }
-        return false;
+        return this.game.physics.arcade.overlap(this, this.walls);
     };
     SlimeBoss.prototype.splatter = function () {
         console.log("splat");
@@ -930,6 +934,21 @@ var MasterLevel = /** @class */ (function (_super) {
         this.game.physics.arcade.collide(this.player, this.gates);
         this.game.physics.arcade.collide(this.enemies, this.gates);
         this.game.physics.arcade.collide(this.npcs, this.gates);
+        this.game.physics.arcade.collide(this.player, this.grounds);
+        this.game.physics.arcade.collide(this.enemies, this.grounds);
+        this.game.physics.arcade.collide(this.npcs, this.grounds);
+        this.game.physics.arcade.collide(this.bonfires, this.grounds);
+        this.game.physics.arcade.collide(this.items, this.grounds);
+        this.game.physics.arcade.collide(this.player, this.walls);
+        this.game.physics.arcade.collide(this.enemies, this.walls);
+        this.game.physics.arcade.collide(this.npcs, this.walls);
+        this.game.physics.arcade.collide(this.bonfires, this.walls);
+        this.game.physics.arcade.collide(this.items, this.walls);
+        this.game.physics.arcade.collide(this.player, this.ceilings);
+        this.game.physics.arcade.collide(this.enemies, this.ceilings);
+        this.game.physics.arcade.collide(this.npcs, this.ceilings);
+        this.game.physics.arcade.collide(this.bonfires, this.ceilings);
+        this.game.physics.arcade.collide(this.items, this.ceilings);
         this.playerFacingBonfire();
         this.playerFacingNpc();
         this.playerFacingItem();
@@ -947,6 +966,9 @@ var MasterLevel = /** @class */ (function (_super) {
     MasterLevel.prototype.addGroups = function () {
         this.enemies = this.game.add.group();
         this.platforms = this.game.add.group();
+        this.ceilings = this.game.add.group();
+        this.walls = this.game.add.group();
+        this.grounds = this.game.add.group();
         this.gates = this.game.add.group();
         this.npcs = this.game.add.group();
         this.bonfires = this.game.add.group();
@@ -1059,10 +1081,22 @@ var Level0 = /** @class */ (function (_super) {
         this.game.world.sendToBack(this.background);
         this.game.add.text(100, 0, "Everything you see is a Placeholder");
         this.platforms.enableBody = true;
-        var ground = this.platforms.create(0, this.game.world.bounds.height, "floor");
+        this.grounds.enableBody = true;
+        this.ceilings.enableBody = true;
+        this.walls.enableBody = true;
+        var ground = this.grounds.create(0, this.game.world.bounds.height, "floor");
         ground.y -= ground.height;
         ground.width = this.game.world.bounds.width;
         this.platforms.forEach(function (platform) {
+            platform.body.immovable = true;
+        });
+        this.grounds.forEach(function (platform) {
+            platform.body.immovable = true;
+        });
+        this.ceilings.forEach(function (platform) {
+            platform.body.immovable = true;
+        });
+        this.walls.forEach(function (platform) {
             platform.body.immovable = true;
         });
         this.npcs.add(new RogueNpc(this.game, 600, ground.y - ground.height));
@@ -1095,16 +1129,28 @@ var Level1 = /** @class */ (function (_super) {
         this.addGroups();
         this.background = 0x49801;
         this.platforms.enableBody = true;
-        var ground = this.platforms.create(0, this.game.world.bounds.height, "floor");
+        this.grounds.enableBody = true;
+        this.ceilings.enableBody = true;
+        this.walls.enableBody = true;
+        var ground = this.grounds.create(0, this.game.world.bounds.height, "floor");
         ground.y -= ground.height;
         ground.width = this.game.world.bounds.width;
-        var ceiling = this.platforms.create(0, 0, "ceiling");
+        var ceiling = this.ceilings.create(0, 0, "ceiling");
         ceiling.width = this.game.world.bounds.width;
-        var wall = this.platforms.create(0, ceiling.height, "wall");
+        var wall = this.walls.create(0, ceiling.height, "wall");
         wall.height = this.game.world.bounds.height - wall.height * 2 - ceiling.height * 2;
-        var wall2 = this.platforms.create(this.game.width - wall.width, ceiling.height, "wall");
+        var wall2 = this.walls.create(this.game.width - wall.width, ceiling.height, "wall");
         wall2.height = this.game.world.bounds.height - wall2.height * 2 - ceiling.height * 2;
         this.platforms.forEach(function (platform) {
+            platform.body.immovable = true;
+        });
+        this.grounds.forEach(function (platform) {
+            platform.body.immovable = true;
+        });
+        this.ceilings.forEach(function (platform) {
+            platform.body.immovable = true;
+        });
+        this.walls.forEach(function (platform) {
             platform.body.immovable = true;
         });
         this.enemies.add(new RogueEnemy(this.game, 600, ground.y - ground.height));
@@ -1138,14 +1184,17 @@ var Level2 = /** @class */ (function (_super) {
         this.addGroups();
         this.background = 0x49801;
         this.platforms.enableBody = true;
-        var ground = this.platforms.create(0, this.game.world.bounds.height, "floor");
+        this.grounds.enableBody = true;
+        this.ceilings.enableBody = true;
+        this.walls.enableBody = true;
+        var ground = this.grounds.create(0, this.game.world.bounds.height, "floor");
         ground.y -= ground.height;
         ground.width = this.game.world.bounds.width;
-        var ceiling = this.platforms.create(0, 0, "ceiling");
+        var ceiling = this.ceilings.create(0, 0, "ceiling");
         ceiling.width = this.game.world.bounds.width;
-        var wall = this.platforms.create(0, ceiling.height, "wall");
+        var wall = this.walls.create(0, ceiling.height, "wall");
         wall.height = this.game.world.bounds.height - wall.height * 2 - ceiling.height * 2;
-        var wall2 = this.platforms.create(this.game.width - wall.width, ceiling.height, "wall");
+        var wall2 = this.walls.create(this.game.width - wall.width, ceiling.height, "wall");
         wall2.height = this.game.world.bounds.height - wall2.height * 2 - ceiling.height * 2;
         this.gates.enableBody = true;
         this.gates.add(new Gate(this.game, wall.x, wall.height));
@@ -1153,11 +1202,20 @@ var Level2 = /** @class */ (function (_super) {
         this.platforms.forEach(function (platform) {
             platform.body.immovable = true;
         });
+        this.grounds.forEach(function (platform) {
+            platform.body.immovable = true;
+        });
+        this.ceilings.forEach(function (platform) {
+            platform.body.immovable = true;
+        });
+        this.walls.forEach(function (platform) {
+            platform.body.immovable = true;
+        });
         this.gates.forEach(function (platform) {
             platform.body.immovable = true;
         });
         this.enemies.add(new Slime(this.game, 300, ground.y - ground.height));
-        this.enemies.add(new SlimeBoss(this.game, 600, ground.y - ground.height));
+        new SlimeBoss(this.game, 600, 200, this.grounds, this.walls);
         this.updateFpsTimer();
         this.enablePhysics();
     };
@@ -2190,7 +2248,7 @@ var Player = /** @class */ (function (_super) {
             boundsAlignH: "center",
             boundsAlignV: "middle"
         };
-        _this.game.camera.follow(_this, Phaser.Camera.FOLLOW_LOCKON, 0.05, 0.05);
+        _this.game.camera.follow(_this, Phaser.Camera.FOLLOW_PLATFORMER, 0.05, 0.05);
         _this.anchor.setTo(0.5, 0);
         //this.scale.setTo(1.5, 1.5);
         _this.inventory = null;
@@ -2628,7 +2686,7 @@ var PreloadState = /** @class */ (function (_super) {
         this.game.load.spritesheet("satyr", "bin/assets/satyr/satyr.png", 32, 32);
         this.game.load.spritesheet("shade", "bin/assets/shade/shade.png", 32, 32);
         this.game.load.spritesheet("slime", "bin/assets/slime/slime.png", 32, 25);
-        this.game.load.spritesheet("slimeboss", "bin/assets/slime/slime.png", 32, 25);
+        this.game.load.spritesheet("slimeboss", "bin/assets/slime/slimeboss.png", 128, 100);
         this.game.load.spritesheet("wasp", "bin/assets/wasp/wasp.png", 32, 32);
         this.game.load.spritesheet("werewolf", "bin/assets/werewolf/werewolf.png", 32, 32);
         this.game.load.spritesheet("yeti", "bin/assets/yeti/yeti.png", 32, 32);

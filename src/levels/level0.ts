@@ -15,12 +15,27 @@ class Level0 extends MasterLevel {
         this.game.add.text(100, 0, "Everything you see is a Placeholder");
 
         this.platforms.enableBody = true;
+        this.grounds.enableBody = true;
+        this.ceilings.enableBody = true;
+        this.walls.enableBody = true;
 
-        const ground = this.platforms.create(0, this.game.world.bounds.height, "floor");
+        const ground = this.grounds.create(0, this.game.world.bounds.height, "floor");
         ground.y -= ground.height;
         ground.width = this.game.world.bounds.width;
 
         this.platforms.forEach(function (platform: Phaser.Sprite) {
+            platform.body.immovable = true;
+        });
+
+        this.grounds.forEach(function (platform: Phaser.Sprite) {
+            platform.body.immovable = true;
+        });
+
+        this.ceilings.forEach(function (platform: Phaser.Sprite) {
+            platform.body.immovable = true;
+        });
+
+        this.walls.forEach(function (platform: Phaser.Sprite) {
             platform.body.immovable = true;
         });
 

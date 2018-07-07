@@ -61,9 +61,9 @@ class SlimeBoss extends MasterEnemy {
         this.slimeBossState = slimeBossStateEnum.idle;
         this.ground = ground;
         this.walls = walls;
-        this.bodyWidth = 16;
-        this.bodyHeight = 15;
-        this.body.setSize(this.bodyWidth / this.scale.x, this.bodyHeight / this.scale.y, (this.width - this.bodyWidth) / 2, this.height - this.bodyHeight);
+        this.bodyWidth = 75;
+        this.bodyHeight = 60;
+        this.body.setSize(this.bodyWidth / this.scale.x, this.bodyHeight / this.scale.y, (this.width - this.bodyWidth) / 2, this.height - this.bodyHeight - 6);
         this.stats = {
             level: 1,
             maxHealth: this.maxHealth,
@@ -79,14 +79,14 @@ class SlimeBoss extends MasterEnemy {
 
         });
         this.animations.add("walk", [4, 5, 6, 7], 10, true);
-        this.animations.add("jump", [27], 10, false);
+        this.animations.add("jump", [26], 10, false);
         this.animations.add("death", [17, 18, 19, 20], 10, false).onComplete.add(() => {
             this.kill();
         });
         this.animations.add("splatter", [17, 18, 19, 20], 10, false).onComplete.add(() => {
 
         });
-        this.animations.add("regenerating", [21, 22, 23, 24, 25, 26], 10, false).onComplete.add(() => {
+        this.animations.add("regenerating", [21, 22, 23, 24, 25], 10, false).onComplete.add(() => {
 
         });
         this.health = this.maxHealth;
@@ -118,14 +118,21 @@ class SlimeBoss extends MasterEnemy {
 
     jumpToWall() {
         console.log("jumping to wall");
-        const vy = this.game.rnd.integerInRange(-350, 700);
-        const vx = this.game.rnd.integerInRange(-500, 500);
+        this.slimeBossState = slimeBossStateEnum.jumpingToWall;
+        const vy = this.game.rnd.integerInRange(-500, -1000);
+        const arr = [this.game.rnd.integerInRange(300, 500), this.game.rnd.integerInRange(-300, -500)];
+        const vx = arr[this.game.rnd.integerInRange(0, 1)];
+
         this.body.velocity.y = vy;
         this.body.velocity.x = vx;
     }
 
     resetVelocity() {
-        if (this.onGround() || this.onWall()) {
+        if (this.onGround()) {
+            this.body.velocity.x = 0;
+            this.body.velocity.y = 0;
+        }
+        if (this.onWall()) {
             this.body.velocity.x = 0;
             this.body.velocity.y = 0;
         }
@@ -150,19 +157,18 @@ class SlimeBoss extends MasterEnemy {
 
     idle() {
         if (this.canDoNothing[this.slimeBossState]) {
+            console.log("idling");
             this.slimeBossState = slimeBossStateEnum.idle;
         }
     }
 
     regenerate() {
-
+        console.log("regenerating");
+        this.slimeBossState = slimeBossStateEnum.regenerating;
     }
 
     onGround() {
-        if (this.game.physics.arcade.overlap(this, this.ground)) {
-            return true;
-        }
-        return false;
+        return this.game.physics.arcade.overlap(this, this.ground);
     }
 
     jumpAttack() {
@@ -174,6 +180,7 @@ class SlimeBoss extends MasterEnemy {
     }
 
     jumpToPlayer() {
+        this.slimeBossState = slimeBossStateEnum.jumpingToPlayer;
         const px = this.player.x;
         const py = this.player.y;
 
@@ -181,10 +188,7 @@ class SlimeBoss extends MasterEnemy {
     }
 
     onWall() {
-        if (this.game.physics.arcade.overlap(this, this.walls)) {
-            return true;
-        }
-        return false;
+        return this.game.physics.arcade.overlap(this, this.walls);
     }
 
     splatter() {
