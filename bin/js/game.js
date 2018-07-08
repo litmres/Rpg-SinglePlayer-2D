@@ -230,8 +230,9 @@ var MasterEnemy = /** @class */ (function (_super) {
     };
     MasterEnemy.prototype.checkForGettingHit = function () {
         if (this.player && this.player.playerState === playerStateEnum.attack1) {
-            if (this.game.physics.arcade.overlap(this, this.player.hitBox1)) {
+            if (this.stats.health > 0 && this.game.physics.arcade.overlap(this, this.player.hitBox1)) {
                 this.takeDamage(this.player.stats.attack * 50, this.player.x);
+                console.log(this.stats.health);
             }
         }
     };
@@ -708,6 +709,7 @@ var SlimeBaby = /** @class */ (function (_super) {
         var _this = _super.call(this, game, x, y, "slime", 0) || this;
         _this.defaultDirection = -1;
         _this.isMoving = false;
+        _this.merged = false;
         _this.player = player;
         _this.parentBoss = parentBoss;
         _this.bodyWidth = 16;
@@ -743,19 +745,17 @@ var SlimeBaby = /** @class */ (function (_super) {
         this.handleDeath();
         this.updateHitbox();
     };
-    SlimeBaby.prototype.takeDamage = function (damage, objPositionX) {
-        if (this.canTakeDamage()) {
-            this.stats.health -= this.calculateDamage(damage);
+    SlimeBaby.prototype.mergeWithParent = function () {
+        if (!this.merged && this.game.physics.arcade.overlap(this, this.parentBoss)) {
+            this.parentBoss.fakeHealth += this.stats.health;
+            this.merged = true;
+            this.kill();
+            this.destroy();
         }
     };
-    SlimeBaby.prototype.mergeWithParent = function () {
-        var _this = this;
-        if (this.game.physics.arcade.overlap(this, this.parentBoss)) {
-            this.parentBoss.fakeHealth += this.stats.health;
-            this.kill();
-            setTimeout(function () {
-                _this.destroy();
-            }, 5000);
+    SlimeBaby.prototype.resetVelocity = function () {
+        if (this.merged) {
+            this.body.velocity.x = 0;
         }
     };
     SlimeBaby.prototype.moveToParent = function () {
@@ -763,7 +763,7 @@ var SlimeBaby = /** @class */ (function (_super) {
             return;
         }
         this.enemyState = enemyStateEnum.movingWalk;
-        this.moveNpcTowards(this.parentBoss.body.x, this.body.y, this.stats.movespeed, 5000);
+        this.game.physics.arcade.moveToXY(this, this.parentBoss.body.x, this.body.y, this.stats.movespeed, 5000);
         this.isMoving = true;
     };
     return SlimeBaby;
@@ -779,7 +779,7 @@ var SlimeBoss = /** @class */ (function (_super) {
             _a[slimeBossStateEnum.jumpingToWall] = "jump",
             _a[slimeBossStateEnum.idle] = "idle",
             _a[slimeBossStateEnum.death] = "death",
-            _a[slimeBossStateEnum.regenerating] = "death",
+            _a[slimeBossStateEnum.regenerating] = "regenerating",
             _a[slimeBossStateEnum.splattered] = "splatter",
             _a);
         _this.canJumpToPlayer = (_b = {},

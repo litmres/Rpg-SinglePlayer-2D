@@ -7,7 +7,7 @@ class SlimeBoss extends MasterEnemy {
         [slimeBossStateEnum.jumpingToWall]: "jump",
         [slimeBossStateEnum.idle]: "idle",
         [slimeBossStateEnum.death]: "death",
-        [slimeBossStateEnum.regenerating]: "death",
+        [slimeBossStateEnum.regenerating]: "regenerating",
         [slimeBossStateEnum.splattered]: "splatter",
     };
     canJumpToPlayer: slimeBossAllowanceInterface = {

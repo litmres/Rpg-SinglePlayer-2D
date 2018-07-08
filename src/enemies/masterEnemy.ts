@@ -134,8 +134,9 @@ class MasterEnemy extends Phaser.Sprite {
 
     checkForGettingHit() {
         if (this.player && this.player.playerState === playerStateEnum.attack1) {
-            if (this.game.physics.arcade.overlap(this, this.player.hitBox1)) {
+            if (this.stats.health > 0 && this.game.physics.arcade.overlap(this, this.player.hitBox1)) {
                 this.takeDamage(this.player.stats.attack * 50, this.player.x);
+                console.log(this.stats.health);
             }
         }
     }

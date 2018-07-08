@@ -6,6 +6,7 @@ class SlimeBaby extends MasterEnemy {
     parentBoss: SlimeBoss;
     defaultDirection = -1;
     isMoving = false;
+    merged = false;
     constructor(game: Phaser.Game, x: number, y: number, parentBoss: SlimeBoss, player: Player) {
         super(game, x, y, "slime", 0);
         this.player = player;
@@ -51,26 +52,31 @@ class SlimeBaby extends MasterEnemy {
         this.updateHitbox();
     }
 
-    takeDamage(damage: number, objPositionX: number) {
-        if (this.canTakeDamage()) {
-            this.stats.health -= this.calculateDamage(damage);
+    mergeWithParent() {
+        if (!this.merged && this.game.physics.arcade.overlap(this, this.parentBoss)) {
+            this.parentBoss.fakeHealth += this.stats.health;
+            this.merged = true;
+            this.kill();
+            this.destroy();
         }
     }
 
-    mergeWithParent() {
-        if (this.game.physics.arcade.overlap(this, this.parentBoss)) {
-            this.parentBoss.fakeHealth += this.stats.health;
-            this.kill();
-            setTimeout(() => {
-                this.destroy();
-            }, 5000);
+    resetVelocity() {
+        if (this.merged) {
+            this.body.velocity.x = 0;
         }
     }
 
     moveToParent() {
         if (this.isMoving) { return; }
         this.enemyState = enemyStateEnum.movingWalk;
-        this.moveNpcTowards(this.parentBoss.body.x, this.body.y, this.stats.movespeed, 5000);
+        this.game.physics.arcade.moveToXY(
+            this,
+            this.parentBoss.body.x,
+            this.body.y,
+            this.stats.movespeed,
+            5000
+        );
         this.isMoving = true;
     }
 }
