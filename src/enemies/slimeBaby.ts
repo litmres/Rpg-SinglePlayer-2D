@@ -7,6 +7,8 @@ class SlimeBaby extends MasterEnemy {
     defaultDirection = -1;
     isMoving = false;
     merged = false;
+    canStartMovingToParent = false;
+    canMerge = false;
     constructor(game: Phaser.Game, x: number, y: number, parentBoss: SlimeBoss, player: Player) {
         super(game, x, y, "slime", 0);
         this.player = player;
@@ -31,9 +33,12 @@ class SlimeBaby extends MasterEnemy {
         });
         this.animations.add("walk", [4, 5, 6, 7], 10, true);
         this.animations.add("death", [17, 18, 19, 20], 10, false).onComplete.add(() => {
+            this.parentBoss.stats.health -= 1;
             this.kill();
         });
         this.health = this.maxHealth;
+        this.body.velocity.y = -this.game.rnd.integerInRange(200, 1000);
+        this.body.velocity.x = this.game.rnd.integerInRange(-500, 500);
     }
 
     update() {
@@ -52,8 +57,16 @@ class SlimeBaby extends MasterEnemy {
         this.updateHitbox();
     }
 
+    checkForGettingHit() {
+        if (this.player && this.player.playerState === playerStateEnum.attack1) {
+            if (!this.merged && this.game.physics.arcade.overlap(this, this.player.hitBox1)) {
+                this.takeDamage(this.player.stats.attack * 50, this.player.x);
+            }
+        }
+    }
+
     mergeWithParent() {
-        if (!this.merged && this.game.physics.arcade.overlap(this, this.parentBoss)) {
+        if (this.canMerge && !this.merged && this.game.physics.arcade.overlap(this, this.parentBoss)) {
             this.parentBoss.fakeHealth += this.stats.health;
             this.merged = true;
             this.kill();
@@ -69,14 +82,15 @@ class SlimeBaby extends MasterEnemy {
 
     moveToParent() {
         if (this.isMoving) { return; }
+        if (this.body.y < this.parentBoss.body.y) { return; }
         this.enemyState = enemyStateEnum.movingWalk;
         this.game.physics.arcade.moveToXY(
             this,
-            this.parentBoss.body.x,
+            this.parentBoss.centerX,
             this.body.y,
             this.stats.movespeed,
-            5000
         );
         this.isMoving = true;
+        this.canMerge = true;
     }
 }

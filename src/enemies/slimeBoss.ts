@@ -39,7 +39,7 @@ class SlimeBoss extends MasterEnemy {
         [slimeBossStateEnum.jumpingToWall]: false,
         [slimeBossStateEnum.idle]: false,
         [slimeBossStateEnum.death]: false,
-        [slimeBossStateEnum.regenerating]: false,
+        [slimeBossStateEnum.regenerating]: true,
         [slimeBossStateEnum.splattered]: true,
     };
     canDoNothing: slimeBossAllowanceInterface = {
@@ -70,6 +70,7 @@ class SlimeBoss extends MasterEnemy {
         this.bodyWidth = 75;
         this.bodyHeight = 60;
         this.body.setSize(this.bodyWidth / this.scale.x, this.bodyHeight / this.scale.y, (this.width - this.bodyWidth) / 2, this.height - this.bodyHeight - 6);
+        this.maxHealth = 500;
         this.stats = {
             level: 1,
             maxHealth: this.maxHealth,
@@ -93,7 +94,8 @@ class SlimeBoss extends MasterEnemy {
         this.animations.add("splatter", [17, 18, 19, 20], 10, false).onComplete.add(() => {
 
         });
-        this.animations.add("regenerating", [21, 22, 23, 24, 25], 10, false).onComplete.add(() => {
+
+        this.animations.add("regenerating", [21, 22, 23, 24, 25], 1, false).onComplete.add(() => {
 
         });
         this.health = this.maxHealth;
@@ -104,7 +106,9 @@ class SlimeBoss extends MasterEnemy {
         this.game.debug.body(this);
         this.resetVelocity();
 
-        this.animations.play(this.slimeBossAnimations[this.slimeBossState]);
+        if (this.slimeBossState !== slimeBossStateEnum.regenerating) {
+            this.animations.play(this.slimeBossAnimations[this.slimeBossState]);
+        }
 
         this.checkForHitting();
 
@@ -214,6 +218,18 @@ class SlimeBoss extends MasterEnemy {
 
     regenerate() {
         this.slimeBossState = slimeBossStateEnum.regenerating;
+        const num = this.stats.health / 5;
+        if (this.fakeHealth < num) {
+            this.animations.frame = 21;
+        } else if (this.fakeHealth < num * 2) {
+            this.animations.frame = 22;
+        } else if (this.fakeHealth < num * 3) {
+            this.animations.frame = 23;
+        } else if (this.fakeHealth < num * 4) {
+            this.animations.frame = 24;
+        } else if (this.fakeHealth < num * 5) {
+            this.animations.frame = 25;
+        }
     }
 
     onGround() {
@@ -234,7 +250,7 @@ class SlimeBoss extends MasterEnemy {
         const px = this.player.body.x;
         const py = this.player.body.y;
 
-        this.game.physics.arcade.moveToXY(this, px, py, 1000, 1000);
+        this.game.physics.arcade.moveToXY(this, px, py, 1000, 500);
         setTimeout(() => {
             this.x = px;
             this.y = py;
@@ -249,7 +265,7 @@ class SlimeBoss extends MasterEnemy {
         this.slimeBossState = slimeBossStateEnum.splattered;
         for (let ii = 0; ii < this.stats.health; ii++) {
             this.fakeHealth -= 1;
-            this.enemyGroup.add(new SlimeBaby(this.game, this.centerX + ii * 20, this.centerY - 50, this, this.player));
+            this.enemyGroup.add(new SlimeBaby(this.game, this.centerX, this.y - 30, this, this.player));
         }
     }
 }
