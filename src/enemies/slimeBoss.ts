@@ -58,8 +58,11 @@ class SlimeBoss extends MasterEnemy {
     walls: Phaser.Group;
     goingToJump = false;
     player: Player;
-    constructor(game: Phaser.Game, x: number, y: number, ground: Phaser.Group, walls: Phaser.Group, player: Player) {
+    enemyGroup: Phaser.Group;
+    fakeHealth: number;
+    constructor(game: Phaser.Game, x: number, y: number, ground: Phaser.Group, walls: Phaser.Group, player: Player, enemyGroup: Phaser.Group) {
         super(game, x, y, "slimeboss", 0);
+        this.enemyGroup = enemyGroup;
         this.player = player;
         this.slimeBossState = slimeBossStateEnum.idle;
         this.ground = ground;
@@ -78,6 +81,7 @@ class SlimeBoss extends MasterEnemy {
             movespeed: 60,
             luck: 1,
         };
+        this.fakeHealth = this.maxHealth;
         this.animations.add("idle", [0, 1, 2, 3], 10, false).onComplete.add(() => {
 
         });
@@ -96,6 +100,7 @@ class SlimeBoss extends MasterEnemy {
     }
 
     update() {
+        this.game.debug.bodyInfo(this, 32, 32);
         this.game.debug.body(this);
         this.resetVelocity();
 
@@ -140,7 +145,6 @@ class SlimeBoss extends MasterEnemy {
     }
 
     jumpToWall() {
-        console.log("jumping to wall");
         this.slimeBossState = slimeBossStateEnum.jumpingToWall;
 
         const arrayX: any = [];
@@ -204,13 +208,11 @@ class SlimeBoss extends MasterEnemy {
 
     idle() {
         if (this.onWall() && this.slimeBossState !== slimeBossStateEnum.jumpingToPlayer) {
-            console.log("idling");
             this.slimeBossState = slimeBossStateEnum.idle;
         }
     }
 
     regenerate() {
-        console.log("regenerating");
         this.slimeBossState = slimeBossStateEnum.regenerating;
     }
 
@@ -237,8 +239,6 @@ class SlimeBoss extends MasterEnemy {
             this.x = px;
             this.y = py;
         }, 1000);
-
-        console.log("jumpingto player");
     }
 
     onWall() {
@@ -247,5 +247,9 @@ class SlimeBoss extends MasterEnemy {
 
     splatter() {
         this.slimeBossState = slimeBossStateEnum.splattered;
+        for (let ii = 0; ii < this.stats.health; ii++) {
+            this.fakeHealth -= 1;
+            this.enemyGroup.add(new SlimeBaby(this.game, this.centerX + ii * 20, this.centerY - 50, this, this.player));
+        }
     }
 }

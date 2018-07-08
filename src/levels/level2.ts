@@ -65,7 +65,7 @@ class Level2 extends MasterLevel {
         this.player = new Player(this.game, 0, 0);
         this.player.currentRoom = this.levelNumber;
         this.player.loadPlayer(this.playerStorage);
-        new SlimeBoss(this.game, 600, 200, this.grounds, this.walls, this.player);
+        new SlimeBoss(this.game, 600, 200, this.grounds, this.walls, this.player, this.enemies);
         this.addPlayerToEnemies();
         this.addPlayerToNpcs();
         this.addPlayerToGates();
