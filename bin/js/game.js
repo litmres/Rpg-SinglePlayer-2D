@@ -453,6 +453,30 @@ var AdventurerEnemy = /** @class */ (function (_super) {
     };
     return AdventurerEnemy;
 }(MasterEnemy));
+var BossOverlay = /** @class */ (function (_super) {
+    __extends(BossOverlay, _super);
+    function BossOverlay(game, x, y, boss) {
+        var _this = _super.call(this, game, x, y, "") || this;
+        _this.maxHpBar = 830;
+        _this.scale.setTo(0.4, 0.4);
+        _this.boss = boss;
+        _this.healthBar = _this.game.add.image(66, 12, "healthbar");
+        _this.healthBar.height = 50;
+        _this.healthBar.width = _this.maxHpBar;
+        _this.addChild(_this.healthBar);
+        _this.overlay = _this.game.add.image(0, 0, "bossoverlay");
+        _this.addChild(_this.overlay);
+        _this.fixedToCamera = true;
+        return _this;
+    }
+    BossOverlay.prototype.update = function () {
+        this.updateHealthBar(this.boss.stats.maxHealth, this.boss.stats.health);
+    };
+    BossOverlay.prototype.updateHealthBar = function (max, current) {
+        this.healthBar.width = this.maxHpBar / max * current;
+    };
+    return BossOverlay;
+}(Phaser.Image));
 /// <reference path="./masterEnemy.ts"/>
 var KoboldEnemy = /** @class */ (function (_super) {
     __extends(KoboldEnemy, _super);
@@ -873,6 +897,9 @@ var SlimeBoss = /** @class */ (function (_super) {
         _this.animations.add("regenerating", [21, 22, 23, 24, 25], 1, false).onComplete.add(function () {
         });
         _this.health = _this.maxHealth;
+        _this.bossOverlay = _this.game.add.group();
+        _this.bossOverlay.add(new BossOverlay(_this.game, _this.game.camera.width / 4, _this.game.camera.height - 29, _this));
+        _this.game.world.bringToTop(_this.bossOverlay);
         return _this;
     }
     SlimeBoss.prototype.update = function () {
@@ -2760,6 +2787,7 @@ var PreloadState = /** @class */ (function (_super) {
         });
         this.game.stage.backgroundColor = 0xB20059;
         this.game.load.image("overlay", "bin/assets/UI/overlay.png");
+        this.game.load.image("bossoverlay", "bin/assets/UI/bossoverlay.png");
         this.game.load.image("healthbar", "bin/assets/UI/healthbar.png");
         this.game.load.image("staminabar", "bin/assets/UI/staminabar.png");
         this.game.load.image("darkbackground", "bin/assets/backgrounds/background.png");

@@ -60,6 +60,7 @@ class SlimeBoss extends MasterEnemy {
     player: Player;
     enemyGroup: Phaser.Group;
     fakeHealth: number;
+    bossOverlay: Phaser.Group;
     constructor(game: Phaser.Game, x: number, y: number, ground: Phaser.Group, walls: Phaser.Group, player: Player, enemyGroup: Phaser.Group) {
         super(game, x, y, "slimeboss", 0);
         this.enemyGroup = enemyGroup;
@@ -99,6 +100,10 @@ class SlimeBoss extends MasterEnemy {
 
         });
         this.health = this.maxHealth;
+
+        this.bossOverlay = this.game.add.group();
+        this.bossOverlay.add(new BossOverlay(this.game, this.game.camera.width / 4, this.game.camera.height - 29, this));
+        this.game.world.bringToTop(this.bossOverlay);
     }
 
     update() {

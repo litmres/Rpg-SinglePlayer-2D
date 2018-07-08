@@ -29,6 +29,7 @@ class PreloadState extends Phaser.State {
         });
         this.game.stage.backgroundColor = 0xB20059;
         this.game.load.image("overlay", "bin/assets/UI/overlay.png");
+        this.game.load.image("bossoverlay", "bin/assets/UI/bossoverlay.png");
         this.game.load.image("healthbar", "bin/assets/UI/healthbar.png");
         this.game.load.image("staminabar", "bin/assets/UI/staminabar.png");
         this.game.load.image("darkbackground", "bin/assets/backgrounds/background.png");
