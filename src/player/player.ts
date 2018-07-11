@@ -434,6 +434,8 @@ class Player extends Phaser.Sprite {
 
     handleBonfire() {
         if (this.facingBonfire!.isLit) {
+            this.stats.health = this.stats.maxHealth;
+            this.stats.stamina = this.stats.maxStamina;
             this.playerState = playerStateEnum.sitDown;
         } else if (!this.facingBonfire!.isLit) {
             this.facingBonfire!.isLit = true;
