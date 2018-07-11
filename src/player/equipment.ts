@@ -1,10 +1,10 @@
 class Equipment {
 
-    ringSlots: Ring[] = [];
+    ringSlots: MasterRing[] = [];
     beltSlots = [];
     armorSlots = [];
 
-    equiptRings: Ring[] = [new Ring()];
+    equiptRings: MasterRing[] = [new RingOfStrength()];
     equiptBelts = [];
     equiptArmors = [];
 
@@ -13,7 +13,7 @@ class Equipment {
     }
 
     addToInventory(item: any) {
-        if (item.itemType === "ring") {
+        if (item.itemType === itemType.ring) {
             this.ringSlots.push(item);
         }
         if (item.itemType === "armor") {
@@ -24,7 +24,7 @@ class Equipment {
         }
     }
 
-    equiptRing(item: Ring) {
+    equiptRing(item: MasterRing) {
         this.equiptRings.push(item);
     }
 
@@ -36,8 +36,8 @@ class Equipment {
         this.equiptArmors.push(item);
     }
 
-    getEquiptItem(type: string, num: number) {
-        if (type === "ring") {
+    getEquiptItem(type: number, num: number) {
+        if (type === itemType.ring) {
             return this.equiptRings[num];
         }
         if (type === "belt") {

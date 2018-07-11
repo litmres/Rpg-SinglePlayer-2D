@@ -1,10 +1,10 @@
 /// <reference path="./masterLevel.ts"/>
 
-class Level1 extends MasterLevel {
-    levelNumber = levelsEnum.level1;
+class Level2 extends MasterLevel {
+    levelNumber = levelsEnum.level2;
 
     preload() {
-        this.game.world.setBounds(0, 0, this.game.world.width + 1000, this.game.world.height);
+        this.game.world.setBounds(0, 0, this.game.width, this.game.height);
         this.addGroups();
 
         this.background = 0x49801;
@@ -24,8 +24,14 @@ class Level1 extends MasterLevel {
         const wall = this.walls.create(0, ceiling.height, "wall");
         wall.height = this.game.world.bounds.height - wall.height * 2 - ceiling.height * 2;
 
-        const wall2 = this.walls.create(this.world.bounds.width - wall.width, ceiling.height, "wall");
+        const wall2 = this.walls.create(this.game.width - wall.width, ceiling.height, "wall");
         wall2.height = this.game.world.bounds.height - wall2.height * 2 - ceiling.height * 2;
+
+        this.gates.enableBody = true;
+
+        this.gates.add(new Gate(this.game, wall.x, wall.height));
+
+        this.gates.add(new Gate(this.game, wall2.x, wall2.height));
 
         this.platforms.forEach(function (platform: Phaser.Sprite) {
             platform.body.immovable = true;
@@ -43,17 +49,9 @@ class Level1 extends MasterLevel {
             platform.body.immovable = true;
         });
 
-        this.enemies.add(new RogueEnemy(this.game, 600, ground.y - ground.height));
-        this.enemies.add(new KoboldEnemy(this.game, 800, ground.y - ground.height * 2));
-        this.enemies.add(new KoboldEnemy(this.game, 1000, ground.y - ground.height * 2));
-        this.enemies.add(new KoboldEnemy(this.game, 1200, ground.y - ground.height * 2));
-        this.enemies.add(new Slime(this.game, 300, ground.y - ground.height * 2));
-        this.enemies.add(new Slime(this.game, 500, ground.y - ground.height * 2));
-        this.enemies.add(new Slime(this.game, 1300, ground.y - ground.height * 2));
-        this.enemies.add(new Slime(this.game, 1600, ground.y - ground.height * 2));
-        this.enemies.add(new AdventurerEnemy(this.game, 1400, ground.y - ground.height * 2));
-
-        this.bonfires.add(new Bonfire(this.game, 500, ground.y - ground.height));
+        this.gates.forEach(function (platform: Phaser.Sprite) {
+            platform.body.immovable = true;
+        });
 
         this.updateFpsTimer();
 
@@ -65,6 +63,7 @@ class Level1 extends MasterLevel {
         this.player = new Player(this.game, 0, 0);
         this.player.currentRoom = this.levelNumber;
         this.player.loadPlayer(this.playerStorage);
+        new SlimeBoss(this.game, 600, 200, this.grounds, this.walls, this.player, this.enemies);
         this.addPlayerToEnemies();
         this.addPlayerToNpcs();
         this.addPlayerToGates();

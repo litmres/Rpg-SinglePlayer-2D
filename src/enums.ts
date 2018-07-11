@@ -19,6 +19,10 @@ enum playerStateEnum {
 	knockBack,
 }
 
+enum itemType {
+	ring = 0,
+}
+
 enum enemyStateEnum {
 	movingWalk = 0,
 	movingFall,
@@ -47,6 +51,15 @@ enum npcStateEnum {
 	sitDown,
 	movingChase,
 	knockBack,
+}
+
+enum slimeBossStateEnum {
+	regenerating = 0,
+	jumpingToWall,
+	jumpingToPlayer,
+	splattered,
+	idle,
+	death,
 }
 
 enum levelsEnum {

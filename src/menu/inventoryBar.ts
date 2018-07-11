@@ -3,7 +3,7 @@ class InventoryBar extends Phaser.Image {
     player: Player;
 
     slots = {
-        type: "",
+        type: 0,
         amount: 0,
         array: [],
     };
@@ -11,7 +11,7 @@ class InventoryBar extends Phaser.Image {
     itemSlot: Phaser.Group;
     equiptSlot: Phaser.Group;
 
-    constructor(game: Phaser.Game, x: number, y: number, player: Player, slotType: string, amount: number) {
+    constructor(game: Phaser.Game, x: number, y: number, player: Player, slotType: number, amount: number) {
         super(game, x, y, "inventorybar");
         this.scale.setTo(0.5, 0.5);
         this.player = player;

@@ -4,13 +4,16 @@ class MasterLevel extends Phaser.State {
     music!: Phaser.Sound;
     player!: Player;
     platforms!: Phaser.Group;
+    grounds!: Phaser.Group;
+    walls!: Phaser.Group;
+    ceilings!: Phaser.Group;
     playerStorage: savePlayerInterface = JSON.parse(window.localStorage.getItem("player")!);
     enemies!: Phaser.Group;
     npcs!: Phaser.Group;
     bonfires!: Phaser.Group;
     gates!: Phaser.Group;
     items!: Phaser.Group;
-    debugMode = true;
+    debugMode = false;
 
     update() {
         this.game.physics.arcade.collide(this.player, this.platforms);
@@ -18,9 +21,32 @@ class MasterLevel extends Phaser.State {
         this.game.physics.arcade.collide(this.npcs, this.platforms);
         this.game.physics.arcade.collide(this.bonfires, this.platforms);
         this.game.physics.arcade.collide(this.items, this.platforms);
+
         this.game.physics.arcade.collide(this.player, this.gates);
         this.game.physics.arcade.collide(this.enemies, this.gates);
         this.game.physics.arcade.collide(this.npcs, this.gates);
+
+        this.game.physics.arcade.collide(this.player, this.grounds);
+        this.game.physics.arcade.collide(this.enemies, this.grounds);
+        this.game.physics.arcade.collide(this.npcs, this.grounds);
+        this.game.physics.arcade.collide(this.bonfires, this.grounds);
+        this.game.physics.arcade.collide(this.items, this.grounds);
+
+        this.game.physics.arcade.collide(this.player, this.walls);
+        this.game.physics.arcade.collide(this.enemies, this.walls);
+        this.game.physics.arcade.collide(this.npcs, this.walls);
+        this.game.physics.arcade.collide(this.bonfires, this.walls);
+        this.game.physics.arcade.collide(this.items, this.walls);
+
+
+        this.game.physics.arcade.collide(this.player, this.ceilings);
+        this.game.physics.arcade.collide(this.enemies, this.ceilings);
+        this.game.physics.arcade.collide(this.npcs, this.ceilings);
+        this.game.physics.arcade.collide(this.bonfires, this.ceilings);
+        this.game.physics.arcade.collide(this.items, this.ceilings);
+
+
+
 
         this.playerFacingBonfire();
         this.playerFacingNpc();
@@ -43,6 +69,9 @@ class MasterLevel extends Phaser.State {
     addGroups() {
         this.enemies = this.game.add.group();
         this.platforms = this.game.add.group();
+        this.ceilings = this.game.add.group();
+        this.walls = this.game.add.group();
+        this.grounds = this.game.add.group();
         this.gates = this.game.add.group();
         this.npcs = this.game.add.group();
         this.bonfires = this.game.add.group();

@@ -30,6 +30,10 @@ var playerStateEnum;
     playerStateEnum[playerStateEnum["autoWalkTo"] = 11] = "autoWalkTo";
     playerStateEnum[playerStateEnum["knockBack"] = 12] = "knockBack";
 })(playerStateEnum || (playerStateEnum = {}));
+var itemType;
+(function (itemType) {
+    itemType[itemType["ring"] = 0] = "ring";
+})(itemType || (itemType = {}));
 var enemyStateEnum;
 (function (enemyStateEnum) {
     enemyStateEnum[enemyStateEnum["movingWalk"] = 0] = "movingWalk";
@@ -60,6 +64,15 @@ var npcStateEnum;
     npcStateEnum[npcStateEnum["movingChase"] = 10] = "movingChase";
     npcStateEnum[npcStateEnum["knockBack"] = 11] = "knockBack";
 })(npcStateEnum || (npcStateEnum = {}));
+var slimeBossStateEnum;
+(function (slimeBossStateEnum) {
+    slimeBossStateEnum[slimeBossStateEnum["regenerating"] = 0] = "regenerating";
+    slimeBossStateEnum[slimeBossStateEnum["jumpingToWall"] = 1] = "jumpingToWall";
+    slimeBossStateEnum[slimeBossStateEnum["jumpingToPlayer"] = 2] = "jumpingToPlayer";
+    slimeBossStateEnum[slimeBossStateEnum["splattered"] = 3] = "splattered";
+    slimeBossStateEnum[slimeBossStateEnum["idle"] = 4] = "idle";
+    slimeBossStateEnum[slimeBossStateEnum["death"] = 5] = "death";
+})(slimeBossStateEnum || (slimeBossStateEnum = {}));
 var levelsEnum;
 (function (levelsEnum) {
     levelsEnum[levelsEnum["level0"] = 0] = "level0";
@@ -76,6 +89,7 @@ var SimpleGame = /** @class */ (function (_super) {
         _this.state.add("title", new TitleState());
         _this.state.add("level0", new Level0());
         _this.state.add("level1", new Level1());
+        _this.state.add("level2", new Level2());
         _this.state.start("boot");
         return _this;
     }
@@ -266,7 +280,7 @@ var MasterEnemy = /** @class */ (function (_super) {
     };
     MasterEnemy.prototype.calculateDamage = function (damage) {
         if (this.stats.health - damage < 0) {
-            return 0;
+            return this.stats.health;
         }
         return damage;
     };
@@ -348,9 +362,10 @@ var MasterEnemy = /** @class */ (function (_super) {
             this.enemyState = enemyStateEnum.idle;
         }
     };
-    MasterEnemy.prototype.updateScale = function (direction) {
+    MasterEnemy.prototype.updateScale = function (direction, upsideDown) {
         if (direction === void 0) { direction = 1; }
-        this.scale.setTo(this.defaultDirection * this.defaultScaleWidth * direction, this.defaultScaleHeight);
+        if (upsideDown === void 0) { upsideDown = 1; }
+        this.scale.setTo(this.defaultDirection * this.defaultScaleWidth * direction, this.defaultScaleHeight * upsideDown);
     };
     return MasterEnemy;
 }(Phaser.Sprite));
@@ -438,6 +453,30 @@ var AdventurerEnemy = /** @class */ (function (_super) {
     };
     return AdventurerEnemy;
 }(MasterEnemy));
+var BossOverlay = /** @class */ (function (_super) {
+    __extends(BossOverlay, _super);
+    function BossOverlay(game, x, y, boss) {
+        var _this = _super.call(this, game, x, y, "") || this;
+        _this.maxHpBar = 830;
+        _this.scale.setTo(0.4, 0.4);
+        _this.boss = boss;
+        _this.healthBar = _this.game.add.image(66, 12, "healthbar");
+        _this.healthBar.height = 50;
+        _this.healthBar.width = _this.maxHpBar;
+        _this.addChild(_this.healthBar);
+        _this.overlay = _this.game.add.image(0, 0, "bossoverlay");
+        _this.addChild(_this.overlay);
+        _this.fixedToCamera = true;
+        return _this;
+    }
+    BossOverlay.prototype.update = function () {
+        this.updateHealthBar(this.boss.stats.maxHealth, this.boss.stats.health);
+    };
+    BossOverlay.prototype.updateHealthBar = function (max, current) {
+        this.healthBar.width = this.maxHpBar / max * current;
+    };
+    return BossOverlay;
+}(Phaser.Image));
 /// <reference path="./masterEnemy.ts"/>
 var KoboldEnemy = /** @class */ (function (_super) {
     __extends(KoboldEnemy, _super);
@@ -601,13 +640,450 @@ var RogueEnemy = /** @class */ (function (_super) {
     };
     return RogueEnemy;
 }(MasterEnemy));
+/// <reference path="./masterEnemy.ts"/>
+var Slime = /** @class */ (function (_super) {
+    __extends(Slime, _super);
+    function Slime(game, x, y) {
+        var _this = _super.call(this, game, x, y, "slime", 0) || this;
+        _this.wanderRange = 100;
+        _this.maxWanderRange = 100;
+        _this.aggroRange = 100;
+        _this.defaultDirection = -1;
+        _this.bodyWidth = 16;
+        _this.bodyHeight = 15;
+        _this.body.setSize(_this.bodyWidth / _this.scale.x, _this.bodyHeight / _this.scale.y, (_this.width - _this.bodyWidth) / 2, _this.height - _this.bodyHeight);
+        _this.stats = {
+            level: 1,
+            maxHealth: _this.maxHealth,
+            health: _this.maxHealth,
+            maxStamina: _this.maxHealth,
+            stamina: _this.maxHealth,
+            attack: 1,
+            defense: 1,
+            movespeed: 50,
+            luck: 1,
+        };
+        _this.animations.add("idle", [0, 1, 2, 3], 10, false).onComplete.add(function () {
+            var rndNumber = _this.game.rnd.integerInRange(1, 100);
+            if (rndNumber > 90) {
+                _this.enemyState = enemyStateEnum.idleSpecial;
+            }
+            else if (!_this.friendly && rndNumber > 20 && rndNumber < 90) {
+                _this.wander();
+            }
+        });
+        _this.animations.add("idlespecial", [0, 1, 2, 3], 10, false).onComplete.add(function () {
+            _this.animations.stop();
+            _this.enemyState = enemyStateEnum.idle;
+        });
+        _this.animations.add("walk", [4, 5, 6, 7], 10, true);
+        _this.animations.add("attack1", [8, 9, 10, 11, 12], 10, false).onComplete.add(function () {
+            _this.animations.stop();
+            _this.enemyState = enemyStateEnum.idle;
+        });
+        _this.animations.add("death", [17, 18, 19, 20], 10, false).onComplete.add(function () {
+            _this.kill();
+        });
+        _this.health = _this.maxHealth;
+        _this.hitBox1 = _this.hitBoxes.create(0, _this.height / 2);
+        _this.game.physics.enable(_this.hitBoxes, Phaser.Physics.ARCADE);
+        _this.hitBox1.body.setSize(15, 10);
+        _this.hitBox1.name = "attack1";
+        return _this;
+    }
+    Slime.prototype.update = function () {
+        this.resetVelocity();
+        this.animations.play(this.enemyAnimations[this.enemyState]);
+        if (!this.friendly) {
+            this.handleInput();
+            this.stopMovingTo();
+            this.idle();
+        }
+        this.checkForHitting();
+        this.checkForGettingHit();
+        this.handleDeath();
+        this.updateHitbox();
+    };
+    Slime.prototype.checkForHitting = function () {
+        if (this.animations.currentAnim.name === "attack1" &&
+            this.animations.frame >= 10 &&
+            this.animations.frame <= 11 &&
+            this.game.physics.arcade.overlap(this.hitBox1, this.player)) {
+            this.player.takeDamage(this.stats.attack * 20, this.x);
+        }
+    };
+    Slime.prototype.handleInput = function () {
+        if (this.player) {
+            var distance = this.game.physics.arcade.distanceBetween(this, this.player);
+            if (distance < Math.abs(this.hitBox1.width) && this.canAttack[this.enemyState]) {
+                this.attack();
+            }
+            else if (distance < this.aggroRange && this.canChase[this.enemyState]) {
+                this.chase();
+            }
+        }
+    };
+    return Slime;
+}(MasterEnemy));
+/// <reference path="./masterEnemy.ts"/>
+var SlimeBaby = /** @class */ (function (_super) {
+    __extends(SlimeBaby, _super);
+    function SlimeBaby(game, x, y, parentBoss, player) {
+        var _this = _super.call(this, game, x, y, "slime", 0) || this;
+        _this.defaultDirection = -1;
+        _this.isMoving = false;
+        _this.merged = false;
+        _this.canStartMovingToParent = false;
+        _this.canMerge = false;
+        _this.player = player;
+        _this.parentBoss = parentBoss;
+        _this.bodyWidth = 16;
+        _this.bodyHeight = 15;
+        _this.body.setSize(_this.bodyWidth / _this.scale.x, _this.bodyHeight / _this.scale.y, (_this.width - _this.bodyWidth) / 2, _this.height - _this.bodyHeight);
+        _this.maxHealth = 1;
+        _this.stats = {
+            level: 1,
+            maxHealth: _this.maxHealth,
+            health: _this.maxHealth,
+            maxStamina: _this.maxHealth,
+            stamina: _this.maxHealth,
+            attack: 1,
+            defense: 1,
+            movespeed: 40,
+            luck: 1,
+        };
+        _this.animations.add("idle", [0, 1, 2, 3], 10, false).onComplete.add(function () {
+        });
+        _this.animations.add("walk", [4, 5, 6, 7], 10, true);
+        _this.animations.add("death", [17, 18, 19, 20], 10, false).onComplete.add(function () {
+            _this.parentBoss.stats.health -= 1;
+            _this.kill();
+        });
+        _this.health = _this.maxHealth;
+        _this.body.velocity.y = -_this.game.rnd.integerInRange(200, 1000);
+        _this.body.velocity.x = _this.game.rnd.integerInRange(-500, 500);
+        return _this;
+    }
+    SlimeBaby.prototype.update = function () {
+        this.resetVelocity();
+        this.animations.play(this.enemyAnimations[this.enemyState]);
+        this.moveToParent();
+        this.mergeWithParent();
+        this.checkForGettingHit();
+        this.handleDeath();
+        this.updateHitbox();
+    };
+    SlimeBaby.prototype.checkForGettingHit = function () {
+        if (this.player && this.player.playerState === playerStateEnum.attack1) {
+            if (!this.merged && this.game.physics.arcade.overlap(this, this.player.hitBox1)) {
+                this.takeDamage(this.player.stats.attack * 50, this.player.x);
+            }
+        }
+    };
+    SlimeBaby.prototype.mergeWithParent = function () {
+        if (this.stats.health > 0 && this.canMerge && !this.merged && this.game.physics.arcade.overlap(this, this.parentBoss)) {
+            this.parentBoss.fakeHealth += this.stats.health;
+            this.merged = true;
+            this.kill();
+            this.destroy();
+        }
+    };
+    SlimeBaby.prototype.resetVelocity = function () {
+        if (this.merged) {
+            this.body.velocity.x = 0;
+        }
+    };
+    SlimeBaby.prototype.moveToParent = function () {
+        if (this.isMoving) {
+            return;
+        }
+        if (this.body.y < this.parentBoss.body.y) {
+            return;
+        }
+        if (this.parentBoss.body.x > this.body.x) {
+            this.updateScale(1);
+        }
+        else {
+            this.updateScale(-1);
+        }
+        this.enemyState = enemyStateEnum.movingWalk;
+        this.game.physics.arcade.moveToXY(this, this.parentBoss.centerX, this.body.y, this.stats.movespeed);
+        this.isMoving = true;
+        this.canMerge = true;
+    };
+    return SlimeBaby;
+}(MasterEnemy));
+/// <reference path="./masterEnemy.ts"/>
+var SlimeBoss = /** @class */ (function (_super) {
+    __extends(SlimeBoss, _super);
+    function SlimeBoss(game, x, y, ground, walls, player, enemyGroup) {
+        var _a, _b, _c, _d, _e, _f;
+        var _this = _super.call(this, game, x, y, "slimeboss", 0) || this;
+        _this.slimeBossAnimations = (_a = {},
+            _a[slimeBossStateEnum.jumpingToPlayer] = "jump",
+            _a[slimeBossStateEnum.jumpingToWall] = "jump",
+            _a[slimeBossStateEnum.idle] = "idle",
+            _a[slimeBossStateEnum.death] = "death",
+            _a[slimeBossStateEnum.regenerating] = "regenerating",
+            _a[slimeBossStateEnum.splattered] = "splatter",
+            _a);
+        _this.canJumpToPlayer = (_b = {},
+            _b[slimeBossStateEnum.jumpingToPlayer] = false,
+            _b[slimeBossStateEnum.jumpingToWall] = false,
+            _b[slimeBossStateEnum.idle] = true,
+            _b[slimeBossStateEnum.death] = false,
+            _b[slimeBossStateEnum.regenerating] = false,
+            _b[slimeBossStateEnum.splattered] = false,
+            _b);
+        _this.canJumpToWall = (_c = {},
+            _c[slimeBossStateEnum.jumpingToPlayer] = false,
+            _c[slimeBossStateEnum.jumpingToWall] = false,
+            _c[slimeBossStateEnum.idle] = true,
+            _c[slimeBossStateEnum.death] = false,
+            _c[slimeBossStateEnum.regenerating] = false,
+            _c[slimeBossStateEnum.splattered] = false,
+            _c);
+        _this.canSplatter = (_d = {},
+            _d[slimeBossStateEnum.jumpingToPlayer] = true,
+            _d[slimeBossStateEnum.jumpingToWall] = false,
+            _d[slimeBossStateEnum.idle] = false,
+            _d[slimeBossStateEnum.death] = false,
+            _d[slimeBossStateEnum.regenerating] = false,
+            _d[slimeBossStateEnum.splattered] = false,
+            _d);
+        _this.canRegenerate = (_e = {},
+            _e[slimeBossStateEnum.jumpingToPlayer] = false,
+            _e[slimeBossStateEnum.jumpingToWall] = false,
+            _e[slimeBossStateEnum.idle] = false,
+            _e[slimeBossStateEnum.death] = false,
+            _e[slimeBossStateEnum.regenerating] = true,
+            _e[slimeBossStateEnum.splattered] = true,
+            _e);
+        _this.canDoNothing = (_f = {},
+            _f[slimeBossStateEnum.jumpingToPlayer] = false,
+            _f[slimeBossStateEnum.jumpingToWall] = false,
+            _f[slimeBossStateEnum.idle] = false,
+            _f[slimeBossStateEnum.death] = false,
+            _f[slimeBossStateEnum.regenerating] = true,
+            _f[slimeBossStateEnum.splattered] = false,
+            _f);
+        _this.defaultDirection = -1;
+        _this.isDoingJumpAttack = false;
+        _this.goingToJump = false;
+        _this.enemyGroup = enemyGroup;
+        _this.player = player;
+        _this.slimeBossState = slimeBossStateEnum.idle;
+        _this.ground = ground;
+        _this.walls = walls;
+        _this.bodyWidth = 75;
+        _this.bodyHeight = 60;
+        _this.body.setSize(_this.bodyWidth / _this.scale.x, _this.bodyHeight / _this.scale.y, (_this.width - _this.bodyWidth) / 2, _this.height - _this.bodyHeight - 6);
+        _this.maxHealth = 500;
+        _this.stats = {
+            level: 1,
+            maxHealth: _this.maxHealth,
+            health: _this.maxHealth,
+            maxStamina: _this.maxHealth,
+            stamina: _this.maxHealth,
+            attack: 1,
+            defense: 1,
+            movespeed: 60,
+            luck: 1,
+        };
+        _this.fakeHealth = _this.maxHealth;
+        _this.animations.add("idle", [0, 1, 2, 3], 10, false).onComplete.add(function () {
+        });
+        _this.animations.add("walk", [4, 5, 6, 7], 10, true);
+        _this.animations.add("jump", [26], 10, false);
+        _this.animations.add("death", [17, 18, 19, 20], 10, false).onComplete.add(function () {
+            _this.kill();
+        });
+        _this.animations.add("splatter", [17, 18, 19, 20], 10, false).onComplete.add(function () {
+        });
+        _this.animations.add("regenerating", [21, 22, 23, 24, 25], 1, false).onComplete.add(function () {
+        });
+        _this.health = _this.maxHealth;
+        _this.bossOverlay = _this.game.add.group();
+        _this.bossOverlay.add(new BossOverlay(_this.game, _this.game.camera.width / 4, _this.game.camera.height - 29, _this));
+        _this.game.world.bringToTop(_this.bossOverlay);
+        return _this;
+    }
+    SlimeBoss.prototype.update = function () {
+        this.resetVelocity();
+        if (this.slimeBossState !== slimeBossStateEnum.regenerating) {
+            this.animations.play(this.slimeBossAnimations[this.slimeBossState]);
+        }
+        this.checkForHitting();
+        this.handleInput();
+        this.handleDeath();
+        this.handleRotation();
+        this.updateHitbox();
+    };
+    SlimeBoss.prototype.handleRotation = function () {
+        if (this.onGround()) {
+            this.angle = 0;
+        }
+        if (this.onWall()) {
+            this.anchor.setTo(0.5, 0.5);
+            if (this.body.x < 300) {
+                this.updateScale(-1, 1);
+                this.angle = 90;
+            }
+            else {
+                this.updateScale(1, -1);
+                this.angle = -90;
+            }
+        }
+        if (!this.onWall() && !this.onGround() && this.body.velocity.x > 0) {
+            this.updateScale(1);
+        }
+        else {
+            this.updateScale(-1);
+        }
+    };
+    SlimeBoss.prototype.checkForHitting = function () {
+        if (this.animations.currentAnim.name === "jump" &&
+            this.animations.frame >= 26 &&
+            this.animations.frame <= 26 &&
+            this.game.physics.arcade.overlap(this, this.player) &&
+            this.slimeBossState === slimeBossStateEnum.jumpingToPlayer) {
+            this.player.takeDamage(this.stats.attack * 20, this.x);
+        }
+    };
+    SlimeBoss.prototype.jumpToWall = function () {
+        this.slimeBossState = slimeBossStateEnum.jumpingToWall;
+        var arrayX = [];
+        var arrayY = [];
+        this.walls.forEach(function (v) {
+            arrayX.push(v.body.x);
+            arrayY.push(v.body.height);
+        });
+        var wall = this.game.rnd.integerInRange(0, this.walls.length - 1);
+        var tx = arrayX[wall];
+        var ty = arrayY[wall];
+        var angle = this.game.physics.arcade.angleToXY(this, tx, ty);
+        var arrayD = [-1, 1];
+        var direction = this.game.rnd.integerInRange(0, arrayD.length - 1);
+        this.body.velocity.x = -(this.body.x + Math.cos(angle) * this.width / 2) * arrayD[direction] * 2;
+        this.body.velocity.y = -(this.body.y + Math.sin(angle) * this.height / 2);
+        this.goingToJump = false;
+    };
+    SlimeBoss.prototype.resetVelocity = function () {
+        if (this.onGround()) {
+            this.body.gravity.y = 0;
+            this.body.velocity.x = 0;
+            this.body.velocity.y = 0;
+        }
+        if (this.onWall() && this.slimeBossState !== slimeBossStateEnum.jumpingToPlayer) {
+            this.body.gravity.y = 0;
+            this.body.velocity.x = 0;
+            this.body.velocity.y = 0;
+        }
+        if (!this.onWall() && !this.onGround() && this.slimeBossState !== slimeBossStateEnum.jumpingToPlayer) {
+            this.body.gravity.y = 1000;
+        }
+    };
+    // tslint:disable-next-line:cyclomatic-complexity
+    SlimeBoss.prototype.handleInput = function () {
+        var _this = this;
+        if (this.canJumpToWall[this.slimeBossState] && this.onGround() && !this.goingToJump) {
+            this.goingToJump = true;
+            setTimeout(function () {
+                _this.jumpToWall();
+            }, this.game.rnd.integerInRange(1000, 2000));
+        }
+        if (this.canJumpToPlayer[this.slimeBossState] && this.onWall() && !this.goingToJump) {
+            this.goingToJump = true;
+            setTimeout(function () {
+                _this.jumpAttack();
+            }, this.game.rnd.integerInRange(500, 2500));
+        }
+        if (this.canSplatter[this.slimeBossState] && this.onGround()) {
+            this.splatter();
+        }
+        if (this.canRegenerate[this.slimeBossState]) {
+            this.regenerate();
+        }
+        if (this.slimeBossState === slimeBossStateEnum.jumpingToWall &&
+            this.x < this.player.x &&
+            this.x + this.width > this.player.x + this.player.width) {
+            this.spawnNormalEnemy();
+        }
+        this.idle();
+    };
+    SlimeBoss.prototype.spawnNormalEnemy = function () {
+        this.stats.health -= 5;
+        this.fakeHealth = this.stats.health;
+        var slime = new Slime(this.game, this.centerX, this.y - 30);
+        slime.player = this.player;
+        this.enemyGroup.add(slime);
+    };
+    SlimeBoss.prototype.idle = function () {
+        if ((this.onWall() && this.slimeBossState !== slimeBossStateEnum.jumpingToPlayer) ||
+            (this.onGround() && this.canDoNothing[this.slimeBossState] && this.stats.health === this.fakeHealth)) {
+            this.slimeBossState = slimeBossStateEnum.idle;
+        }
+    };
+    SlimeBoss.prototype.regenerate = function () {
+        this.slimeBossState = slimeBossStateEnum.regenerating;
+        var num = this.stats.health / 5;
+        if (this.fakeHealth < num) {
+            this.animations.frame = 21;
+        }
+        else if (this.fakeHealth < num * 2) {
+            this.animations.frame = 22;
+        }
+        else if (this.fakeHealth < num * 3) {
+            this.animations.frame = 23;
+        }
+        else if (this.fakeHealth < num * 4) {
+            this.animations.frame = 24;
+        }
+        else if (this.fakeHealth < num * 5) {
+            this.animations.frame = 25;
+        }
+    };
+    SlimeBoss.prototype.onGround = function () {
+        return this.game.physics.arcade.overlap(this, this.ground);
+    };
+    SlimeBoss.prototype.jumpAttack = function () {
+        this.jumpToPlayer();
+        this.isDoingJumpAttack = true;
+        if (this.isDoingJumpAttack && this.game.physics.arcade.overlap(this, this.player)) {
+            this.player.takeDamage(this.stats.attack * 20, this.x);
+        }
+        this.goingToJump = false;
+    };
+    SlimeBoss.prototype.jumpToPlayer = function () {
+        var _this = this;
+        this.slimeBossState = slimeBossStateEnum.jumpingToPlayer;
+        var px = this.player.body.x + this.player.width / 2;
+        var py = this.player.body.y - this.player.height / 2;
+        this.game.physics.arcade.moveToXY(this, px, py, 1000, 500);
+        setTimeout(function () {
+            _this.x = px;
+            _this.y = py;
+        }, 500);
+    };
+    SlimeBoss.prototype.onWall = function () {
+        return this.game.physics.arcade.overlap(this, this.walls);
+    };
+    SlimeBoss.prototype.splatter = function () {
+        this.slimeBossState = slimeBossStateEnum.splattered;
+        for (var ii = 0; ii < this.stats.health; ii++) {
+            this.fakeHealth -= 1;
+            this.enemyGroup.add(new SlimeBaby(this.game, this.centerX, this.y - 30, this, this.player));
+        }
+    };
+    return SlimeBoss;
+}(MasterEnemy));
 var MasterLevel = /** @class */ (function (_super) {
     __extends(MasterLevel, _super);
     function MasterLevel() {
         var _this = _super !== null && _super.apply(this, arguments) || this;
         _this.levelNumber = levelsEnum.level0;
         _this.playerStorage = JSON.parse(window.localStorage.getItem("player"));
-        _this.debugMode = true;
+        _this.debugMode = false;
         return _this;
     }
     MasterLevel.prototype.update = function () {
@@ -619,6 +1095,21 @@ var MasterLevel = /** @class */ (function (_super) {
         this.game.physics.arcade.collide(this.player, this.gates);
         this.game.physics.arcade.collide(this.enemies, this.gates);
         this.game.physics.arcade.collide(this.npcs, this.gates);
+        this.game.physics.arcade.collide(this.player, this.grounds);
+        this.game.physics.arcade.collide(this.enemies, this.grounds);
+        this.game.physics.arcade.collide(this.npcs, this.grounds);
+        this.game.physics.arcade.collide(this.bonfires, this.grounds);
+        this.game.physics.arcade.collide(this.items, this.grounds);
+        this.game.physics.arcade.collide(this.player, this.walls);
+        this.game.physics.arcade.collide(this.enemies, this.walls);
+        this.game.physics.arcade.collide(this.npcs, this.walls);
+        this.game.physics.arcade.collide(this.bonfires, this.walls);
+        this.game.physics.arcade.collide(this.items, this.walls);
+        this.game.physics.arcade.collide(this.player, this.ceilings);
+        this.game.physics.arcade.collide(this.enemies, this.ceilings);
+        this.game.physics.arcade.collide(this.npcs, this.ceilings);
+        this.game.physics.arcade.collide(this.bonfires, this.ceilings);
+        this.game.physics.arcade.collide(this.items, this.ceilings);
         this.playerFacingBonfire();
         this.playerFacingNpc();
         this.playerFacingItem();
@@ -636,6 +1127,9 @@ var MasterLevel = /** @class */ (function (_super) {
     MasterLevel.prototype.addGroups = function () {
         this.enemies = this.game.add.group();
         this.platforms = this.game.add.group();
+        this.ceilings = this.game.add.group();
+        this.walls = this.game.add.group();
+        this.grounds = this.game.add.group();
         this.gates = this.game.add.group();
         this.npcs = this.game.add.group();
         this.bonfires = this.game.add.group();
@@ -740,6 +1234,7 @@ var Level0 = /** @class */ (function (_super) {
         return _this;
     }
     Level0.prototype.preload = function () {
+        this.game.world.setBounds(0, 0, this.game.width, this.game.height);
         this.addGroups();
         this.background = this.game.add.image(0, 0, "darkbackground");
         this.background.height = this.game.height;
@@ -747,20 +1242,31 @@ var Level0 = /** @class */ (function (_super) {
         this.game.world.sendToBack(this.background);
         this.game.add.text(100, 0, "Everything you see is a Placeholder");
         this.platforms.enableBody = true;
-        var ground = this.platforms.create(0, this.game.height, "floor");
+        this.grounds.enableBody = true;
+        this.ceilings.enableBody = true;
+        this.walls.enableBody = true;
+        var ground = this.grounds.create(0, this.game.world.bounds.height, "floor");
         ground.y -= ground.height;
-        ground.width = this.game.width;
+        ground.width = this.game.world.bounds.width;
         this.platforms.forEach(function (platform) {
             platform.body.immovable = true;
         });
+        this.grounds.forEach(function (platform) {
+            platform.body.immovable = true;
+        });
+        this.ceilings.forEach(function (platform) {
+            platform.body.immovable = true;
+        });
+        this.walls.forEach(function (platform) {
+            platform.body.immovable = true;
+        });
         this.npcs.add(new RogueNpc(this.game, 600, ground.y - ground.height));
-        this.items.add(new Item(this.game, 450, ground.y - ground.height, new Ring()));
+        this.items.add(new Item(this.game, 450, ground.y - ground.height, new RingOfStrength()));
         this.updateFpsTimer();
         this.enablePhysics();
     };
     Level0.prototype.create = function () {
         this.game.stage.backgroundColor = this.background;
-        this.game.world.setBounds(0, 0, this.game.width, this.game.height);
         this.player = new Player(this.game, 0, 0);
         this.player.y -= this.player.height * 2;
         this.player.currentRoom = this.levelNumber;
@@ -780,37 +1286,49 @@ var Level1 = /** @class */ (function (_super) {
         return _this;
     }
     Level1.prototype.preload = function () {
+        this.game.world.setBounds(0, 0, this.game.world.width + 1000, this.game.world.height);
         this.addGroups();
         this.background = 0x49801;
         this.platforms.enableBody = true;
-        var ground = this.platforms.create(0, this.game.height, "floor");
+        this.grounds.enableBody = true;
+        this.ceilings.enableBody = true;
+        this.walls.enableBody = true;
+        var ground = this.grounds.create(0, this.game.world.bounds.height, "floor");
         ground.y -= ground.height;
-        ground.width = this.game.width;
-        var ceiling = this.platforms.create(0, 0, "ceiling");
-        ceiling.width = this.game.width;
-        var wall = this.platforms.create(0, ceiling.height, "wall");
-        wall.height = this.game.height - wall.height * 2 - ceiling.height * 2;
-        var wall2 = this.platforms.create(this.game.width - wall.width, ceiling.height, "wall");
-        wall2.height = this.game.height - wall2.height * 2 - ceiling.height * 2;
-        this.gates.enableBody = true;
-        this.gates.add(new Gate(this.game, wall.x, wall.height));
-        this.gates.add(new Gate(this.game, wall2.x, wall2.height));
+        ground.width = this.game.world.bounds.width;
+        var ceiling = this.ceilings.create(0, 0, "ceiling");
+        ceiling.width = this.game.world.bounds.width;
+        var wall = this.walls.create(0, ceiling.height, "wall");
+        wall.height = this.game.world.bounds.height - wall.height * 2 - ceiling.height * 2;
+        var wall2 = this.walls.create(this.world.bounds.width - wall.width, ceiling.height, "wall");
+        wall2.height = this.game.world.bounds.height - wall2.height * 2 - ceiling.height * 2;
         this.platforms.forEach(function (platform) {
             platform.body.immovable = true;
         });
-        this.gates.forEach(function (platform) {
+        this.grounds.forEach(function (platform) {
+            platform.body.immovable = true;
+        });
+        this.ceilings.forEach(function (platform) {
+            platform.body.immovable = true;
+        });
+        this.walls.forEach(function (platform) {
             platform.body.immovable = true;
         });
         this.enemies.add(new RogueEnemy(this.game, 600, ground.y - ground.height));
-        this.enemies.add(new KoboldEnemy(this.game, 300, ground.y - ground.height * 2));
-        this.enemies.add(new AdventurerEnemy(this.game, 500, ground.y - ground.height * 2));
+        this.enemies.add(new KoboldEnemy(this.game, 800, ground.y - ground.height * 2));
+        this.enemies.add(new KoboldEnemy(this.game, 1000, ground.y - ground.height * 2));
+        this.enemies.add(new KoboldEnemy(this.game, 1200, ground.y - ground.height * 2));
+        this.enemies.add(new Slime(this.game, 300, ground.y - ground.height * 2));
+        this.enemies.add(new Slime(this.game, 500, ground.y - ground.height * 2));
+        this.enemies.add(new Slime(this.game, 1300, ground.y - ground.height * 2));
+        this.enemies.add(new Slime(this.game, 1600, ground.y - ground.height * 2));
+        this.enemies.add(new AdventurerEnemy(this.game, 1400, ground.y - ground.height * 2));
         this.bonfires.add(new Bonfire(this.game, 500, ground.y - ground.height));
         this.updateFpsTimer();
         this.enablePhysics();
     };
     Level1.prototype.create = function () {
         this.game.stage.backgroundColor = this.background;
-        this.game.world.setBounds(0, 0, this.game.width, this.game.height);
         this.player = new Player(this.game, 0, 0);
         this.player.currentRoom = this.levelNumber;
         this.player.loadPlayer(this.playerStorage);
@@ -820,11 +1338,68 @@ var Level1 = /** @class */ (function (_super) {
     };
     return Level1;
 }(MasterLevel));
+/// <reference path="./masterLevel.ts"/>
+var Level2 = /** @class */ (function (_super) {
+    __extends(Level2, _super);
+    function Level2() {
+        var _this = _super !== null && _super.apply(this, arguments) || this;
+        _this.levelNumber = levelsEnum.level2;
+        return _this;
+    }
+    Level2.prototype.preload = function () {
+        this.game.world.setBounds(0, 0, this.game.width, this.game.height);
+        this.addGroups();
+        this.background = 0x49801;
+        this.platforms.enableBody = true;
+        this.grounds.enableBody = true;
+        this.ceilings.enableBody = true;
+        this.walls.enableBody = true;
+        var ground = this.grounds.create(0, this.game.world.bounds.height, "floor");
+        ground.y -= ground.height;
+        ground.width = this.game.world.bounds.width;
+        var ceiling = this.ceilings.create(0, 0, "ceiling");
+        ceiling.width = this.game.world.bounds.width;
+        var wall = this.walls.create(0, ceiling.height, "wall");
+        wall.height = this.game.world.bounds.height - wall.height * 2 - ceiling.height * 2;
+        var wall2 = this.walls.create(this.game.width - wall.width, ceiling.height, "wall");
+        wall2.height = this.game.world.bounds.height - wall2.height * 2 - ceiling.height * 2;
+        this.gates.enableBody = true;
+        this.gates.add(new Gate(this.game, wall.x, wall.height));
+        this.gates.add(new Gate(this.game, wall2.x, wall2.height));
+        this.platforms.forEach(function (platform) {
+            platform.body.immovable = true;
+        });
+        this.grounds.forEach(function (platform) {
+            platform.body.immovable = true;
+        });
+        this.ceilings.forEach(function (platform) {
+            platform.body.immovable = true;
+        });
+        this.walls.forEach(function (platform) {
+            platform.body.immovable = true;
+        });
+        this.gates.forEach(function (platform) {
+            platform.body.immovable = true;
+        });
+        this.updateFpsTimer();
+        this.enablePhysics();
+    };
+    Level2.prototype.create = function () {
+        this.game.stage.backgroundColor = this.background;
+        this.player = new Player(this.game, 0, 0);
+        this.player.currentRoom = this.levelNumber;
+        this.player.loadPlayer(this.playerStorage);
+        new SlimeBoss(this.game, 600, 200, this.grounds, this.walls, this.player, this.enemies);
+        this.addPlayerToEnemies();
+        this.addPlayerToNpcs();
+        this.addPlayerToGates();
+    };
+    return Level2;
+}(MasterLevel));
 var Inventory = /** @class */ (function (_super) {
     __extends(Inventory, _super);
     function Inventory(game, x, y, player) {
         var _this = _super.call(this, game, x, y, "") || this;
-        _this.transparency = 1;
         _this.MenuStyle = {
             font: "bold 32px Arial",
             fill: "#fff",
@@ -838,7 +1413,7 @@ var Inventory = /** @class */ (function (_super) {
         });
         _this.inventoryBars = _this.game.add.group();
         var bar1 = new InventoryBar(_this.game, _this.x, _this.y, _this.player, "armor", 4);
-        var bar2 = new InventoryBar(_this.game, bar1.x, bar1.y + bar1.height, _this.player, "ring", 4);
+        var bar2 = new InventoryBar(_this.game, bar1.x, bar1.y + bar1.height, _this.player, itemType.ring, 4);
         var bar3 = new InventoryBar(_this.game, bar2.x, bar2.y + bar2.height, _this.player, "belt", 4);
         var bar4 = new InventoryBar(_this.game, bar2.x, bar3.y + bar3.height, _this.player, "belt", 4);
         _this.inventoryBars.add(bar1);
@@ -869,7 +1444,7 @@ var InventoryBar = /** @class */ (function (_super) {
     function InventoryBar(game, x, y, player, slotType, amount) {
         var _this = _super.call(this, game, x, y, "inventorybar") || this;
         _this.slots = {
-            type: "",
+            type: 0,
             amount: 0,
             array: [],
         };
@@ -1643,25 +2218,36 @@ var Item = /** @class */ (function (_super) {
     };
     return Item;
 }(Phaser.Sprite));
-var Ring = /** @class */ (function () {
-    function Ring() {
+var MasterRing = /** @class */ (function () {
+    function MasterRing() {
         this.effect = {};
-        this.itemType = "ring";
+        this.itemType = itemType.ring;
         this.image = "ring";
     }
-    return Ring;
+    return MasterRing;
 }());
+var RingOfStrength = /** @class */ (function (_super) {
+    __extends(RingOfStrength, _super);
+    function RingOfStrength() {
+        var _this = _super !== null && _super.apply(this, arguments) || this;
+        _this.effect = {};
+        _this.itemType = itemType.ring;
+        _this.image = "ring";
+        return _this;
+    }
+    return RingOfStrength;
+}(MasterRing));
 var Equipment = /** @class */ (function () {
     function Equipment() {
         this.ringSlots = [];
         this.beltSlots = [];
         this.armorSlots = [];
-        this.equiptRings = [new Ring()];
+        this.equiptRings = [new RingOfStrength()];
         this.equiptBelts = [];
         this.equiptArmors = [];
     }
     Equipment.prototype.addToInventory = function (item) {
-        if (item.itemType === "ring") {
+        if (item.itemType === itemType.ring) {
             this.ringSlots.push(item);
         }
         if (item.itemType === "armor") {
@@ -1681,7 +2267,7 @@ var Equipment = /** @class */ (function () {
         this.equiptArmors.push(item);
     };
     Equipment.prototype.getEquiptItem = function (type, num) {
-        if (type === "ring") {
+        if (type === itemType.ring) {
             return this.equiptRings[num];
         }
         if (type === "belt") {
@@ -1697,27 +2283,21 @@ var Equipment = /** @class */ (function () {
 var OverlayBar = /** @class */ (function (_super) {
     __extends(OverlayBar, _super);
     function OverlayBar(game, x, y, player) {
-        var _this = _super.call(this, game, x, y, "overlay") || this;
+        var _this = _super.call(this, game, x, y, "") || this;
         _this.maxHpBar = 300;
         _this.maxStamBar = 288;
         _this.player = player;
-        _this.healthBar = _this.game.add.image(_this.x + 52, _this.y + 7, "healthbar");
+        _this.healthBar = _this.game.add.image(52, 7, "healthbar");
         _this.healthBar.height = 30;
         _this.healthBar.width = _this.maxHpBar;
-        _this.staminaBar = _this.game.add.image(_this.x + 52, _this.y + 43, "staminabar");
+        _this.addChild(_this.healthBar);
+        _this.staminaBar = _this.game.add.image(52, 43, "staminabar");
         _this.staminaBar.height = 10;
         _this.staminaBar.width = _this.maxStamBar;
-        _this.emitter = _this.game.add.emitter(_this.healthBar.x + _this.healthBar.width / 2, _this.healthBar.y + _this.healthBar.height - 5, 20);
-        _this.emitter.makeParticles("bubble");
-        //this.emitter.setSize(this.healthBar.width, this.healthBar.height);
-        _this.emitter.width = _this.healthBar.width - 20;
-        _this.emitter.height = _this.healthBar.height / 2;
-        _this.emitter.minParticleScale = 0.02;
-        _this.emitter.maxParticleScale = 0.02;
-        _this.emitter.minParticleSpeed.setTo(-10, -5);
-        _this.emitter.maxParticleSpeed.setTo(10, -1);
-        _this.emitter.gravity = 0;
-        _this.emitter.start(false, 2000, 500);
+        _this.addChild(_this.staminaBar);
+        _this.overlay = _this.game.add.image(0, 0, "overlay");
+        _this.addChild(_this.overlay);
+        _this.fixedToCamera = true;
         return _this;
     }
     OverlayBar.prototype.update = function () {
@@ -1834,6 +2414,7 @@ var Player = /** @class */ (function (_super) {
             boundsAlignH: "center",
             boundsAlignV: "middle"
         };
+        _this.game.camera.follow(_this, Phaser.Camera.FOLLOW_PLATFORMER, 0.05, 0.05);
         _this.anchor.setTo(0.5, 0);
         //this.scale.setTo(1.5, 1.5);
         _this.inventory = null;
@@ -1926,6 +2507,7 @@ var Player = /** @class */ (function (_super) {
         _this.playerOverlay = _this.game.add.group();
         _this.playerOverlay.add(new OverlayBar(_this.game, 50, 50, _this));
         _this.game.world.bringToTop(_this.playerOverlay);
+        _this.fpsCounter.fixedToCamera = true;
         return _this;
     }
     Player.prototype.update = function () {
@@ -2042,7 +2624,7 @@ var Player = /** @class */ (function (_super) {
             this.EnterThisFromNextLevel();
         }
         */
-        if (this.game.physics.arcade.distanceToXY(this, this.game.width, this.y) < this.width) {
+        if (this.game.physics.arcade.distanceToXY(this, this.game.world.bounds.width, this.y) < this.width) {
             this.EnterLevelHandler.Next = true;
         }
         else {
@@ -2073,7 +2655,7 @@ var Player = /** @class */ (function (_super) {
     Player.prototype.EnterNextLevel = function () {
         this.scale.setTo(1, 1);
         this.playerState = playerStateEnum.autoWalkTo;
-        this.movePlayerTo(this.game.width + this.width, this.y, this.stats.movespeed, 700, playerStateEnum.idle, "nextLevel");
+        this.movePlayerTo(this.game.world.bounds.width + this.width, this.y, this.stats.movespeed, 700, playerStateEnum.idle, "nextLevel");
     };
     Player.prototype.EnterPreviousLevel = function () {
         this.scale.setTo(-1, 1);
@@ -2129,6 +2711,8 @@ var Player = /** @class */ (function (_super) {
     };
     Player.prototype.handleBonfire = function () {
         if (this.facingBonfire.isLit) {
+            this.stats.health = this.stats.maxHealth;
+            this.stats.stamina = this.stats.maxStamina;
             this.playerState = playerStateEnum.sitDown;
         }
         else if (!this.facingBonfire.isLit) {
@@ -2234,6 +2818,7 @@ var PreloadState = /** @class */ (function (_super) {
         });
         this.game.stage.backgroundColor = 0xB20059;
         this.game.load.image("overlay", "bin/assets/UI/overlay.png");
+        this.game.load.image("bossoverlay", "bin/assets/UI/bossoverlay.png");
         this.game.load.image("healthbar", "bin/assets/UI/healthbar.png");
         this.game.load.image("staminabar", "bin/assets/UI/staminabar.png");
         this.game.load.image("darkbackground", "bin/assets/backgrounds/background.png");
@@ -2269,7 +2854,8 @@ var PreloadState = /** @class */ (function (_super) {
         this.game.load.spritesheet("redogre", "bin/assets/redogre/redogre.png", 32, 32);
         this.game.load.spritesheet("satyr", "bin/assets/satyr/satyr.png", 32, 32);
         this.game.load.spritesheet("shade", "bin/assets/shade/shade.png", 32, 32);
-        this.game.load.spritesheet("slime", "bin/assets/slime/slime.png", 32, 32);
+        this.game.load.spritesheet("slime", "bin/assets/slime/slime.png", 32, 25);
+        this.game.load.spritesheet("slimeboss", "bin/assets/slime/slimeboss.png", 128, 100);
         this.game.load.spritesheet("wasp", "bin/assets/wasp/wasp.png", 32, 32);
         this.game.load.spritesheet("werewolf", "bin/assets/werewolf/werewolf.png", 32, 32);
         this.game.load.spritesheet("yeti", "bin/assets/yeti/yeti.png", 32, 32);
@@ -2337,6 +2923,7 @@ var TitleState = /** @class */ (function (_super) {
         return _this;
     }
     TitleState.prototype.preload = function () {
+        this.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
         this.backgroundImage = 0x055550;
         for (var key in this.MenuText) {
             var obj = this.MenuText[key];

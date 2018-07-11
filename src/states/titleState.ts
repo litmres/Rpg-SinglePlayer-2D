@@ -54,6 +54,7 @@ class TitleState extends Phaser.State {
     };
 
     preload() {
+        this.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
         this.backgroundImage = 0x055550;
         for (const key in this.MenuText) {
             const obj = this.MenuText[key];

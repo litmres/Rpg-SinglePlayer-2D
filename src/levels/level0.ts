@@ -4,6 +4,7 @@ class Level0 extends MasterLevel {
     levelNumber = levelsEnum.level0;
 
     preload() {
+        this.game.world.setBounds(0, 0, this.game.width, this.game.height);
         this.addGroups();
 
         this.background = this.game.add.image(0, 0, "darkbackground");
@@ -14,18 +15,33 @@ class Level0 extends MasterLevel {
         this.game.add.text(100, 0, "Everything you see is a Placeholder");
 
         this.platforms.enableBody = true;
+        this.grounds.enableBody = true;
+        this.ceilings.enableBody = true;
+        this.walls.enableBody = true;
 
-        const ground = this.platforms.create(0, this.game.height, "floor");
+        const ground = this.grounds.create(0, this.game.world.bounds.height, "floor");
         ground.y -= ground.height;
-        ground.width = this.game.width;
+        ground.width = this.game.world.bounds.width;
 
         this.platforms.forEach(function (platform: Phaser.Sprite) {
             platform.body.immovable = true;
         });
 
+        this.grounds.forEach(function (platform: Phaser.Sprite) {
+            platform.body.immovable = true;
+        });
+
+        this.ceilings.forEach(function (platform: Phaser.Sprite) {
+            platform.body.immovable = true;
+        });
+
+        this.walls.forEach(function (platform: Phaser.Sprite) {
+            platform.body.immovable = true;
+        });
+
         this.npcs.add(new RogueNpc(this.game, 600, ground.y - ground.height));
 
-        this.items.add(new Item(this.game, 450, ground.y - ground.height, new Ring()));
+        this.items.add(new Item(this.game, 450, ground.y - ground.height, new RingOfStrength()));
 
         this.updateFpsTimer();
 
@@ -34,7 +50,6 @@ class Level0 extends MasterLevel {
 
     create() {
         this.game.stage.backgroundColor = this.background;
-        this.game.world.setBounds(0, 0, this.game.width, this.game.height);
         this.player = new Player(this.game, 0, 0);
         this.player.y -= this.player.height * 2;
         this.player.currentRoom = this.levelNumber;

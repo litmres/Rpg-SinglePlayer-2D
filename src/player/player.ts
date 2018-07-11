@@ -109,6 +109,7 @@ class Player extends Phaser.Sprite {
     };
     constructor(game: Phaser.Game, x: number, y: number) {
         super(game, x, y, "player", 0);
+        this.game.camera.follow(this, Phaser.Camera.FOLLOW_PLATFORMER, 0.05, 0.05);
         this.anchor.setTo(0.5, 0);
         //this.scale.setTo(1.5, 1.5);
         this.inventory = null;
@@ -209,6 +210,7 @@ class Player extends Phaser.Sprite {
         this.playerOverlay = this.game.add.group();
         this.playerOverlay.add(new OverlayBar(this.game, 50, 50, this));
         this.game.world.bringToTop(this.playerOverlay);
+        this.fpsCounter.fixedToCamera = true;
     }
 
     update() {
@@ -336,7 +338,7 @@ class Player extends Phaser.Sprite {
             this.EnterThisFromNextLevel();
         }
         */
-        if (this.game.physics.arcade.distanceToXY(this, this.game.width, this.y) < this.width) {
+        if (this.game.physics.arcade.distanceToXY(this, this.game.world.bounds.width, this.y) < this.width) {
             this.EnterLevelHandler.Next = true;
         } else {
             this.EnterLevelHandler.Next = false;
@@ -369,7 +371,7 @@ class Player extends Phaser.Sprite {
     EnterNextLevel() {
         this.scale.setTo(1, 1);
         this.playerState = playerStateEnum.autoWalkTo;
-        this.movePlayerTo(this.game.width + this.width, this.y, this.stats.movespeed, 700, playerStateEnum.idle, "nextLevel");
+        this.movePlayerTo(this.game.world.bounds.width + this.width, this.y, this.stats.movespeed, 700, playerStateEnum.idle, "nextLevel");
     }
 
     EnterPreviousLevel() {
@@ -432,6 +434,8 @@ class Player extends Phaser.Sprite {
 
     handleBonfire() {
         if (this.facingBonfire!.isLit) {
+            this.stats.health = this.stats.maxHealth;
+            this.stats.stamina = this.stats.maxStamina;
             this.playerState = playerStateEnum.sitDown;
         } else if (!this.facingBonfire!.isLit) {
             this.facingBonfire!.isLit = true;

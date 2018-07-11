@@ -29,6 +29,7 @@ class PreloadState extends Phaser.State {
         });
         this.game.stage.backgroundColor = 0xB20059;
         this.game.load.image("overlay", "bin/assets/UI/overlay.png");
+        this.game.load.image("bossoverlay", "bin/assets/UI/bossoverlay.png");
         this.game.load.image("healthbar", "bin/assets/UI/healthbar.png");
         this.game.load.image("staminabar", "bin/assets/UI/staminabar.png");
         this.game.load.image("darkbackground", "bin/assets/backgrounds/background.png");
@@ -65,7 +66,8 @@ class PreloadState extends Phaser.State {
         this.game.load.spritesheet("redogre", "bin/assets/redogre/redogre.png", 32, 32);
         this.game.load.spritesheet("satyr", "bin/assets/satyr/satyr.png", 32, 32);
         this.game.load.spritesheet("shade", "bin/assets/shade/shade.png", 32, 32);
-        this.game.load.spritesheet("slime", "bin/assets/slime/slime.png", 32, 32);
+        this.game.load.spritesheet("slime", "bin/assets/slime/slime.png", 32, 25);
+        this.game.load.spritesheet("slimeboss", "bin/assets/slime/slimeboss.png", 128, 100);
         this.game.load.spritesheet("wasp", "bin/assets/wasp/wasp.png", 32, 32);
         this.game.load.spritesheet("werewolf", "bin/assets/werewolf/werewolf.png", 32, 32);
         this.game.load.spritesheet("yeti", "bin/assets/yeti/yeti.png", 32, 32);

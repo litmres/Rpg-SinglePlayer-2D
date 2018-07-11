@@ -1,6 +1,4 @@
 class Inventory extends Phaser.Image {
-    transparency = 1;
-
     MenuStyle: MenuStyle = {
         font: "bold 32px Arial",
         fill: "#fff",
@@ -19,14 +17,13 @@ class Inventory extends Phaser.Image {
     constructor(game: Phaser.Game, x: number, y: number, player: Player) {
         super(game, x, y, "");
         this.player = player;
-
         this.game.input.keyboard.addKey(Phaser.Keyboard.I).onDown.addOnce(() => {
             this.destroyInventory();
         });
 
         this.inventoryBars = this.game.add.group();
         const bar1 = new InventoryBar(this.game, this.x, this.y, this.player, "armor", 4);
-        const bar2 = new InventoryBar(this.game, bar1.x, bar1.y + bar1.height, this.player, "ring", 4);
+        const bar2 = new InventoryBar(this.game, bar1.x, bar1.y + bar1.height, this.player, itemType.ring, 4);
         const bar3 = new InventoryBar(this.game, bar2.x, bar2.y + bar2.height, this.player, "belt", 4);
         const bar4 = new InventoryBar(this.game, bar2.x, bar3.y + bar3.height, this.player, "belt", 4);
         this.inventoryBars.add(bar1);
