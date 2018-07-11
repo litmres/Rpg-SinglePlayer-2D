@@ -1300,7 +1300,7 @@ var Level1 = /** @class */ (function (_super) {
         ceiling.width = this.game.world.bounds.width;
         var wall = this.walls.create(0, ceiling.height, "wall");
         wall.height = this.game.world.bounds.height - wall.height * 2 - ceiling.height * 2;
-        var wall2 = this.walls.create(this.game.width - wall.width, ceiling.height, "wall");
+        var wall2 = this.walls.create(this.world.bounds.width - wall.width, ceiling.height, "wall");
         wall2.height = this.game.world.bounds.height - wall2.height * 2 - ceiling.height * 2;
         this.platforms.forEach(function (platform) {
             platform.body.immovable = true;
@@ -2618,7 +2618,7 @@ var Player = /** @class */ (function (_super) {
             this.EnterThisFromNextLevel();
         }
         */
-        if (this.game.physics.arcade.distanceToXY(this, this.game.width, this.y) < this.width) {
+        if (this.game.physics.arcade.distanceToXY(this, this.game.world.bounds.width, this.y) < this.width) {
             this.EnterLevelHandler.Next = true;
         }
         else {
@@ -2649,7 +2649,7 @@ var Player = /** @class */ (function (_super) {
     Player.prototype.EnterNextLevel = function () {
         this.scale.setTo(1, 1);
         this.playerState = playerStateEnum.autoWalkTo;
-        this.movePlayerTo(this.game.width + this.width, this.y, this.stats.movespeed, 700, playerStateEnum.idle, "nextLevel");
+        this.movePlayerTo(this.game.world.bounds.width + this.width, this.y, this.stats.movespeed, 700, playerStateEnum.idle, "nextLevel");
     };
     Player.prototype.EnterPreviousLevel = function () {
         this.scale.setTo(-1, 1);

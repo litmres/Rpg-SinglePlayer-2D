@@ -338,7 +338,7 @@ class Player extends Phaser.Sprite {
             this.EnterThisFromNextLevel();
         }
         */
-        if (this.game.physics.arcade.distanceToXY(this, this.game.width, this.y) < this.width) {
+        if (this.game.physics.arcade.distanceToXY(this, this.game.world.bounds.width, this.y) < this.width) {
             this.EnterLevelHandler.Next = true;
         } else {
             this.EnterLevelHandler.Next = false;
@@ -371,7 +371,7 @@ class Player extends Phaser.Sprite {
     EnterNextLevel() {
         this.scale.setTo(1, 1);
         this.playerState = playerStateEnum.autoWalkTo;
-        this.movePlayerTo(this.game.width + this.width, this.y, this.stats.movespeed, 700, playerStateEnum.idle, "nextLevel");
+        this.movePlayerTo(this.game.world.bounds.width + this.width, this.y, this.stats.movespeed, 700, playerStateEnum.idle, "nextLevel");
     }
 
     EnterPreviousLevel() {

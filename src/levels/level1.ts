@@ -24,7 +24,7 @@ class Level1 extends MasterLevel {
         const wall = this.walls.create(0, ceiling.height, "wall");
         wall.height = this.game.world.bounds.height - wall.height * 2 - ceiling.height * 2;
 
-        const wall2 = this.walls.create(this.game.width - wall.width, ceiling.height, "wall");
+        const wall2 = this.walls.create(this.world.bounds.width - wall.width, ceiling.height, "wall");
         wall2.height = this.game.world.bounds.height - wall2.height * 2 - ceiling.height * 2;
 
         this.platforms.forEach(function (platform: Phaser.Sprite) {
