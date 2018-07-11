@@ -66,7 +66,7 @@ class SlimeBaby extends MasterEnemy {
     }
 
     mergeWithParent() {
-        if (this.canMerge && !this.merged && this.game.physics.arcade.overlap(this, this.parentBoss)) {
+        if (this.stats.health > 0 && this.canMerge && !this.merged && this.game.physics.arcade.overlap(this, this.parentBoss)) {
             this.parentBoss.fakeHealth += this.stats.health;
             this.merged = true;
             this.kill();
@@ -83,6 +83,11 @@ class SlimeBaby extends MasterEnemy {
     moveToParent() {
         if (this.isMoving) { return; }
         if (this.body.y < this.parentBoss.body.y) { return; }
+        if (this.parentBoss.body.x > this.body.x) {
+            this.updateScale(1);
+        } else {
+            this.updateScale(-1);
+        }
         this.enemyState = enemyStateEnum.movingWalk;
         this.game.physics.arcade.moveToXY(
             this,

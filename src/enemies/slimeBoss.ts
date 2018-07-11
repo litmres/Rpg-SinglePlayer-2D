@@ -47,7 +47,7 @@ class SlimeBoss extends MasterEnemy {
         [slimeBossStateEnum.jumpingToWall]: false,
         [slimeBossStateEnum.idle]: false,
         [slimeBossStateEnum.death]: false,
-        [slimeBossStateEnum.regenerating]: false,
+        [slimeBossStateEnum.regenerating]: true,
         [slimeBossStateEnum.splattered]: false,
     };
     bodyWidth: number;
@@ -107,8 +107,6 @@ class SlimeBoss extends MasterEnemy {
     }
 
     update() {
-        this.game.debug.bodyInfo(this, 32, 32);
-        this.game.debug.body(this);
         this.resetVelocity();
 
         if (this.slimeBossState !== slimeBossStateEnum.regenerating) {
@@ -133,21 +131,27 @@ class SlimeBoss extends MasterEnemy {
         if (this.onWall()) {
             this.anchor.setTo(0.5, 0.5);
             if (this.body.x < 300) {
-                this.updateScale(1, 1);
+                this.updateScale(-1, 1);
                 this.angle = 90;
             } else {
                 this.updateScale(1, -1);
-                this.angle = 90;
+                this.angle = -90;
             }
 
+        }
+        if (!this.onWall() && !this.onGround() && this.body.velocity.x > 0) {
+            this.updateScale(1);
+        } else {
+            this.updateScale(-1);
         }
     }
 
     checkForHitting() {
-        if (this.animations.currentAnim.name === "attack1" &&
-            this.animations.frame >= 27 &&
-            this.animations.frame <= 27 &&
-            this.game.physics.arcade.overlap(this, this.player)
+        if (this.animations.currentAnim.name === "jump" &&
+            this.animations.frame >= 26 &&
+            this.animations.frame <= 26 &&
+            this.game.physics.arcade.overlap(this, this.player) &&
+            this.slimeBossState === slimeBossStateEnum.jumpingToPlayer
         ) {
             this.player.takeDamage(this.stats.attack * 20, this.x);
         }
@@ -164,15 +168,15 @@ class SlimeBoss extends MasterEnemy {
         });
         const wall = this.game.rnd.integerInRange(0, this.walls.length - 1);
         const tx = arrayX[wall];
-        const ty = this.game.rnd.integerInRange(500, 1000);
-        const angle = this.game.physics.arcade.angleToXY(this, this.body.x - tx, ty);
+        const ty = arrayY[wall];
+        const angle = this.game.physics.arcade.angleToXY(this, tx, ty);
 
-        console.log(tx, ty);
-        console.log((this.centerX + Math.cos(angle) * this.width / 2));
-        console.log(-(this.centerY + Math.sin(angle) * this.height / 2));
+        const arrayD = [-1, 1];
+        const direction = this.game.rnd.integerInRange(0, arrayD.length - 1);
 
-        this.body.velocity.x = -(this.centerX + Math.cos(angle) * this.width / 2);
-        this.body.velocity.y = -(this.centerY + Math.sin(angle) * this.height / 2);
+        this.body.velocity.x = -(this.body.x + Math.cos(angle) * this.width / 2) * arrayD[direction] * 2;
+        this.body.velocity.y = -(this.body.y + Math.sin(angle) * this.height / 2);
+
         this.goingToJump = false;
     }
 
@@ -191,19 +195,19 @@ class SlimeBoss extends MasterEnemy {
             this.body.gravity.y = 1000;
         }
     }
-
+    // tslint:disable-next-line:cyclomatic-complexity
     handleInput() {
         if (this.canJumpToWall[this.slimeBossState] && this.onGround() && !this.goingToJump) {
             this.goingToJump = true;
             setTimeout(() => {
                 this.jumpToWall();
-            }, 1000);
+            }, this.game.rnd.integerInRange(1000, 2000));
         }
         if (this.canJumpToPlayer[this.slimeBossState] && this.onWall() && !this.goingToJump) {
             this.goingToJump = true;
             setTimeout(() => {
                 this.jumpAttack();
-            }, 1000);
+            }, this.game.rnd.integerInRange(500, 2500));
         }
         if (this.canSplatter[this.slimeBossState] && this.onGround()) {
             this.splatter();
@@ -211,12 +215,28 @@ class SlimeBoss extends MasterEnemy {
         if (this.canRegenerate[this.slimeBossState]) {
             this.regenerate();
         }
+        if (this.slimeBossState === slimeBossStateEnum.jumpingToWall &&
+            this.x < this.player.x &&
+            this.x + this.width > this.player.x + this.player.width
+        ) {
+            this.spawnNormalEnemy();
+        }
 
         this.idle();
     }
 
+    spawnNormalEnemy() {
+        this.stats.health -= 5;
+        this.fakeHealth = this.stats.health;
+        const slime = new Slime(this.game, this.centerX, this.y - 30);
+        slime.player = this.player;
+        this.enemyGroup.add(slime);
+    }
+
     idle() {
-        if (this.onWall() && this.slimeBossState !== slimeBossStateEnum.jumpingToPlayer) {
+        if ((this.onWall() && this.slimeBossState !== slimeBossStateEnum.jumpingToPlayer) ||
+            (this.onGround() && this.canDoNothing[this.slimeBossState] && this.stats.health === this.fakeHealth)
+        ) {
             this.slimeBossState = slimeBossStateEnum.idle;
         }
     }
@@ -252,14 +272,14 @@ class SlimeBoss extends MasterEnemy {
 
     jumpToPlayer() {
         this.slimeBossState = slimeBossStateEnum.jumpingToPlayer;
-        const px = this.player.body.x;
-        const py = this.player.body.y;
+        const px = this.player.body.x + this.player.width / 2;
+        const py = this.player.body.y - this.player.height / 2;
 
         this.game.physics.arcade.moveToXY(this, px, py, 1000, 500);
         setTimeout(() => {
             this.x = px;
             this.y = py;
-        }, 1000);
+        }, 500);
     }
 
     onWall() {
