@@ -29,6 +29,7 @@ var playerStateEnum;
     playerStateEnum[playerStateEnum["standUp"] = 10] = "standUp";
     playerStateEnum[playerStateEnum["autoWalkTo"] = 11] = "autoWalkTo";
     playerStateEnum[playerStateEnum["knockBack"] = 12] = "knockBack";
+    playerStateEnum[playerStateEnum["roll"] = 13] = "roll";
 })(playerStateEnum || (playerStateEnum = {}));
 var itemType;
 (function (itemType) {
@@ -101,7 +102,7 @@ window.onload = function () {
 var MasterEnemy = /** @class */ (function (_super) {
     __extends(MasterEnemy, _super);
     function MasterEnemy(game, x, y, key, frame) {
-        var _a, _b, _c, _d, _e;
+        var _a;
         var _this = _super.call(this, game, x, y, key, frame) || this;
         _this.enemyState = enemyStateEnum.idle;
         _this.friendly = false;
@@ -113,76 +114,38 @@ var MasterEnemy = /** @class */ (function (_super) {
         _this.defaultDirection = 1;
         _this.maxWanderRange = 100;
         _this.aggroRange = 100;
-        _this.canWalk = (_a = {},
-            _a[enemyStateEnum.movingWalk] = true,
-            _a[enemyStateEnum.movingFall] = false,
-            _a[enemyStateEnum.idle] = true,
-            _a[enemyStateEnum.idleSpecial] = true,
-            _a[enemyStateEnum.attack1] = false,
-            _a[enemyStateEnum.attack2] = false,
-            _a[enemyStateEnum.attack3] = false,
-            _a[enemyStateEnum.death] = false,
-            _a[enemyStateEnum.sit] = false,
-            _a[enemyStateEnum.sitDown] = false,
-            _a[enemyStateEnum.movingChase] = false,
-            _a[enemyStateEnum.knockBack] = false,
+        _this.canWalk = enemyAllowance([
+            enemyStateEnum.movingWalk,
+            enemyStateEnum.idle,
+            enemyStateEnum.idleSpecial,
+        ]);
+        _this.canIdle = enemyAllowance([]);
+        _this.canChase = enemyAllowance([
+            enemyStateEnum.movingWalk,
+            enemyStateEnum.idle,
+            enemyStateEnum.idleSpecial,
+            enemyStateEnum.movingChase
+        ]);
+        _this.canAttack = enemyAllowance([
+            enemyStateEnum.movingWalk,
+            enemyStateEnum.idle,
+            enemyStateEnum.idleSpecial,
+            enemyStateEnum.movingChase
+        ]);
+        _this.enemyAnimations = (_a = {},
+            _a[enemyStateEnum.movingWalk] = "walk",
+            _a[enemyStateEnum.movingFall] = "fall",
+            _a[enemyStateEnum.idle] = "idle",
+            _a[enemyStateEnum.attack1] = "attack1",
+            _a[enemyStateEnum.attack2] = "attack2",
+            _a[enemyStateEnum.attack3] = "attack3",
+            _a[enemyStateEnum.death] = "death",
+            _a[enemyStateEnum.sit] = "sit",
+            _a[enemyStateEnum.sitDown] = "sitdown",
+            _a[enemyStateEnum.movingChase] = "walk",
+            _a[enemyStateEnum.idleSpecial] = "idlespecial",
+            _a[enemyStateEnum.knockBack] = "knockback",
             _a);
-        _this.canIdle = (_b = {},
-            _b[enemyStateEnum.movingWalk] = false,
-            _b[enemyStateEnum.movingFall] = false,
-            _b[enemyStateEnum.idle] = false,
-            _b[enemyStateEnum.idleSpecial] = false,
-            _b[enemyStateEnum.attack1] = false,
-            _b[enemyStateEnum.attack2] = false,
-            _b[enemyStateEnum.attack3] = false,
-            _b[enemyStateEnum.death] = false,
-            _b[enemyStateEnum.sit] = false,
-            _b[enemyStateEnum.sitDown] = false,
-            _b[enemyStateEnum.movingChase] = false,
-            _b[enemyStateEnum.knockBack] = false,
-            _b);
-        _this.canChase = (_c = {},
-            _c[enemyStateEnum.movingWalk] = true,
-            _c[enemyStateEnum.movingFall] = false,
-            _c[enemyStateEnum.idle] = true,
-            _c[enemyStateEnum.idleSpecial] = true,
-            _c[enemyStateEnum.attack1] = false,
-            _c[enemyStateEnum.attack2] = false,
-            _c[enemyStateEnum.attack3] = false,
-            _c[enemyStateEnum.death] = false,
-            _c[enemyStateEnum.sit] = false,
-            _c[enemyStateEnum.sitDown] = false,
-            _c[enemyStateEnum.movingChase] = true,
-            _c[enemyStateEnum.knockBack] = false,
-            _c);
-        _this.canAttack = (_d = {},
-            _d[enemyStateEnum.movingWalk] = true,
-            _d[enemyStateEnum.movingFall] = false,
-            _d[enemyStateEnum.idle] = true,
-            _d[enemyStateEnum.idleSpecial] = true,
-            _d[enemyStateEnum.attack1] = false,
-            _d[enemyStateEnum.attack2] = false,
-            _d[enemyStateEnum.attack3] = false,
-            _d[enemyStateEnum.death] = false,
-            _d[enemyStateEnum.sit] = false,
-            _d[enemyStateEnum.sitDown] = false,
-            _d[enemyStateEnum.movingChase] = true,
-            _d[enemyStateEnum.knockBack] = false,
-            _d);
-        _this.enemyAnimations = (_e = {},
-            _e[enemyStateEnum.movingWalk] = "walk",
-            _e[enemyStateEnum.movingFall] = "fall",
-            _e[enemyStateEnum.idle] = "idle",
-            _e[enemyStateEnum.attack1] = "attack1",
-            _e[enemyStateEnum.attack2] = "attack2",
-            _e[enemyStateEnum.attack3] = "attack3",
-            _e[enemyStateEnum.death] = "death",
-            _e[enemyStateEnum.sit] = "sit",
-            _e[enemyStateEnum.sitDown] = "sitdown",
-            _e[enemyStateEnum.movingChase] = "walk",
-            _e[enemyStateEnum.idleSpecial] = "idlespecial",
-            _e[enemyStateEnum.knockBack] = "knockback",
-            _e);
         _this.invincible = false;
         _this.anchor.setTo(0.5, 0);
         game.physics.arcade.enableBody(_this);
@@ -228,9 +191,20 @@ var MasterEnemy = /** @class */ (function (_super) {
             }
         });
     };
+    // tslint:disable-next-line:cyclomatic-complexity
     MasterEnemy.prototype.checkForGettingHit = function () {
         if (this.player && this.player.playerState === playerStateEnum.attack1) {
             if (this.game.physics.arcade.overlap(this, this.player.hitBox1)) {
+                this.takeDamage(this.player.stats.attack * 50, this.player.x);
+            }
+        }
+        else if (this.player && this.player.playerState === playerStateEnum.attack2) {
+            if (this.game.physics.arcade.overlap(this, this.player.hitBox2)) {
+                this.takeDamage(this.player.stats.attack * 50, this.player.x);
+            }
+        }
+        else if (this.player && this.player.playerState === playerStateEnum.attack3) {
+            if (this.game.physics.arcade.overlap(this, this.player.hitBox3)) {
                 this.takeDamage(this.player.stats.attack * 50, this.player.x);
             }
         }
@@ -369,6 +343,27 @@ var MasterEnemy = /** @class */ (function (_super) {
     };
     return MasterEnemy;
 }(Phaser.Sprite));
+function enemyAllowance(array) {
+    var _a;
+    var obj = (_a = {},
+        _a[enemyStateEnum.movingWalk] = false,
+        _a[enemyStateEnum.movingFall] = false,
+        _a[enemyStateEnum.idle] = false,
+        _a[enemyStateEnum.idleSpecial] = false,
+        _a[enemyStateEnum.attack1] = false,
+        _a[enemyStateEnum.attack2] = false,
+        _a[enemyStateEnum.attack3] = false,
+        _a[enemyStateEnum.death] = false,
+        _a[enemyStateEnum.sit] = false,
+        _a[enemyStateEnum.sitDown] = false,
+        _a[enemyStateEnum.movingChase] = false,
+        _a[enemyStateEnum.knockBack] = false,
+        _a);
+    array.forEach(function (v) {
+        obj[v] = true;
+    });
+    return obj;
+}
 /// <reference path="./masterEnemy.ts"/>
 var AdventurerEnemy = /** @class */ (function (_super) {
     __extends(AdventurerEnemy, _super);
@@ -415,7 +410,7 @@ var AdventurerEnemy = /** @class */ (function (_super) {
         _this.health = _this.maxHealth;
         _this.hitBox1 = _this.hitBoxes.create(0, _this.height / 2);
         _this.game.physics.enable(_this.hitBoxes, Phaser.Physics.ARCADE);
-        _this.hitBox1.body.setSize(20, 10);
+        _this.hitBox1.body.setSize(25, 10);
         _this.hitBox1.name = "attack1";
         return _this;
     }
@@ -2340,6 +2335,11 @@ var Player = /** @class */ (function (_super) {
             playerStateEnum.idle,
             playerStateEnum.movingStartWalk
         ]);
+        _this.canRoll = playerAllowance([
+            playerStateEnum.movingWalk,
+            playerStateEnum.idle,
+            playerStateEnum.movingStartWalk
+        ]);
         _this.fpsCounter = _this.game.add.text(_this.game.camera.x, 0, "FPS: " + _this.game.time.fps, {
             font: "24px Arial",
             fill: "#fff"
@@ -2366,6 +2366,7 @@ var Player = /** @class */ (function (_super) {
             _a[playerStateEnum.movingStartWalk] = "walk",
             _a[playerStateEnum.autoWalkTo] = "walk",
             _a[playerStateEnum.knockBack] = "knockback",
+            _a[playerStateEnum.roll] = "rolling",
             _a);
         _this.DialogueStyle = {
             font: "bold 10px Arial",
@@ -2383,8 +2384,8 @@ var Player = /** @class */ (function (_super) {
         _this.body.collideWorldBounds = true;
         _this.game.physics.enable(_this, Phaser.Physics.ARCADE);
         _this.bodyWidth = 12;
-        _this.bodyHeight = 24;
-        _this.body.setSize(_this.bodyWidth / _this.scale.x, _this.bodyHeight / _this.scale.y, (_this.width - _this.bodyWidth) / 2 - 3, 32);
+        _this.bodyHeight = 30;
+        _this.body.setSize(_this.bodyWidth / _this.scale.x, _this.bodyHeight / _this.scale.y, (_this.width - _this.bodyWidth) / 2, 5);
         _this.stats = {
             level: 1,
             maxHealth: _this.maxHealth,
@@ -2405,6 +2406,7 @@ var Player = /** @class */ (function (_super) {
             ESC: _this.game.input.keyboard.addKey(Phaser.Keyboard.ESC),
             P: _this.game.input.keyboard.addKey(Phaser.Keyboard.P),
             I: _this.game.input.keyboard.addKey(Phaser.Keyboard.I),
+            SPACE: _this.game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR),
             LMB: _this.game.input.activePointer.leftButton,
             RMB: _this.game.input.activePointer.rightButton,
         };
@@ -2424,45 +2426,67 @@ var Player = /** @class */ (function (_super) {
             Phaser.Keyboard.D,
             Phaser.Keyboard.E
         ]);
-        _this.animations.add("idle", [24, 25, 26, 27], 10, false);
+        _this.animations.add("idle", [0, 1, 2, 3], 10, false);
         _this.animations.add("startwalk", [1, 2, 3], 10, false).onComplete.add(function () {
             _this.animations.stop();
             _this.playerState = playerStateEnum.movingWalk;
         });
-        _this.animations.add("walk", [28, 29, 30, 31], 10, true);
-        _this.animations.add("attack1", [20, 21, 22, 23], 10, false).onComplete.add(function () {
+        _this.animations.add("walk", [8, 9, 10], 10, true);
+        _this.animations.add("attack1", [42, 43, 44, 45, 46, 47, 48, 49], 10, false).onComplete.add(function () {
+            _this.animations.stop();
+            if (_this.controls.LMB.justPressed(500) || _this.controls.LMB.justReleased(500)) {
+                _this.playerState = playerStateEnum.attack2;
+            }
+            else {
+                _this.playerState = playerStateEnum.idle;
+            }
+        });
+        _this.animations.add("attack2", [49, 50, 51, 52, 52], 10, false).onComplete.add(function () {
+            _this.animations.stop();
+            if (_this.controls.LMB.justPressed(500) || _this.controls.LMB.justReleased(500)) {
+                _this.playerState = playerStateEnum.attack3;
+            }
+            else {
+                _this.playerState = playerStateEnum.idle;
+            }
+        });
+        _this.animations.add("attack3", [53, 54, 55, 56, 57, 58, 59], 10, false).onComplete.add(function () {
             _this.animations.stop();
             _this.playerState = playerStateEnum.idle;
         });
-        _this.animations.add("attack2", [24, 25, 26], 10, false).onComplete.add(function () {
-            _this.animations.stop();
-            _this.playerState = playerStateEnum.idle;
-        });
-        _this.animations.add("attack3", [27, 28, 29], 10, false).onComplete.add(function () {
-            _this.animations.stop();
-            _this.playerState = playerStateEnum.idle;
-        });
-        _this.animations.add("sitdown", [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], 10, false).onComplete.add(function () {
+        _this.animations.add("sitdown", [62, 63, 64, 65], 10, false).onComplete.add(function () {
             _this.animations.stop();
             _this.savePlayer(_this.x);
             _this.playerState = playerStateEnum.sit;
         });
-        _this.animations.add("sit", [9], 3, false);
-        _this.animations.add("standup", [9, 8, 7, 6, 5, 4, 3, 2, 1, 0], 10, false).onComplete.add(function () {
+        _this.animations.add("sit", [65], 3, false);
+        _this.animations.add("standup", [65, 64, 63, 62], 10, false).onComplete.add(function () {
             _this.animations.stop();
             _this.playerState = playerStateEnum.idle;
         });
-        _this.animations.add("death", [71, 72, 73, 74, 75, 76, 78, 79, 80, 81, 81, 82, 83], 10, false).onComplete.add(function () {
+        _this.animations.add("death", [62, 63, 64, 65, 66, 67, 68], 10, false).onComplete.add(function () {
             _this.kill();
             _this.game.state.start("title");
         });
-        _this.animations.add("knockback", [83], 10, true);
+        _this.animations.add("rolling", [24, 25, 26, 27, 28], 10, false).onComplete.add(function () {
+            _this.animations.stop();
+            _this.playerState = playerStateEnum.idle;
+        });
+        _this.animations.add("knockback", [62], 10, true);
         _this.hitBoxes = _this.game.add.group();
         _this.addChild(_this.hitBoxes);
-        _this.hitBox1 = _this.hitBoxes.create(0, _this.height / 1.5);
+        _this.hitBox1 = _this.hitBoxes.create(0, 0);
         _this.game.physics.enable(_this.hitBoxes, Phaser.Physics.ARCADE);
-        _this.hitBox1.body.setSize(20, 10);
+        _this.hitBox1.body.setSize(25, _this.height);
         _this.hitBox1.name = "attack1";
+        _this.hitBox2 = _this.hitBoxes.create(-15, 0);
+        _this.game.physics.enable(_this.hitBoxes, Phaser.Physics.ARCADE);
+        _this.hitBox2.body.setSize(40, _this.height);
+        _this.hitBox2.name = "attack2";
+        _this.hitBox3 = _this.hitBoxes.create(-25, _this.height / 2);
+        _this.game.physics.enable(_this.hitBoxes, Phaser.Physics.ARCADE);
+        _this.hitBox3.body.setSize(50, _this.height / 2);
+        _this.hitBox3.name = "attack3";
         _this.playerOverlay = _this.game.add.group();
         _this.playerOverlay.add(new OverlayBar(_this.game, 50, 50, _this));
         _this.game.world.bringToTop(_this.playerOverlay);
@@ -2492,6 +2516,14 @@ var Player = /** @class */ (function (_super) {
                 v.scale.setTo(1, 1);
             }
         });
+    };
+    Player.prototype.handleRoll = function () {
+        if (this.playerState === playerStateEnum.roll) {
+            this.invincible = true;
+        }
+        else {
+            this.resetInvincable();
+        }
     };
     Player.prototype.handleDeath = function () {
         if (this.stats.health <= 0 && this.playerState !== playerStateEnum.death) {
@@ -2555,6 +2587,10 @@ var Player = /** @class */ (function (_super) {
         else if (this.canIdle[this.playerState]) {
             this.idle();
         }
+        if (this.controls.SPACE.justPressed() && this.canRoll[this.playerState]) {
+            this.playerState = playerStateEnum.roll;
+            this.game.physics.arcade.moveToXY(this, this.x + this.scale.x, this.y, this.stats.movespeed * 1.5);
+        }
         if ((this.controls.LEFT.justPressed() || this.controls.RIGHT.justPressed()) && this.playerState === playerStateEnum.sit) {
             this.playerState = playerStateEnum.standUp;
         }
@@ -2575,14 +2611,6 @@ var Player = /** @class */ (function (_super) {
             this.EnterLevelHandler.Text.x = this.game.camera.x + (this.game.camera.width / 2);
             this.EnterLevelHandler.Text.y = this.game.camera.height;
         }
-        /*
-        if(this.x < 0 && this.playerState !== playerStateEnum.autoWalkTo){
-            this.EnterThisFromPreviousLevel();
-        }
-        if(this.x > this.game.width && this.playerState !== playerStateEnum.autoWalkTo){
-            this.EnterThisFromNextLevel();
-        }
-        */
         if (this.game.physics.arcade.distanceToXY(this, this.game.world.bounds.width, this.y) < this.width) {
             this.EnterLevelHandler.Next = true;
         }
@@ -2621,19 +2649,6 @@ var Player = /** @class */ (function (_super) {
         this.playerState = playerStateEnum.autoWalkTo;
         this.movePlayerTo(this.width, this.y, this.stats.movespeed, 700, playerStateEnum.idle, "previousLevel");
     };
-    /*
-    EnterThisFromPreviousLevel(){
-        this.scale.setTo(1,1);
-        this.playerState = playerStateEnum.autoWalkTo;
-        this.movePlayerTo(this.width*2, this.y, 0.2, 700);
-    }
-
-    EnterThisFromNextLevel(){
-        this.scale.setTo(-1,1);
-        this.playerState = playerStateEnum.autoWalkTo;
-        this.movePlayerTo(this.game.width-(this.width*2), this.y, 0.2, 700);
-    }
-    */
     Player.prototype.movePlayerTo = function (toX, toY, speed, time, endState, nextLevel) {
         var _this = this;
         if (time === void 0) { time = 0; }
@@ -2681,7 +2696,8 @@ var Player = /** @class */ (function (_super) {
     };
     Player.prototype.resetVelocity = function () {
         if (this.playerState !== playerStateEnum.autoWalkTo &&
-            this.playerState !== playerStateEnum.knockBack) {
+            this.playerState !== playerStateEnum.knockBack &&
+            this.playerState !== playerStateEnum.roll) {
             this.body.velocity.x = 0;
         }
     };
@@ -2748,6 +2764,7 @@ function playerAllowance(array) {
         _a[playerStateEnum.movingStartWalk] = false,
         _a[playerStateEnum.autoWalkTo] = false,
         _a[playerStateEnum.knockBack] = false,
+        _a[playerStateEnum.roll] = false,
         _a);
     array.forEach(function (v) {
         obj[v] = true;
@@ -2779,7 +2796,7 @@ var PreloadState = /** @class */ (function (_super) {
     PreloadState.prototype.preload = function () {
         this.game.load.onLoadStart.add(this.assets, this);
         //need one here for it to work apparently
-        this.game.load.spritesheet("player", "bin/assets/player/player.png", 64, 64);
+        this.game.load.spritesheet("player", "bin/assets/player/adventurer.png", 50, 37);
         this.game.load.onFileComplete.add(this.progressBar, this);
         this.game.load.onLoadComplete.add(this.finishedLoading, this);
     };

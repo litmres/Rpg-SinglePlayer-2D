@@ -12,62 +12,24 @@ class MasterEnemy extends Phaser.Sprite {
     spawnPositionX: number;
     spawnPositionY: number;
     aggroRange = 100;
-    canWalk: enemyAllowanceInterface = {
-        [enemyStateEnum.movingWalk]: true,
-        [enemyStateEnum.movingFall]: false,
-        [enemyStateEnum.idle]: true,
-        [enemyStateEnum.idleSpecial]: true,
-        [enemyStateEnum.attack1]: false,
-        [enemyStateEnum.attack2]: false,
-        [enemyStateEnum.attack3]: false,
-        [enemyStateEnum.death]: false,
-        [enemyStateEnum.sit]: false,
-        [enemyStateEnum.sitDown]: false,
-        [enemyStateEnum.movingChase]: false,
-        [enemyStateEnum.knockBack]: false,
-    };
-    canIdle: enemyAllowanceInterface = {
-        [enemyStateEnum.movingWalk]: false,
-        [enemyStateEnum.movingFall]: false,
-        [enemyStateEnum.idle]: false,
-        [enemyStateEnum.idleSpecial]: false,
-        [enemyStateEnum.attack1]: false,
-        [enemyStateEnum.attack2]: false,
-        [enemyStateEnum.attack3]: false,
-        [enemyStateEnum.death]: false,
-        [enemyStateEnum.sit]: false,
-        [enemyStateEnum.sitDown]: false,
-        [enemyStateEnum.movingChase]: false,
-        [enemyStateEnum.knockBack]: false,
-    };
-    canChase: enemyAllowanceInterface = {
-        [enemyStateEnum.movingWalk]: true,
-        [enemyStateEnum.movingFall]: false,
-        [enemyStateEnum.idle]: true,
-        [enemyStateEnum.idleSpecial]: true,
-        [enemyStateEnum.attack1]: false,
-        [enemyStateEnum.attack2]: false,
-        [enemyStateEnum.attack3]: false,
-        [enemyStateEnum.death]: false,
-        [enemyStateEnum.sit]: false,
-        [enemyStateEnum.sitDown]: false,
-        [enemyStateEnum.movingChase]: true,
-        [enemyStateEnum.knockBack]: false,
-    };
-    canAttack: enemyAllowanceInterface = {
-        [enemyStateEnum.movingWalk]: true,
-        [enemyStateEnum.movingFall]: false,
-        [enemyStateEnum.idle]: true,
-        [enemyStateEnum.idleSpecial]: true,
-        [enemyStateEnum.attack1]: false,
-        [enemyStateEnum.attack2]: false,
-        [enemyStateEnum.attack3]: false,
-        [enemyStateEnum.death]: false,
-        [enemyStateEnum.sit]: false,
-        [enemyStateEnum.sitDown]: false,
-        [enemyStateEnum.movingChase]: true,
-        [enemyStateEnum.knockBack]: false,
-    };
+    canWalk = enemyAllowance([
+        enemyStateEnum.movingWalk,
+        enemyStateEnum.idle,
+        enemyStateEnum.idleSpecial,
+    ]);
+    canIdle = enemyAllowance([]);
+    canChase = enemyAllowance([
+        enemyStateEnum.movingWalk,
+        enemyStateEnum.idle,
+        enemyStateEnum.idleSpecial,
+        enemyStateEnum.movingChase
+    ]);
+    canAttack = enemyAllowance([
+        enemyStateEnum.movingWalk,
+        enemyStateEnum.idle,
+        enemyStateEnum.idleSpecial,
+        enemyStateEnum.movingChase
+    ]);
     stats: playerStatsInterface;
     enemyAnimations: enemyAnimationInterface = {
         [enemyStateEnum.movingWalk]: "walk",
@@ -132,9 +94,18 @@ class MasterEnemy extends Phaser.Sprite {
         });
     }
 
+    // tslint:disable-next-line:cyclomatic-complexity
     checkForGettingHit() {
         if (this.player && this.player.playerState === playerStateEnum.attack1) {
             if (this.game.physics.arcade.overlap(this, this.player.hitBox1)) {
+                this.takeDamage(this.player.stats.attack * 50, this.player.x);
+            }
+        } else if (this.player && this.player.playerState === playerStateEnum.attack2) {
+            if (this.game.physics.arcade.overlap(this, this.player.hitBox2)) {
+                this.takeDamage(this.player.stats.attack * 50, this.player.x);
+            }
+        } else if (this.player && this.player.playerState === playerStateEnum.attack3) {
+            if (this.game.physics.arcade.overlap(this, this.player.hitBox3)) {
                 this.takeDamage(this.player.stats.attack * 50, this.player.x);
             }
         }
@@ -292,3 +263,26 @@ class MasterEnemy extends Phaser.Sprite {
     }
 }
 
+function enemyAllowance(array: Array<enemyStateEnum>): enemyAllowanceInterface {
+
+    const obj: enemyAllowanceInterface = {
+        [enemyStateEnum.movingWalk]: false,
+        [enemyStateEnum.movingFall]: false,
+        [enemyStateEnum.idle]: false,
+        [enemyStateEnum.idleSpecial]: false,
+        [enemyStateEnum.attack1]: false,
+        [enemyStateEnum.attack2]: false,
+        [enemyStateEnum.attack3]: false,
+        [enemyStateEnum.death]: false,
+        [enemyStateEnum.sit]: false,
+        [enemyStateEnum.sitDown]: false,
+        [enemyStateEnum.movingChase]: false,
+        [enemyStateEnum.knockBack]: false,
+    };
+
+    array.forEach((v) => {
+        obj[v] = true;
+    });
+
+    return obj;
+}

@@ -72,6 +72,7 @@ interface playerAnimationInterface {
 	[playerStateEnum.movingStartWalk]: string;
 	[playerStateEnum.autoWalkTo]: string;
 	[playerStateEnum.knockBack]: string;
+	[playerStateEnum.roll]: string;
 }
 
 interface npcAnimationInterface {
@@ -118,6 +119,7 @@ interface playerAllowanceInterface {
 	[playerStateEnum.movingStartWalk]: boolean;
 	[playerStateEnum.autoWalkTo]: boolean;
 	[playerStateEnum.knockBack]: boolean;
+	[playerStateEnum.roll]: boolean;
 }
 
 interface npcAllowanceInterface {
