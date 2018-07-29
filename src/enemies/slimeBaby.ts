@@ -57,9 +57,18 @@ class SlimeBaby extends MasterEnemy {
         this.updateHitbox();
     }
 
+    // tslint:disable-next-line:cyclomatic-complexity
     checkForGettingHit() {
         if (this.player && this.player.playerState === playerStateEnum.attack1) {
             if (!this.merged && this.game.physics.arcade.overlap(this, this.player.hitBox1)) {
+                this.takeDamage(this.player.stats.attack * 50, this.player.x);
+            }
+        } else if (this.player && this.player.playerState === playerStateEnum.attack2) {
+            if (!this.merged && this.game.physics.arcade.overlap(this, this.player.hitBox2)) {
+                this.takeDamage(this.player.stats.attack * 50, this.player.x);
+            }
+        } else if (this.player && this.player.playerState === playerStateEnum.attack3) {
+            if (!this.merged && this.game.physics.arcade.overlap(this, this.player.hitBox3)) {
                 this.takeDamage(this.player.stats.attack * 50, this.player.x);
             }
         }
