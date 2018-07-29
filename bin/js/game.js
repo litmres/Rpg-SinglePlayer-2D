@@ -1083,7 +1083,7 @@ var MasterLevel = /** @class */ (function (_super) {
         var _this = _super !== null && _super.apply(this, arguments) || this;
         _this.levelNumber = levelsEnum.level0;
         _this.playerStorage = JSON.parse(window.localStorage.getItem("player"));
-        _this.debugMode = false;
+        _this.debugMode = true;
         return _this;
     }
     MasterLevel.prototype.update = function () {
@@ -2315,72 +2315,31 @@ var OverlayBar = /** @class */ (function (_super) {
 var Player = /** @class */ (function (_super) {
     __extends(Player, _super);
     function Player(game, x, y) {
-        var _a, _b, _c, _d, _e;
+        var _a;
         var _this = _super.call(this, game, x, y, "player", 0) || this;
         _this.playerState = playerStateEnum.idle;
         _this.lastCheckPoint = levelsEnum.level0;
         _this.invincible = false;
         _this.equipment = new Equipment();
-        _this.canWalk = (_a = {},
-            _a[playerStateEnum.movingWalk] = true,
-            _a[playerStateEnum.movingFall] = false,
-            _a[playerStateEnum.idle] = true,
-            _a[playerStateEnum.attack1] = false,
-            _a[playerStateEnum.attack2] = false,
-            _a[playerStateEnum.attack3] = false,
-            _a[playerStateEnum.death] = false,
-            _a[playerStateEnum.sit] = false,
-            _a[playerStateEnum.sitDown] = false,
-            _a[playerStateEnum.standUp] = false,
-            _a[playerStateEnum.movingStartWalk] = true,
-            _a[playerStateEnum.autoWalkTo] = false,
-            _a[playerStateEnum.knockBack] = false,
-            _a);
-        _this.canIdle = (_b = {},
-            _b[playerStateEnum.movingWalk] = true,
-            _b[playerStateEnum.movingFall] = false,
-            _b[playerStateEnum.idle] = false,
-            _b[playerStateEnum.attack1] = false,
-            _b[playerStateEnum.attack2] = false,
-            _b[playerStateEnum.attack3] = false,
-            _b[playerStateEnum.death] = false,
-            _b[playerStateEnum.sit] = false,
-            _b[playerStateEnum.sitDown] = false,
-            _b[playerStateEnum.standUp] = false,
-            _b[playerStateEnum.movingStartWalk] = true,
-            _b[playerStateEnum.autoWalkTo] = false,
-            _b[playerStateEnum.knockBack] = false,
-            _b);
-        _this.canAttack = (_c = {},
-            _c[playerStateEnum.movingWalk] = true,
-            _c[playerStateEnum.movingFall] = false,
-            _c[playerStateEnum.idle] = true,
-            _c[playerStateEnum.attack1] = false,
-            _c[playerStateEnum.attack2] = false,
-            _c[playerStateEnum.attack3] = false,
-            _c[playerStateEnum.death] = false,
-            _c[playerStateEnum.sit] = false,
-            _c[playerStateEnum.sitDown] = false,
-            _c[playerStateEnum.standUp] = false,
-            _c[playerStateEnum.movingStartWalk] = true,
-            _c[playerStateEnum.autoWalkTo] = false,
-            _c[playerStateEnum.knockBack] = false,
-            _c);
-        _this.canSitDown = (_d = {},
-            _d[playerStateEnum.movingWalk] = true,
-            _d[playerStateEnum.movingFall] = false,
-            _d[playerStateEnum.idle] = true,
-            _d[playerStateEnum.attack1] = false,
-            _d[playerStateEnum.attack2] = false,
-            _d[playerStateEnum.attack3] = false,
-            _d[playerStateEnum.death] = false,
-            _d[playerStateEnum.sit] = false,
-            _d[playerStateEnum.sitDown] = false,
-            _d[playerStateEnum.standUp] = false,
-            _d[playerStateEnum.movingStartWalk] = true,
-            _d[playerStateEnum.autoWalkTo] = false,
-            _d[playerStateEnum.knockBack] = false,
-            _d);
+        _this.canWalk = playerAllowance([
+            playerStateEnum.movingWalk,
+            playerStateEnum.idle,
+            playerStateEnum.movingStartWalk
+        ]);
+        _this.canIdle = playerAllowance([
+            playerStateEnum.movingWalk,
+            playerStateEnum.movingStartWalk
+        ]);
+        _this.canAttack = playerAllowance([
+            playerStateEnum.movingWalk,
+            playerStateEnum.idle,
+            playerStateEnum.movingStartWalk
+        ]);
+        _this.canSitDown = playerAllowance([
+            playerStateEnum.movingWalk,
+            playerStateEnum.idle,
+            playerStateEnum.movingStartWalk
+        ]);
         _this.fpsCounter = _this.game.add.text(_this.game.camera.x, 0, "FPS: " + _this.game.time.fps, {
             font: "24px Arial",
             fill: "#fff"
@@ -2393,21 +2352,21 @@ var Player = /** @class */ (function (_super) {
             EnterText: "Press E to go to Next Level",
             PreviousText: "Press E to go to Previous Level",
         };
-        _this.playerAnimations = (_e = {},
-            _e[playerStateEnum.movingWalk] = "walk",
-            _e[playerStateEnum.movingFall] = "fall",
-            _e[playerStateEnum.idle] = "idle",
-            _e[playerStateEnum.attack1] = "attack1",
-            _e[playerStateEnum.attack2] = "attack2",
-            _e[playerStateEnum.attack3] = "attack3",
-            _e[playerStateEnum.death] = "death",
-            _e[playerStateEnum.sit] = "sit",
-            _e[playerStateEnum.sitDown] = "sitdown",
-            _e[playerStateEnum.standUp] = "standup",
-            _e[playerStateEnum.movingStartWalk] = "walk",
-            _e[playerStateEnum.autoWalkTo] = "walk",
-            _e[playerStateEnum.knockBack] = "knockback",
-            _e);
+        _this.playerAnimations = (_a = {},
+            _a[playerStateEnum.movingWalk] = "walk",
+            _a[playerStateEnum.movingFall] = "fall",
+            _a[playerStateEnum.idle] = "idle",
+            _a[playerStateEnum.attack1] = "attack1",
+            _a[playerStateEnum.attack2] = "attack2",
+            _a[playerStateEnum.attack3] = "attack3",
+            _a[playerStateEnum.death] = "death",
+            _a[playerStateEnum.sit] = "sit",
+            _a[playerStateEnum.sitDown] = "sitdown",
+            _a[playerStateEnum.standUp] = "standup",
+            _a[playerStateEnum.movingStartWalk] = "walk",
+            _a[playerStateEnum.autoWalkTo] = "walk",
+            _a[playerStateEnum.knockBack] = "knockback",
+            _a);
         _this.DialogueStyle = {
             font: "bold 10px Arial",
             fill: "#fff",
@@ -2773,6 +2732,28 @@ var Player = /** @class */ (function (_super) {
     };
     return Player;
 }(Phaser.Sprite));
+function playerAllowance(array) {
+    var _a;
+    var obj = (_a = {},
+        _a[playerStateEnum.movingWalk] = false,
+        _a[playerStateEnum.movingFall] = false,
+        _a[playerStateEnum.idle] = false,
+        _a[playerStateEnum.attack1] = false,
+        _a[playerStateEnum.attack2] = false,
+        _a[playerStateEnum.attack3] = false,
+        _a[playerStateEnum.death] = false,
+        _a[playerStateEnum.sit] = false,
+        _a[playerStateEnum.sitDown] = false,
+        _a[playerStateEnum.standUp] = false,
+        _a[playerStateEnum.movingStartWalk] = false,
+        _a[playerStateEnum.autoWalkTo] = false,
+        _a[playerStateEnum.knockBack] = false,
+        _a);
+    array.forEach(function (v) {
+        obj[v] = true;
+    });
+    return obj;
+}
 var BootState = /** @class */ (function (_super) {
     __extends(BootState, _super);
     function BootState() {

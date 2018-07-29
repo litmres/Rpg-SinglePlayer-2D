@@ -4,66 +4,25 @@ class Player extends Phaser.Sprite {
     invincible = false;
     equipment = new Equipment();
     inventory: Inventory | null;
-    canWalk: playerAllowanceInterface = {
-        [playerStateEnum.movingWalk]: true,
-        [playerStateEnum.movingFall]: false,
-        [playerStateEnum.idle]: true,
-        [playerStateEnum.attack1]: false,
-        [playerStateEnum.attack2]: false,
-        [playerStateEnum.attack3]: false,
-        [playerStateEnum.death]: false,
-        [playerStateEnum.sit]: false,
-        [playerStateEnum.sitDown]: false,
-        [playerStateEnum.standUp]: false,
-        [playerStateEnum.movingStartWalk]: true,
-        [playerStateEnum.autoWalkTo]: false,
-        [playerStateEnum.knockBack]: false,
-    };
-    canIdle: playerAllowanceInterface = {
-        [playerStateEnum.movingWalk]: true,
-        [playerStateEnum.movingFall]: false,
-        [playerStateEnum.idle]: false,
-        [playerStateEnum.attack1]: false,
-        [playerStateEnum.attack2]: false,
-        [playerStateEnum.attack3]: false,
-        [playerStateEnum.death]: false,
-        [playerStateEnum.sit]: false,
-        [playerStateEnum.sitDown]: false,
-        [playerStateEnum.standUp]: false,
-        [playerStateEnum.movingStartWalk]: true,
-        [playerStateEnum.autoWalkTo]: false,
-        [playerStateEnum.knockBack]: false,
-    };
-    canAttack: playerAllowanceInterface = {
-        [playerStateEnum.movingWalk]: true,
-        [playerStateEnum.movingFall]: false,
-        [playerStateEnum.idle]: true,
-        [playerStateEnum.attack1]: false,
-        [playerStateEnum.attack2]: false,
-        [playerStateEnum.attack3]: false,
-        [playerStateEnum.death]: false,
-        [playerStateEnum.sit]: false,
-        [playerStateEnum.sitDown]: false,
-        [playerStateEnum.standUp]: false,
-        [playerStateEnum.movingStartWalk]: true,
-        [playerStateEnum.autoWalkTo]: false,
-        [playerStateEnum.knockBack]: false,
-    };
-    canSitDown: playerAllowanceInterface = {
-        [playerStateEnum.movingWalk]: true,
-        [playerStateEnum.movingFall]: false,
-        [playerStateEnum.idle]: true,
-        [playerStateEnum.attack1]: false,
-        [playerStateEnum.attack2]: false,
-        [playerStateEnum.attack3]: false,
-        [playerStateEnum.death]: false,
-        [playerStateEnum.sit]: false,
-        [playerStateEnum.sitDown]: false,
-        [playerStateEnum.standUp]: false,
-        [playerStateEnum.movingStartWalk]: true,
-        [playerStateEnum.autoWalkTo]: false,
-        [playerStateEnum.knockBack]: false,
-    };
+    canWalk = playerAllowance([
+        playerStateEnum.movingWalk,
+        playerStateEnum.idle,
+        playerStateEnum.movingStartWalk
+    ]);
+    canIdle = playerAllowance([
+        playerStateEnum.movingWalk,
+        playerStateEnum.movingStartWalk
+    ]);
+    canAttack = playerAllowance([
+        playerStateEnum.movingWalk,
+        playerStateEnum.idle,
+        playerStateEnum.movingStartWalk
+    ]);
+    canSitDown = playerAllowance([
+        playerStateEnum.movingWalk,
+        playerStateEnum.idle,
+        playerStateEnum.movingStartWalk
+    ]);
     facingNpc: MasterNpc | null | undefined;
     facingBonfire: Bonfire | null | undefined;
     facingItem: Item | null | undefined;
@@ -214,7 +173,6 @@ class Player extends Phaser.Sprite {
     }
 
     update() {
-
         this.resetVelocity();
 
         this.animations.play(this.playerAnimations[this.playerState]);
@@ -499,4 +457,30 @@ class Player extends Phaser.Sprite {
         this.savePlayer(this.x, this.currentRoom - 1);
         this.game.state.start("level" + (this.currentRoom - 1), true, false);
     }
+}
+
+
+function playerAllowance(array: Array<playerStateEnum>): playerAllowanceInterface {
+
+    const obj: playerAllowanceInterface = {
+        [playerStateEnum.movingWalk]: false,
+        [playerStateEnum.movingFall]: false,
+        [playerStateEnum.idle]: false,
+        [playerStateEnum.attack1]: false,
+        [playerStateEnum.attack2]: false,
+        [playerStateEnum.attack3]: false,
+        [playerStateEnum.death]: false,
+        [playerStateEnum.sit]: false,
+        [playerStateEnum.sitDown]: false,
+        [playerStateEnum.standUp]: false,
+        [playerStateEnum.movingStartWalk]: false,
+        [playerStateEnum.autoWalkTo]: false,
+        [playerStateEnum.knockBack]: false,
+    };
+
+    array.forEach((v) => {
+        obj[v] = true;
+    });
+
+    return obj;
 }
