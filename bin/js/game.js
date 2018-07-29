@@ -1089,7 +1089,7 @@ var MasterLevel = /** @class */ (function (_super) {
         var _this = _super !== null && _super.apply(this, arguments) || this;
         _this.levelNumber = levelsEnum.level0;
         _this.playerStorage = JSON.parse(window.localStorage.getItem("player"));
-        _this.debugMode = true;
+        _this.debugMode = false;
         return _this;
     }
     MasterLevel.prototype.update = function () {
