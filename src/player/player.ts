@@ -4,71 +4,37 @@ class Player extends Phaser.Sprite {
     invincible = false;
     equipment = new Equipment();
     inventory: Inventory | null;
-    canWalk: playerAllowanceInterface = {
-        [playerStateEnum.movingWalk]: true,
-        [playerStateEnum.movingFall]: false,
-        [playerStateEnum.idle]: true,
-        [playerStateEnum.attack1]: false,
-        [playerStateEnum.attack2]: false,
-        [playerStateEnum.attack3]: false,
-        [playerStateEnum.death]: false,
-        [playerStateEnum.sit]: false,
-        [playerStateEnum.sitDown]: false,
-        [playerStateEnum.standUp]: false,
-        [playerStateEnum.movingStartWalk]: true,
-        [playerStateEnum.autoWalkTo]: false,
-        [playerStateEnum.knockBack]: false,
-    };
-    canIdle: playerAllowanceInterface = {
-        [playerStateEnum.movingWalk]: true,
-        [playerStateEnum.movingFall]: false,
-        [playerStateEnum.idle]: false,
-        [playerStateEnum.attack1]: false,
-        [playerStateEnum.attack2]: false,
-        [playerStateEnum.attack3]: false,
-        [playerStateEnum.death]: false,
-        [playerStateEnum.sit]: false,
-        [playerStateEnum.sitDown]: false,
-        [playerStateEnum.standUp]: false,
-        [playerStateEnum.movingStartWalk]: true,
-        [playerStateEnum.autoWalkTo]: false,
-        [playerStateEnum.knockBack]: false,
-    };
-    canAttack: playerAllowanceInterface = {
-        [playerStateEnum.movingWalk]: true,
-        [playerStateEnum.movingFall]: false,
-        [playerStateEnum.idle]: true,
-        [playerStateEnum.attack1]: false,
-        [playerStateEnum.attack2]: false,
-        [playerStateEnum.attack3]: false,
-        [playerStateEnum.death]: false,
-        [playerStateEnum.sit]: false,
-        [playerStateEnum.sitDown]: false,
-        [playerStateEnum.standUp]: false,
-        [playerStateEnum.movingStartWalk]: true,
-        [playerStateEnum.autoWalkTo]: false,
-        [playerStateEnum.knockBack]: false,
-    };
-    canSitDown: playerAllowanceInterface = {
-        [playerStateEnum.movingWalk]: true,
-        [playerStateEnum.movingFall]: false,
-        [playerStateEnum.idle]: true,
-        [playerStateEnum.attack1]: false,
-        [playerStateEnum.attack2]: false,
-        [playerStateEnum.attack3]: false,
-        [playerStateEnum.death]: false,
-        [playerStateEnum.sit]: false,
-        [playerStateEnum.sitDown]: false,
-        [playerStateEnum.standUp]: false,
-        [playerStateEnum.movingStartWalk]: true,
-        [playerStateEnum.autoWalkTo]: false,
-        [playerStateEnum.knockBack]: false,
-    };
+    canWalk = playerAllowance([
+        playerStateEnum.movingWalk,
+        playerStateEnum.idle,
+        playerStateEnum.movingStartWalk
+    ]);
+    canIdle = playerAllowance([
+        playerStateEnum.movingWalk,
+        playerStateEnum.movingStartWalk
+    ]);
+    canAttack = playerAllowance([
+        playerStateEnum.movingWalk,
+        playerStateEnum.idle,
+        playerStateEnum.movingStartWalk
+    ]);
+    canSitDown = playerAllowance([
+        playerStateEnum.movingWalk,
+        playerStateEnum.idle,
+        playerStateEnum.movingStartWalk
+    ]);
+    canRoll = playerAllowance([
+        playerStateEnum.movingWalk,
+        playerStateEnum.idle,
+        playerStateEnum.movingStartWalk
+    ]);
     facingNpc: MasterNpc | null | undefined;
     facingBonfire: Bonfire | null | undefined;
     facingItem: Item | null | undefined;
     hitBoxes: Phaser.Group;
     hitBox1: Phaser.Sprite;
+    hitBox2: Phaser.Sprite;
+    hitBox3: Phaser.Sprite;
     fpsCounter: Phaser.Text = this.game.add.text(this.game.camera.x, 0, "FPS: " + this.game.time.fps, {
         font: "24px Arial",
         fill: "#fff"
@@ -100,6 +66,7 @@ class Player extends Phaser.Sprite {
         [playerStateEnum.movingStartWalk]: "walk",
         [playerStateEnum.autoWalkTo]: "walk",
         [playerStateEnum.knockBack]: "knockback",
+        [playerStateEnum.roll]: "rolling",
     };
     DialogueStyle = {
         font: "bold 10px Arial",
@@ -119,8 +86,8 @@ class Player extends Phaser.Sprite {
         this.body.collideWorldBounds = true;
         this.game.physics.enable(this, Phaser.Physics.ARCADE);
         this.bodyWidth = 12;
-        this.bodyHeight = 24;
-        this.body.setSize(this.bodyWidth / this.scale.x, this.bodyHeight / this.scale.y, (this.width - this.bodyWidth) / 2 - 3, 32);
+        this.bodyHeight = 30;
+        this.body.setSize(this.bodyWidth / this.scale.x, this.bodyHeight / this.scale.y, (this.width - this.bodyWidth) / 2, 5);
         this.stats = {
             level: 1,
             maxHealth: this.maxHealth,
@@ -141,6 +108,7 @@ class Player extends Phaser.Sprite {
             ESC: this.game.input.keyboard.addKey(Phaser.Keyboard.ESC),
             P: this.game.input.keyboard.addKey(Phaser.Keyboard.P),
             I: this.game.input.keyboard.addKey(Phaser.Keyboard.I),
+            SPACE: this.game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR),
             LMB: this.game.input.activePointer.leftButton,
             RMB: this.game.input.activePointer.rightButton,
         };
@@ -164,48 +132,70 @@ class Player extends Phaser.Sprite {
             Phaser.Keyboard.E
         ]);
 
-        this.animations.add("idle", [24, 25, 26, 27], 10, false);
+        this.animations.add("idle", [0, 1, 2, 3], 10, false);
         this.animations.add("startwalk", [1, 2, 3], 10, false).onComplete.add(() => {
             this.animations.stop();
             this.playerState = playerStateEnum.movingWalk;
         });
-        this.animations.add("walk", [28, 29, 30, 31], 10, true);
-        this.animations.add("attack1", [20, 21, 22, 23], 10, false).onComplete.add(() => {
+        this.animations.add("walk", [8, 9, 10], 10, true);
+        this.animations.add("attack1", [42, 43, 44, 45, 46, 47, 48, 49], 10, false).onComplete.add(() => {
+            this.animations.stop();
+            if (this.controls.LMB.justPressed(500) || this.controls.LMB.justReleased(500)) {
+                this.playerState = playerStateEnum.attack2;
+            } else {
+                this.playerState = playerStateEnum.idle;
+            }
+        });
+        this.animations.add("attack2", [49, 50, 51, 52, 52], 10, false).onComplete.add(() => {
+            this.animations.stop();
+            if (this.controls.LMB.justPressed(500) || this.controls.LMB.justReleased(500)) {
+                this.playerState = playerStateEnum.attack3;
+            } else {
+                this.playerState = playerStateEnum.idle;
+            }
+        });
+        this.animations.add("attack3", [53, 54, 55, 56, 57, 58, 59], 10, false).onComplete.add(() => {
             this.animations.stop();
             this.playerState = playerStateEnum.idle;
         });
-        this.animations.add("attack2", [24, 25, 26], 10, false).onComplete.add(() => {
-            this.animations.stop();
-            this.playerState = playerStateEnum.idle;
-        });
-        this.animations.add("attack3", [27, 28, 29], 10, false).onComplete.add(() => {
-            this.animations.stop();
-            this.playerState = playerStateEnum.idle;
-        });
-        this.animations.add("sitdown", [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], 10, false).onComplete.add(() => {
+        this.animations.add("sitdown", [62, 63, 64, 65], 10, false).onComplete.add(() => {
             this.animations.stop();
             this.savePlayer(this.x);
             this.playerState = playerStateEnum.sit;
         });
-        this.animations.add("sit", [9], 3, false);
-        this.animations.add("standup", [9, 8, 7, 6, 5, 4, 3, 2, 1, 0], 10, false).onComplete.add(() => {
+        this.animations.add("sit", [65], 3, false);
+        this.animations.add("standup", [65, 64, 63, 62], 10, false).onComplete.add(() => {
             this.animations.stop();
             this.playerState = playerStateEnum.idle;
         });
-        this.animations.add("death", [71, 72, 73, 74, 75, 76, 78, 79, 80, 81, 81, 82, 83], 10, false).onComplete.add(() => {
+        this.animations.add("death", [62, 63, 64, 65, 66, 67, 68], 10, false).onComplete.add(() => {
             this.kill();
             this.game.state.start("title");
         });
-        this.animations.add("knockback", [83], 10, true);
+        this.animations.add("rolling", [24, 25, 26, 27, 28], 10, false).onComplete.add(() => {
+            this.animations.stop();
+            this.playerState = playerStateEnum.idle;
+        });
+        this.animations.add("knockback", [62], 10, true);
 
         this.hitBoxes = this.game.add.group();
 
         this.addChild(this.hitBoxes);
 
-        this.hitBox1 = this.hitBoxes.create(0, this.height / 1.5);
+        this.hitBox1 = this.hitBoxes.create(0, 0);
         this.game.physics.enable(this.hitBoxes, Phaser.Physics.ARCADE);
-        this.hitBox1.body.setSize(20, 10);
+        this.hitBox1.body.setSize(25, this.height);
         this.hitBox1.name = "attack1";
+
+        this.hitBox2 = this.hitBoxes.create(-15, 0);
+        this.game.physics.enable(this.hitBoxes, Phaser.Physics.ARCADE);
+        this.hitBox2.body.setSize(40, this.height);
+        this.hitBox2.name = "attack2";
+
+        this.hitBox3 = this.hitBoxes.create(-25, this.height / 2);
+        this.game.physics.enable(this.hitBoxes, Phaser.Physics.ARCADE);
+        this.hitBox3.body.setSize(50, this.height / 2);
+        this.hitBox3.name = "attack3";
 
         this.playerOverlay = this.game.add.group();
         this.playerOverlay.add(new OverlayBar(this.game, 50, 50, this));
@@ -214,7 +204,6 @@ class Player extends Phaser.Sprite {
     }
 
     update() {
-
         this.resetVelocity();
 
         this.animations.play(this.playerAnimations[this.playerState]);
@@ -243,6 +232,14 @@ class Player extends Phaser.Sprite {
                 v.scale.setTo(1, 1);
             }
         });
+    }
+
+    handleRoll() {
+        if (this.playerState === playerStateEnum.roll) {
+            this.invincible = true;
+        } else {
+            this.resetInvincable();
+        }
     }
 
     handleDeath() {
@@ -308,6 +305,11 @@ class Player extends Phaser.Sprite {
             this.idle();
         }
 
+        if (this.controls.SPACE.justPressed() && this.canRoll[this.playerState]) {
+            this.playerState = playerStateEnum.roll;
+            this.game.physics.arcade.moveToXY(this, this.x + this.scale.x, this.y, this.stats.movespeed * 1.5);
+        }
+
         if ((this.controls.LEFT.justPressed() || this.controls.RIGHT.justPressed()) && this.playerState === playerStateEnum.sit) {
             this.playerState = playerStateEnum.standUp;
         }
@@ -330,14 +332,6 @@ class Player extends Phaser.Sprite {
             this.EnterLevelHandler.Text.x = this.game.camera.x + (this.game.camera.width / 2);
             this.EnterLevelHandler.Text.y = this.game.camera.height;
         }
-        /*
-        if(this.x < 0 && this.playerState !== playerStateEnum.autoWalkTo){
-            this.EnterThisFromPreviousLevel();
-        }
-        if(this.x > this.game.width && this.playerState !== playerStateEnum.autoWalkTo){
-            this.EnterThisFromNextLevel();
-        }
-        */
         if (this.game.physics.arcade.distanceToXY(this, this.game.world.bounds.width, this.y) < this.width) {
             this.EnterLevelHandler.Next = true;
         } else {
@@ -379,19 +373,6 @@ class Player extends Phaser.Sprite {
         this.playerState = playerStateEnum.autoWalkTo;
         this.movePlayerTo(this.width, this.y, this.stats.movespeed, 700, playerStateEnum.idle, "previousLevel");
     }
-    /*
-    EnterThisFromPreviousLevel(){
-        this.scale.setTo(1,1);
-        this.playerState = playerStateEnum.autoWalkTo;
-        this.movePlayerTo(this.width*2, this.y, 0.2, 700);
-    }
-
-    EnterThisFromNextLevel(){
-        this.scale.setTo(-1,1);
-        this.playerState = playerStateEnum.autoWalkTo;
-        this.movePlayerTo(this.game.width-(this.width*2), this.y, 0.2, 700);
-    }
-    */
 
     movePlayerTo(toX: number, toY: number, speed: number, time = 0, endState = playerStateEnum.idle, nextLevel = "") {
         this.game.physics.arcade.moveToXY(
@@ -445,7 +426,8 @@ class Player extends Phaser.Sprite {
 
     resetVelocity() {
         if (this.playerState !== playerStateEnum.autoWalkTo &&
-            this.playerState !== playerStateEnum.knockBack
+            this.playerState !== playerStateEnum.knockBack &&
+            this.playerState !== playerStateEnum.roll
         ) {
             this.body.velocity.x = 0;
         }
@@ -499,4 +481,30 @@ class Player extends Phaser.Sprite {
         this.savePlayer(this.x, this.currentRoom - 1);
         this.game.state.start("level" + (this.currentRoom - 1), true, false);
     }
+}
+
+function playerAllowance(array: Array<playerStateEnum>): playerAllowanceInterface {
+
+    const obj: playerAllowanceInterface = {
+        [playerStateEnum.movingWalk]: false,
+        [playerStateEnum.movingFall]: false,
+        [playerStateEnum.idle]: false,
+        [playerStateEnum.attack1]: false,
+        [playerStateEnum.attack2]: false,
+        [playerStateEnum.attack3]: false,
+        [playerStateEnum.death]: false,
+        [playerStateEnum.sit]: false,
+        [playerStateEnum.sitDown]: false,
+        [playerStateEnum.standUp]: false,
+        [playerStateEnum.movingStartWalk]: false,
+        [playerStateEnum.autoWalkTo]: false,
+        [playerStateEnum.knockBack]: false,
+        [playerStateEnum.roll]: false,
+    };
+
+    array.forEach((v) => {
+        obj[v] = true;
+    });
+
+    return obj;
 }

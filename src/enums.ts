@@ -17,6 +17,7 @@ enum playerStateEnum {
 	standUp,
 	autoWalkTo,
 	knockBack,
+	roll,
 }
 
 enum itemType {

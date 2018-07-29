@@ -5,7 +5,7 @@ class PreloadState extends Phaser.State {
     preload() {
         this.game.load.onLoadStart.add(this.assets, this);
         //need one here for it to work apparently
-        this.game.load.spritesheet("player", "bin/assets/player/player.png", 64, 64);
+        this.game.load.spritesheet("player", "bin/assets/player/adventurer.png", 50, 37);
         this.game.load.onFileComplete.add(this.progressBar, this);
         this.game.load.onLoadComplete.add(this.finishedLoading, this);
     }

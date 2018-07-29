@@ -47,7 +47,7 @@ class AdventurerEnemy extends MasterEnemy {
 
         this.hitBox1 = this.hitBoxes.create(0, this.height / 2);
         this.game.physics.enable(this.hitBoxes, Phaser.Physics.ARCADE);
-        this.hitBox1.body.setSize(20, 10);
+        this.hitBox1.body.setSize(25, 10);
         this.hitBox1.name = "attack1";
     }
 
