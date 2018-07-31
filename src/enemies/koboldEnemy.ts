@@ -8,6 +8,7 @@ class KoboldEnemy extends MasterEnemy {
     aggroRange = 100;
     defaultDirection = -1;
     hitBox1: Phaser.Sprite;
+    damageFrames = [12, 13, 14];
     constructor(game: Phaser.Game, x: number, y: number) {
         super(game, x, y, "kobold", 0);
         this.bodyWidth = 18;
@@ -65,16 +66,6 @@ class KoboldEnemy extends MasterEnemy {
         this.handleDeath();
 
         this.updateHitbox();
-    }
-
-    checkForHitting() {
-        if (this.animations.currentAnim.name === "attack1" &&
-            this.animations.frame >= 12 &&
-            this.animations.frame <= 14 &&
-            this.game.physics.arcade.overlap(this.hitBox1, this.player)
-        ) {
-            this.player.takeDamage(this.stats.attack * 20, this.x);
-        }
     }
 
     handleInput() {

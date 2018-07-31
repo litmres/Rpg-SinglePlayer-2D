@@ -7,6 +7,7 @@ class AdventurerEnemy extends MasterEnemy {
     bodyHeight: number;
     aggroRange = 100;
     hitBox1: Phaser.Sprite;
+    damageFrames = [45, 46];
     constructor(game: Phaser.Game, x: number, y: number) {
         super(game, x, y, "adventurer", 0);
         this.bodyWidth = 10;
@@ -69,16 +70,6 @@ class AdventurerEnemy extends MasterEnemy {
         this.handleDeath();
 
         this.updateHitbox();
-    }
-
-    checkForHitting() {
-        if (this.animations.currentAnim.name === "attack1" &&
-            this.animations.frame >= 45 &&
-            this.animations.frame <= 46 &&
-            this.game.physics.arcade.overlap(this.hitBox1, this.player)
-        ) {
-            this.player.takeDamage(this.stats.attack * 20, this.x);
-        }
     }
 
     handleInput() {

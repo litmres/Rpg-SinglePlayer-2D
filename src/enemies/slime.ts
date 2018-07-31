@@ -8,6 +8,7 @@ class Slime extends MasterEnemy {
     aggroRange = 100;
     hitBox1: Phaser.Sprite;
     defaultDirection = -1;
+    damageFrames = [10, 11];
     constructor(game: Phaser.Game, x: number, y: number) {
         super(game, x, y, "slime", 0);
         this.bodyWidth = 16;
@@ -70,16 +71,6 @@ class Slime extends MasterEnemy {
         this.handleDeath();
 
         this.updateHitbox();
-    }
-
-    checkForHitting() {
-        if (this.animations.currentAnim.name === "attack1" &&
-            this.animations.frame >= 10 &&
-            this.animations.frame <= 11 &&
-            this.game.physics.arcade.overlap(this.hitBox1, this.player)
-        ) {
-            this.player.takeDamage(this.stats.attack * 20, this.x);
-        }
     }
 
     handleInput() {

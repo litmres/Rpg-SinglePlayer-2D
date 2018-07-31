@@ -22,6 +22,7 @@ class RogueNpc extends MasterNpc {
     attackRange = 0;
     aggroRange = 100;
     hitBox1: Phaser.Sprite;
+    damageFrames = [34, 35, 36];
     constructor(game: Phaser.Game, x: number, y: number) {
         super(game, x, y, "rogue", 0);
         this.bodyWidth = 16;
@@ -87,16 +88,6 @@ class RogueNpc extends MasterNpc {
         this.handleDeath();
 
         this.updateHitbox();
-    }
-
-    checkForHitting() {
-        if (this.animations.currentAnim.name === "attack1" &&
-            this.animations.frame >= 34 &&
-            this.animations.frame <= 36 &&
-            this.game.physics.arcade.overlap(this.hitBox1, this.player)
-        ) {
-            this.player.takeDamage(this.stats.attack * 50, this.x);
-        }
     }
 
     handleInput() {

@@ -107,6 +107,7 @@ var MasterEnemy = /** @class */ (function (_super) {
         _this.enemyState = enemyStateEnum.idle;
         _this.friendly = false;
         _this.wanderRange = 100;
+        _this.player = null;
         _this.targetX = 0;
         _this.targetY = 0;
         _this.defaultScaleWidth = 1;
@@ -146,7 +147,9 @@ var MasterEnemy = /** @class */ (function (_super) {
             _a[enemyStateEnum.idleSpecial] = "idlespecial",
             _a[enemyStateEnum.knockBack] = "knockback",
             _a);
+        _this.hitBox1 = null;
         _this.invincible = false;
+        _this.damageFrames = [];
         _this.anchor.setTo(0.5, 0);
         game.physics.arcade.enableBody(_this);
         game.add.existing(_this);
@@ -193,18 +196,14 @@ var MasterEnemy = /** @class */ (function (_super) {
     };
     // tslint:disable-next-line:cyclomatic-complexity
     MasterEnemy.prototype.checkForGettingHit = function () {
-        if (this.player && this.player.playerState === playerStateEnum.attack1) {
-            if (this.game.physics.arcade.overlap(this, this.player.hitBox1)) {
+        if (this.player && this.player.damageFrames.indexOf(this.player.animations.frame) >= 0) {
+            if (this.player.playerState === playerStateEnum.attack1 && this.game.physics.arcade.overlap(this, this.player.hitBox1)) {
                 this.takeDamage(this.player.stats.attack * 50, this.player.x);
             }
-        }
-        else if (this.player && this.player.playerState === playerStateEnum.attack2) {
-            if (this.game.physics.arcade.overlap(this, this.player.hitBox2)) {
+            else if (this.player.playerState === playerStateEnum.attack2 && this.game.physics.arcade.overlap(this, this.player.hitBox2)) {
                 this.takeDamage(this.player.stats.attack * 50, this.player.x);
             }
-        }
-        else if (this.player && this.player.playerState === playerStateEnum.attack3) {
-            if (this.game.physics.arcade.overlap(this, this.player.hitBox3)) {
+            else if (this.player.playerState === playerStateEnum.attack3 && this.game.physics.arcade.overlap(this, this.player.hitBox3)) {
                 this.takeDamage(this.player.stats.attack * 50, this.player.x);
             }
         }
@@ -249,6 +248,13 @@ var MasterEnemy = /** @class */ (function (_super) {
             _this.enemyState = endState;
         }, this);
     };
+    MasterEnemy.prototype.checkForHitting = function () {
+        if (this.player &&
+            this.damageFrames.indexOf(this.animations.frame) >= 0 &&
+            this.game.physics.arcade.overlap(this.hitBox1, this.player)) {
+            this.player.takeDamage(this.stats.attack * 20, this.x);
+        }
+    };
     MasterEnemy.prototype.resetInvincable = function () {
         this.invincible = false;
     };
@@ -271,7 +277,7 @@ var MasterEnemy = /** @class */ (function (_super) {
         }
     };
     MasterEnemy.prototype.attack = function () {
-        if (this.player.x > this.x) {
+        if (this.player && this.player.x > this.x) {
             this.scale.setTo(this.defaultDirection * this.defaultScaleWidth, this.defaultScaleHeight);
         }
         else {
@@ -280,6 +286,9 @@ var MasterEnemy = /** @class */ (function (_super) {
         this.enemyState = enemyStateEnum.attack1;
     };
     MasterEnemy.prototype.chase = function () {
+        if (!this.player) {
+            return;
+        }
         this.enemyState = enemyStateEnum.movingChase;
         if (this.player.x > this.x) {
             this.updateScale(1);
@@ -372,6 +381,7 @@ var AdventurerEnemy = /** @class */ (function (_super) {
         _this.wanderRange = 100;
         _this.maxWanderRange = 100;
         _this.aggroRange = 100;
+        _this.damageFrames = [45, 46];
         _this.bodyWidth = 10;
         _this.bodyHeight = 30;
         _this.body.setSize(_this.bodyWidth / _this.scale.x, _this.bodyHeight / _this.scale.y, (_this.width - _this.bodyWidth) / 2, 5);
@@ -427,14 +437,6 @@ var AdventurerEnemy = /** @class */ (function (_super) {
         this.handleDeath();
         this.updateHitbox();
     };
-    AdventurerEnemy.prototype.checkForHitting = function () {
-        if (this.animations.currentAnim.name === "attack1" &&
-            this.animations.frame >= 45 &&
-            this.animations.frame <= 46 &&
-            this.game.physics.arcade.overlap(this.hitBox1, this.player)) {
-            this.player.takeDamage(this.stats.attack * 20, this.x);
-        }
-    };
     AdventurerEnemy.prototype.handleInput = function () {
         if (this.player) {
             var distance = this.game.physics.arcade.distanceBetween(this, this.player);
@@ -481,6 +483,7 @@ var KoboldEnemy = /** @class */ (function (_super) {
         _this.maxWanderRange = 100;
         _this.aggroRange = 100;
         _this.defaultDirection = -1;
+        _this.damageFrames = [12, 13, 14];
         _this.bodyWidth = 18;
         _this.bodyHeight = 28;
         _this.body.setSize(_this.bodyWidth / _this.scale.x, _this.bodyHeight / _this.scale.y, (_this.width - _this.bodyWidth) / 2 + 10, 5);
@@ -530,14 +533,6 @@ var KoboldEnemy = /** @class */ (function (_super) {
         this.handleDeath();
         this.updateHitbox();
     };
-    KoboldEnemy.prototype.checkForHitting = function () {
-        if (this.animations.currentAnim.name === "attack1" &&
-            this.animations.frame >= 12 &&
-            this.animations.frame <= 14 &&
-            this.game.physics.arcade.overlap(this.hitBox1, this.player)) {
-            this.player.takeDamage(this.stats.attack * 20, this.x);
-        }
-    };
     KoboldEnemy.prototype.handleInput = function () {
         if (this.player) {
             var distance = this.game.physics.arcade.distanceBetween(this, this.player);
@@ -559,6 +554,7 @@ var RogueEnemy = /** @class */ (function (_super) {
         _this.wanderRange = 100;
         _this.maxWanderRange = 100;
         _this.aggroRange = 100;
+        _this.damageFrames = [34, 35, 36];
         _this.bodyWidth = 16;
         _this.bodyHeight = 32;
         _this.body.setSize(_this.bodyWidth / _this.scale.x, _this.bodyHeight / _this.scale.y, (_this.width - _this.bodyWidth) / 2, _this.height - _this.bodyHeight);
@@ -614,14 +610,6 @@ var RogueEnemy = /** @class */ (function (_super) {
         this.handleDeath();
         this.updateHitbox();
     };
-    RogueEnemy.prototype.checkForHitting = function () {
-        if (this.animations.currentAnim.name === "attack1" &&
-            this.animations.frame >= 34 &&
-            this.animations.frame <= 36 &&
-            this.game.physics.arcade.overlap(this.hitBox1, this.player)) {
-            this.player.takeDamage(this.stats.attack * 20, this.x);
-        }
-    };
     RogueEnemy.prototype.handleInput = function () {
         if (this.player) {
             var distance = this.game.physics.arcade.distanceBetween(this, this.player);
@@ -644,6 +632,7 @@ var Slime = /** @class */ (function (_super) {
         _this.maxWanderRange = 100;
         _this.aggroRange = 100;
         _this.defaultDirection = -1;
+        _this.damageFrames = [10, 11];
         _this.bodyWidth = 16;
         _this.bodyHeight = 15;
         _this.body.setSize(_this.bodyWidth / _this.scale.x, _this.bodyHeight / _this.scale.y, (_this.width - _this.bodyWidth) / 2, _this.height - _this.bodyHeight);
@@ -698,14 +687,6 @@ var Slime = /** @class */ (function (_super) {
         this.checkForGettingHit();
         this.handleDeath();
         this.updateHitbox();
-    };
-    Slime.prototype.checkForHitting = function () {
-        if (this.animations.currentAnim.name === "attack1" &&
-            this.animations.frame >= 10 &&
-            this.animations.frame <= 11 &&
-            this.game.physics.arcade.overlap(this.hitBox1, this.player)) {
-            this.player.takeDamage(this.stats.attack * 20, this.x);
-        }
     };
     Slime.prototype.handleInput = function () {
         if (this.player) {
@@ -823,7 +804,7 @@ var SlimeBaby = /** @class */ (function (_super) {
 var SlimeBoss = /** @class */ (function (_super) {
     __extends(SlimeBoss, _super);
     function SlimeBoss(game, x, y, ground, walls, player, enemyGroup) {
-        var _a, _b, _c, _d, _e, _f;
+        var _a;
         var _this = _super.call(this, game, x, y, "slimeboss", 0) || this;
         _this.slimeBossAnimations = (_a = {},
             _a[slimeBossStateEnum.jumpingToPlayer] = "jump",
@@ -833,49 +814,27 @@ var SlimeBoss = /** @class */ (function (_super) {
             _a[slimeBossStateEnum.regenerating] = "regenerating",
             _a[slimeBossStateEnum.splattered] = "splatter",
             _a);
-        _this.canJumpToPlayer = (_b = {},
-            _b[slimeBossStateEnum.jumpingToPlayer] = false,
-            _b[slimeBossStateEnum.jumpingToWall] = false,
-            _b[slimeBossStateEnum.idle] = true,
-            _b[slimeBossStateEnum.death] = false,
-            _b[slimeBossStateEnum.regenerating] = false,
-            _b[slimeBossStateEnum.splattered] = false,
-            _b);
-        _this.canJumpToWall = (_c = {},
-            _c[slimeBossStateEnum.jumpingToPlayer] = false,
-            _c[slimeBossStateEnum.jumpingToWall] = false,
-            _c[slimeBossStateEnum.idle] = true,
-            _c[slimeBossStateEnum.death] = false,
-            _c[slimeBossStateEnum.regenerating] = false,
-            _c[slimeBossStateEnum.splattered] = false,
-            _c);
-        _this.canSplatter = (_d = {},
-            _d[slimeBossStateEnum.jumpingToPlayer] = true,
-            _d[slimeBossStateEnum.jumpingToWall] = false,
-            _d[slimeBossStateEnum.idle] = false,
-            _d[slimeBossStateEnum.death] = false,
-            _d[slimeBossStateEnum.regenerating] = false,
-            _d[slimeBossStateEnum.splattered] = false,
-            _d);
-        _this.canRegenerate = (_e = {},
-            _e[slimeBossStateEnum.jumpingToPlayer] = false,
-            _e[slimeBossStateEnum.jumpingToWall] = false,
-            _e[slimeBossStateEnum.idle] = false,
-            _e[slimeBossStateEnum.death] = false,
-            _e[slimeBossStateEnum.regenerating] = true,
-            _e[slimeBossStateEnum.splattered] = true,
-            _e);
-        _this.canDoNothing = (_f = {},
-            _f[slimeBossStateEnum.jumpingToPlayer] = false,
-            _f[slimeBossStateEnum.jumpingToWall] = false,
-            _f[slimeBossStateEnum.idle] = false,
-            _f[slimeBossStateEnum.death] = false,
-            _f[slimeBossStateEnum.regenerating] = true,
-            _f[slimeBossStateEnum.splattered] = false,
-            _f);
+        _this.canJumpToPlayer = slimeBossAllowance([
+            slimeBossStateEnum.idle
+        ]);
+        _this.canJumpToWall = slimeBossAllowance([
+            slimeBossStateEnum.idle
+        ]);
+        _this.canSplatter = slimeBossAllowance([
+            slimeBossStateEnum.jumpingToPlayer
+        ]);
+        _this.canRegenerate = slimeBossAllowance([
+            slimeBossStateEnum.regenerating,
+            slimeBossStateEnum.splattered
+        ]);
+        _this.canDoNothing = slimeBossAllowance([
+            slimeBossStateEnum.regenerating
+        ]);
         _this.defaultDirection = -1;
         _this.isDoingJumpAttack = false;
         _this.goingToJump = false;
+        _this.canSpawnNormalEnemy = true;
+        _this.damageFrames = [26];
         _this.enemyGroup = enemyGroup;
         _this.player = player;
         _this.slimeBossState = slimeBossStateEnum.idle;
@@ -902,6 +861,7 @@ var SlimeBoss = /** @class */ (function (_super) {
         _this.animations.add("walk", [4, 5, 6, 7], 10, true);
         _this.animations.add("jump", [26], 10, false);
         _this.animations.add("death", [17, 18, 19, 20], 10, false).onComplete.add(function () {
+            _this.bossOverlay.destroy();
             _this.kill();
         });
         _this.animations.add("splatter", [17, 18, 19, 20], 10, false).onComplete.add(function () {
@@ -924,6 +884,12 @@ var SlimeBoss = /** @class */ (function (_super) {
         this.handleDeath();
         this.handleRotation();
         this.updateHitbox();
+    };
+    SlimeBoss.prototype.handleDeath = function () {
+        if (this.stats.health <= 0 && this.slimeBossState !== slimeBossStateEnum.death) {
+            this.invincible = true;
+            this.slimeBossState = slimeBossStateEnum.death;
+        }
     };
     SlimeBoss.prototype.handleRotation = function () {
         if (this.onGround()) {
@@ -948,9 +914,7 @@ var SlimeBoss = /** @class */ (function (_super) {
         }
     };
     SlimeBoss.prototype.checkForHitting = function () {
-        if (this.animations.currentAnim.name === "jump" &&
-            this.animations.frame >= 26 &&
-            this.animations.frame <= 26 &&
+        if (this.damageFrames.indexOf(this.animations.frame) >= 0 &&
             this.game.physics.arcade.overlap(this, this.player) &&
             this.slimeBossState === slimeBossStateEnum.jumpingToPlayer) {
             this.player.takeDamage(this.stats.attack * 20, this.x);
@@ -1011,6 +975,7 @@ var SlimeBoss = /** @class */ (function (_super) {
             this.regenerate();
         }
         if (this.slimeBossState === slimeBossStateEnum.jumpingToWall &&
+            this.canSpawnNormalEnemy &&
             this.x < this.player.x &&
             this.x + this.width > this.player.x + this.player.width) {
             this.spawnNormalEnemy();
@@ -1018,6 +983,11 @@ var SlimeBoss = /** @class */ (function (_super) {
         this.idle();
     };
     SlimeBoss.prototype.spawnNormalEnemy = function () {
+        var _this = this;
+        this.canSpawnNormalEnemy = false;
+        setTimeout(function () {
+            _this.canSpawnNormalEnemy = true;
+        }, 1000);
         this.stats.health -= 5;
         this.fakeHealth = this.stats.health;
         var slime = new Slime(this.game, this.centerX, this.y - 30);
@@ -1083,6 +1053,21 @@ var SlimeBoss = /** @class */ (function (_super) {
     };
     return SlimeBoss;
 }(MasterEnemy));
+function slimeBossAllowance(array) {
+    var _a;
+    var obj = (_a = {},
+        _a[slimeBossStateEnum.jumpingToPlayer] = false,
+        _a[slimeBossStateEnum.jumpingToWall] = false,
+        _a[slimeBossStateEnum.idle] = false,
+        _a[slimeBossStateEnum.death] = false,
+        _a[slimeBossStateEnum.regenerating] = false,
+        _a[slimeBossStateEnum.splattered] = false,
+        _a);
+    array.forEach(function (v) {
+        obj[v] = true;
+    });
+    return obj;
+}
 var MasterLevel = /** @class */ (function (_super) {
     __extends(MasterLevel, _super);
     function MasterLevel() {
@@ -1662,13 +1647,14 @@ var PauseMenu = /** @class */ (function (_super) {
 var MasterNpc = /** @class */ (function (_super) {
     __extends(MasterNpc, _super);
     function MasterNpc(game, x, y, key, frame) {
-        var _a, _b, _c, _d, _e;
+        var _a;
         var _this = _super.call(this, game, x, y, key, frame) || this;
         _this.npcState = npcStateEnum.idle;
         _this.npcDialogue = [
             "..."
         ];
         _this.npcDialogueLine = 0;
+        _this.player = null;
         _this.targetX = 0;
         _this.targetY = 0;
         _this.maxWanderRange = 100;
@@ -1682,77 +1668,41 @@ var MasterNpc = /** @class */ (function (_super) {
             boundsAlignV: "middle"
         };
         _this.friendly = true;
-        _this.canWalk = (_a = {},
-            _a[npcStateEnum.movingWalk] = true,
-            _a[npcStateEnum.movingFall] = false,
-            _a[npcStateEnum.idle] = true,
-            _a[npcStateEnum.idleSpecial] = true,
-            _a[npcStateEnum.attack1] = false,
-            _a[npcStateEnum.attack2] = false,
-            _a[npcStateEnum.attack3] = false,
-            _a[npcStateEnum.death] = false,
-            _a[npcStateEnum.sit] = false,
-            _a[npcStateEnum.sitDown] = false,
-            _a[npcStateEnum.movingChase] = false,
-            _a[npcStateEnum.knockBack] = false,
+        _this.canWalk = npcAllowance([
+            npcStateEnum.movingWalk,
+            npcStateEnum.idle,
+            npcStateEnum.idleSpecial
+        ]);
+        _this.canIdle = npcAllowance([]);
+        _this.canChase = npcAllowance([
+            npcStateEnum.movingWalk,
+            npcStateEnum.idle,
+            npcStateEnum.idleSpecial,
+            npcStateEnum.movingChase
+        ]);
+        _this.canAttack = ([
+            npcStateEnum.movingWalk,
+            npcStateEnum.idle,
+            npcStateEnum.idleSpecial,
+            npcStateEnum.movingChase
+        ]);
+        _this.npcAnimations = (_a = {},
+            _a[npcStateEnum.movingWalk] = "walk",
+            _a[npcStateEnum.movingFall] = "fall",
+            _a[npcStateEnum.idle] = "idle",
+            _a[npcStateEnum.attack1] = "attack1",
+            _a[npcStateEnum.attack2] = "attack2",
+            _a[npcStateEnum.attack3] = "attack3",
+            _a[npcStateEnum.death] = "death",
+            _a[npcStateEnum.sit] = "sit",
+            _a[npcStateEnum.sitDown] = "sitdown",
+            _a[npcStateEnum.movingChase] = "walk",
+            _a[npcStateEnum.idleSpecial] = "idlespecial",
+            _a[npcStateEnum.knockBack] = "knockback",
             _a);
-        _this.canIdle = (_b = {},
-            _b[npcStateEnum.movingWalk] = false,
-            _b[npcStateEnum.movingFall] = false,
-            _b[npcStateEnum.idle] = false,
-            _b[npcStateEnum.idleSpecial] = false,
-            _b[npcStateEnum.attack1] = false,
-            _b[npcStateEnum.attack2] = false,
-            _b[npcStateEnum.attack3] = false,
-            _b[npcStateEnum.death] = false,
-            _b[npcStateEnum.sit] = false,
-            _b[npcStateEnum.sitDown] = false,
-            _b[npcStateEnum.movingChase] = false,
-            _b[npcStateEnum.knockBack] = false,
-            _b);
-        _this.canChase = (_c = {},
-            _c[npcStateEnum.movingWalk] = true,
-            _c[npcStateEnum.movingFall] = false,
-            _c[npcStateEnum.idle] = true,
-            _c[npcStateEnum.idleSpecial] = true,
-            _c[npcStateEnum.attack1] = false,
-            _c[npcStateEnum.attack2] = false,
-            _c[npcStateEnum.attack3] = false,
-            _c[npcStateEnum.death] = false,
-            _c[npcStateEnum.sit] = false,
-            _c[npcStateEnum.sitDown] = false,
-            _c[npcStateEnum.movingChase] = true,
-            _c[npcStateEnum.knockBack] = false,
-            _c);
-        _this.canAttack = (_d = {},
-            _d[npcStateEnum.movingWalk] = true,
-            _d[npcStateEnum.movingFall] = false,
-            _d[npcStateEnum.idle] = true,
-            _d[npcStateEnum.idleSpecial] = true,
-            _d[npcStateEnum.attack1] = false,
-            _d[npcStateEnum.attack2] = false,
-            _d[npcStateEnum.attack3] = false,
-            _d[npcStateEnum.death] = false,
-            _d[npcStateEnum.sit] = false,
-            _d[npcStateEnum.sitDown] = false,
-            _d[npcStateEnum.movingChase] = true,
-            _d[npcStateEnum.knockBack] = false,
-            _d);
-        _this.npcAnimations = (_e = {},
-            _e[npcStateEnum.movingWalk] = "walk",
-            _e[npcStateEnum.movingFall] = "fall",
-            _e[npcStateEnum.idle] = "idle",
-            _e[npcStateEnum.attack1] = "attack1",
-            _e[npcStateEnum.attack2] = "attack2",
-            _e[npcStateEnum.attack3] = "attack3",
-            _e[npcStateEnum.death] = "death",
-            _e[npcStateEnum.sit] = "sit",
-            _e[npcStateEnum.sitDown] = "sitdown",
-            _e[npcStateEnum.movingChase] = "walk",
-            _e[npcStateEnum.idleSpecial] = "idlespecial",
-            _e[npcStateEnum.knockBack] = "knockback",
-            _e);
         _this.invincible = false;
+        _this.hitBox1 = null;
+        _this.damageFrames = [];
         _this.anchor.setTo(0.5, 0);
         game.physics.arcade.enableBody(_this);
         game.add.existing(_this);
@@ -1786,12 +1736,28 @@ var MasterNpc = /** @class */ (function (_super) {
             }
         }
     };
+    // tslint:disable-next-line:cyclomatic-complexity
     MasterNpc.prototype.checkForGettingHit = function () {
-        if (this.player && this.player.playerState === playerStateEnum.attack1) {
-            if (this.game.physics.arcade.overlap(this, this.player.hitBox1)) {
+        if (this.player && this.player.damageFrames.indexOf(this.player.animations.frame) >= 0) {
+            if (this.player.playerState === playerStateEnum.attack1 && this.game.physics.arcade.overlap(this, this.player.hitBox1)) {
                 this.friendly = false;
                 this.takeDamage(this.player.stats.attack * 50, this.player.x);
             }
+            else if (this.player.playerState === playerStateEnum.attack2 && this.game.physics.arcade.overlap(this, this.player.hitBox2)) {
+                this.friendly = false;
+                this.takeDamage(this.player.stats.attack * 50, this.player.x);
+            }
+            else if (this.player.playerState === playerStateEnum.attack3 && this.game.physics.arcade.overlap(this, this.player.hitBox3)) {
+                this.friendly = false;
+                this.takeDamage(this.player.stats.attack * 50, this.player.x);
+            }
+        }
+    };
+    MasterNpc.prototype.checkForHitting = function () {
+        if (this.player &&
+            this.damageFrames.indexOf(this.animations.frame) >= 0 &&
+            this.game.physics.arcade.overlap(this.hitBox1, this.player)) {
+            this.player.takeDamage(this.stats.attack * 50, this.x);
         }
     };
     MasterNpc.prototype.updateHitbox = function () {
@@ -1861,7 +1827,7 @@ var MasterNpc = /** @class */ (function (_super) {
         return true;
     };
     MasterNpc.prototype.attack = function () {
-        if (this.player.x > this.x) {
+        if (this.player && this.player.x > this.x) {
             this.scale.setTo(1, 1);
         }
         else {
@@ -1870,6 +1836,9 @@ var MasterNpc = /** @class */ (function (_super) {
         this.npcState = npcStateEnum.attack1;
     };
     MasterNpc.prototype.chase = function () {
+        if (!this.player) {
+            return;
+        }
         this.npcState = npcStateEnum.movingChase;
         if (this.player.x > this.x) {
             this.scale.setTo(1, 1);
@@ -1957,6 +1926,27 @@ var MasterNpc = /** @class */ (function (_super) {
     };
     return MasterNpc;
 }(Phaser.Sprite));
+function npcAllowance(array) {
+    var _a;
+    var obj = (_a = {},
+        _a[npcStateEnum.movingWalk] = false,
+        _a[npcStateEnum.movingFall] = false,
+        _a[npcStateEnum.idle] = false,
+        _a[npcStateEnum.idleSpecial] = false,
+        _a[npcStateEnum.attack1] = false,
+        _a[npcStateEnum.attack2] = false,
+        _a[npcStateEnum.attack3] = false,
+        _a[npcStateEnum.death] = false,
+        _a[npcStateEnum.sit] = false,
+        _a[npcStateEnum.sitDown] = false,
+        _a[npcStateEnum.movingChase] = false,
+        _a[npcStateEnum.knockBack] = false,
+        _a);
+    array.forEach(function (v) {
+        obj[v] = true;
+    });
+    return obj;
+}
 /// <reference path="./masterNpc.ts"/>
 var RogueNpc = /** @class */ (function (_super) {
     __extends(RogueNpc, _super);
@@ -1980,6 +1970,7 @@ var RogueNpc = /** @class */ (function (_super) {
         _this.maxWanderRange = 100;
         _this.attackRange = 0;
         _this.aggroRange = 100;
+        _this.damageFrames = [34, 35, 36];
         _this.bodyWidth = 16;
         _this.bodyHeight = 32;
         _this.body.setSize(_this.bodyWidth / _this.scale.x, _this.bodyHeight / _this.scale.y, (_this.width - _this.bodyWidth) / 2, _this.height - _this.bodyHeight);
@@ -2036,14 +2027,6 @@ var RogueNpc = /** @class */ (function (_super) {
         this.checkForGettingHit();
         this.handleDeath();
         this.updateHitbox();
-    };
-    RogueNpc.prototype.checkForHitting = function () {
-        if (this.animations.currentAnim.name === "attack1" &&
-            this.animations.frame >= 34 &&
-            this.animations.frame <= 36 &&
-            this.game.physics.arcade.overlap(this.hitBox1, this.player)) {
-            this.player.takeDamage(this.stats.attack * 50, this.x);
-        }
     };
     RogueNpc.prototype.handleInput = function () {
         if (this.player) {
@@ -2385,6 +2368,7 @@ var Player = /** @class */ (function (_super) {
             boundsAlignH: "center",
             boundsAlignV: "middle"
         };
+        _this.damageFrames = [45, 46, 50, 51, 56, 57, 58];
         _this.game.camera.follow(_this, Phaser.Camera.FOLLOW_PLATFORMER, 0.05, 0.05);
         _this.anchor.setTo(0.5, 0);
         //this.scale.setTo(1.5, 1.5);
@@ -2508,6 +2492,7 @@ var Player = /** @class */ (function (_super) {
         this.resetVelocity();
         this.animations.play(this.playerAnimations[this.playerState]);
         this.handleInput();
+        this.handleRoll();
         this.handleEnteringLevel();
         this.handleDeath();
         this.updateHitbox();
@@ -2532,7 +2517,7 @@ var Player = /** @class */ (function (_super) {
         if (this.playerState === playerStateEnum.roll) {
             this.invincible = true;
         }
-        else {
+        else if (this.playerState !== playerStateEnum.knockBack) {
             this.resetInvincable();
         }
     };

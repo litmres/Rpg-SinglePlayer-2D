@@ -4,7 +4,7 @@ class MasterNpc extends Phaser.Sprite {
         "..."
     ];
     npcDialogueLine = 0;
-    player: Player;
+    player: Player | null = null;
     targetX = 0;
     targetY = 0;
     maxWanderRange = 100;
@@ -21,62 +21,24 @@ class MasterNpc extends Phaser.Sprite {
         boundsAlignV: "middle"
     };
     friendly = true;
-    canWalk: npcAllowanceInterface = {
-        [npcStateEnum.movingWalk]: true,
-        [npcStateEnum.movingFall]: false,
-        [npcStateEnum.idle]: true,
-        [npcStateEnum.idleSpecial]: true,
-        [npcStateEnum.attack1]: false,
-        [npcStateEnum.attack2]: false,
-        [npcStateEnum.attack3]: false,
-        [npcStateEnum.death]: false,
-        [npcStateEnum.sit]: false,
-        [npcStateEnum.sitDown]: false,
-        [npcStateEnum.movingChase]: false,
-        [npcStateEnum.knockBack]: false,
-    };
-    canIdle: npcAllowanceInterface = {
-        [npcStateEnum.movingWalk]: false,
-        [npcStateEnum.movingFall]: false,
-        [npcStateEnum.idle]: false,
-        [npcStateEnum.idleSpecial]: false,
-        [npcStateEnum.attack1]: false,
-        [npcStateEnum.attack2]: false,
-        [npcStateEnum.attack3]: false,
-        [npcStateEnum.death]: false,
-        [npcStateEnum.sit]: false,
-        [npcStateEnum.sitDown]: false,
-        [npcStateEnum.movingChase]: false,
-        [npcStateEnum.knockBack]: false,
-    };
-    canChase: npcAllowanceInterface = {
-        [npcStateEnum.movingWalk]: true,
-        [npcStateEnum.movingFall]: false,
-        [npcStateEnum.idle]: true,
-        [npcStateEnum.idleSpecial]: true,
-        [npcStateEnum.attack1]: false,
-        [npcStateEnum.attack2]: false,
-        [npcStateEnum.attack3]: false,
-        [npcStateEnum.death]: false,
-        [npcStateEnum.sit]: false,
-        [npcStateEnum.sitDown]: false,
-        [npcStateEnum.movingChase]: true,
-        [npcStateEnum.knockBack]: false,
-    };
-    canAttack: npcAllowanceInterface = {
-        [npcStateEnum.movingWalk]: true,
-        [npcStateEnum.movingFall]: false,
-        [npcStateEnum.idle]: true,
-        [npcStateEnum.idleSpecial]: true,
-        [npcStateEnum.attack1]: false,
-        [npcStateEnum.attack2]: false,
-        [npcStateEnum.attack3]: false,
-        [npcStateEnum.death]: false,
-        [npcStateEnum.sit]: false,
-        [npcStateEnum.sitDown]: false,
-        [npcStateEnum.movingChase]: true,
-        [npcStateEnum.knockBack]: false,
-    };
+    canWalk = npcAllowance([
+        npcStateEnum.movingWalk,
+        npcStateEnum.idle,
+        npcStateEnum.idleSpecial
+    ]);
+    canIdle = npcAllowance([]);
+    canChase = npcAllowance([
+        npcStateEnum.movingWalk,
+        npcStateEnum.idle,
+        npcStateEnum.idleSpecial,
+        npcStateEnum.movingChase
+    ]);
+    canAttack = ([
+        npcStateEnum.movingWalk,
+        npcStateEnum.idle,
+        npcStateEnum.idleSpecial,
+        npcStateEnum.movingChase
+    ]);
     stats: playerStatsInterface;
     npcAnimations: npcAnimationInterface = {
         [npcStateEnum.movingWalk]: "walk",
@@ -94,6 +56,8 @@ class MasterNpc extends Phaser.Sprite {
     };
     invincible = false;
     hitBoxes: Phaser.Group;
+    hitBox1: Phaser.Sprite | null = null;
+    damageFrames: number[] = [];
     constructor(game: Phaser.Game, x: number, y: number, key?: string, frame?: number) {
         super(game, x, y, key, frame);
         this.anchor.setTo(0.5, 0);
@@ -132,12 +96,28 @@ class MasterNpc extends Phaser.Sprite {
         }
     }
 
+    // tslint:disable-next-line:cyclomatic-complexity
     checkForGettingHit() {
-        if (this.player && this.player.playerState === playerStateEnum.attack1) {
-            if (this.game.physics.arcade.overlap(this, this.player.hitBox1)) {
+        if (this.player && this.player.damageFrames.indexOf(this.player.animations.frame) >= 0) {
+            if (this.player.playerState === playerStateEnum.attack1 && this.game.physics.arcade.overlap(this, this.player.hitBox1)) {
+                this.friendly = false;
+                this.takeDamage(this.player.stats.attack * 50, this.player.x);
+            } else if (this.player.playerState === playerStateEnum.attack2 && this.game.physics.arcade.overlap(this, this.player.hitBox2)) {
+                this.friendly = false;
+                this.takeDamage(this.player.stats.attack * 50, this.player.x);
+            } else if (this.player.playerState === playerStateEnum.attack3 && this.game.physics.arcade.overlap(this, this.player.hitBox3)) {
                 this.friendly = false;
                 this.takeDamage(this.player.stats.attack * 50, this.player.x);
             }
+        }
+    }
+
+    checkForHitting() {
+        if (this.player &&
+            this.damageFrames.indexOf(this.animations.frame) >= 0 &&
+            this.game.physics.arcade.overlap(this.hitBox1, this.player)
+        ) {
+            this.player.takeDamage(this.stats.attack * 50, this.x);
         }
     }
 
@@ -217,7 +197,7 @@ class MasterNpc extends Phaser.Sprite {
     }
 
     attack() {
-        if (this.player.x > this.x) {
+        if (this.player && this.player.x > this.x) {
             this.scale.setTo(1, 1);
         } else {
             this.scale.setTo(-1, 1);
@@ -226,6 +206,7 @@ class MasterNpc extends Phaser.Sprite {
     }
 
     chase() {
+        if (!this.player) { return; }
         this.npcState = npcStateEnum.movingChase;
         if (this.player.x > this.x) {
             this.scale.setTo(1, 1);
@@ -321,4 +302,28 @@ class MasterNpc extends Phaser.Sprite {
             this.npcState = npcStateEnum.idle;
         }
     }
+}
+
+function npcAllowance(array: Array<npcStateEnum>): enemyAllowanceInterface {
+
+    const obj: enemyAllowanceInterface = {
+        [npcStateEnum.movingWalk]: false,
+        [npcStateEnum.movingFall]: false,
+        [npcStateEnum.idle]: false,
+        [npcStateEnum.idleSpecial]: false,
+        [npcStateEnum.attack1]: false,
+        [npcStateEnum.attack2]: false,
+        [npcStateEnum.attack3]: false,
+        [npcStateEnum.death]: false,
+        [npcStateEnum.sit]: false,
+        [npcStateEnum.sitDown]: false,
+        [npcStateEnum.movingChase]: false,
+        [npcStateEnum.knockBack]: false,
+    };
+
+    array.forEach((v) => {
+        obj[v] = true;
+    });
+
+    return obj;
 }

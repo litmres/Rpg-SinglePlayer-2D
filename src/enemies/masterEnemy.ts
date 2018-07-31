@@ -2,7 +2,7 @@ class MasterEnemy extends Phaser.Sprite {
     enemyState: enemyStateEnum = enemyStateEnum.idle;
     friendly = false;
     wanderRange = 100;
-    player: Player;
+    player: Player | null = null;
     targetX = 0;
     targetY = 0;
     defaultScaleWidth = 1;
@@ -45,8 +45,10 @@ class MasterEnemy extends Phaser.Sprite {
         [enemyStateEnum.idleSpecial]: "idlespecial",
         [enemyStateEnum.knockBack]: "knockback",
     };
+    hitBox1: Phaser.Sprite | null = null;
     invincible = false;
     hitBoxes: Phaser.Group;
+    damageFrames: number[] = [];
     constructor(game: Phaser.Game, x: number, y: number, key?: string, frame?: number) {
         super(game, x, y, key, frame);
         this.anchor.setTo(0.5, 0);
@@ -96,16 +98,12 @@ class MasterEnemy extends Phaser.Sprite {
 
     // tslint:disable-next-line:cyclomatic-complexity
     checkForGettingHit() {
-        if (this.player && this.player.playerState === playerStateEnum.attack1) {
-            if (this.game.physics.arcade.overlap(this, this.player.hitBox1)) {
+        if (this.player && this.player.damageFrames.indexOf(this.player.animations.frame) >= 0) {
+            if (this.player.playerState === playerStateEnum.attack1 && this.game.physics.arcade.overlap(this, this.player.hitBox1)) {
                 this.takeDamage(this.player.stats.attack * 50, this.player.x);
-            }
-        } else if (this.player && this.player.playerState === playerStateEnum.attack2) {
-            if (this.game.physics.arcade.overlap(this, this.player.hitBox2)) {
+            } else if (this.player.playerState === playerStateEnum.attack2 && this.game.physics.arcade.overlap(this, this.player.hitBox2)) {
                 this.takeDamage(this.player.stats.attack * 50, this.player.x);
-            }
-        } else if (this.player && this.player.playerState === playerStateEnum.attack3) {
-            if (this.game.physics.arcade.overlap(this, this.player.hitBox3)) {
+            } else if (this.player.playerState === playerStateEnum.attack3 && this.game.physics.arcade.overlap(this, this.player.hitBox3)) {
                 this.takeDamage(this.player.stats.attack * 50, this.player.x);
             }
         }
@@ -158,6 +156,15 @@ class MasterEnemy extends Phaser.Sprite {
         }, this);
     }
 
+    checkForHitting() {
+        if (this.player &&
+            this.damageFrames.indexOf(this.animations.frame) >= 0 &&
+            this.game.physics.arcade.overlap(this.hitBox1, this.player)
+        ) {
+            this.player.takeDamage(this.stats.attack * 20, this.x);
+        }
+    }
+
     resetInvincable() {
         this.invincible = false;
     }
@@ -186,7 +193,7 @@ class MasterEnemy extends Phaser.Sprite {
     }
 
     attack() {
-        if (this.player.x > this.x) {
+        if (this.player && this.player.x > this.x) {
             this.scale.setTo(this.defaultDirection * this.defaultScaleWidth, this.defaultScaleHeight);
         } else {
             this.scale.setTo(this.defaultDirection * this.defaultScaleWidth * -1, this.defaultScaleHeight);
@@ -195,6 +202,7 @@ class MasterEnemy extends Phaser.Sprite {
     }
 
     chase() {
+        if (!this.player) { return; }
         this.enemyState = enemyStateEnum.movingChase;
         if (this.player.x > this.x) {
             this.updateScale(1);

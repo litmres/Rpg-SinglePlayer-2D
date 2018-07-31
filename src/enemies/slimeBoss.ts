@@ -10,46 +10,22 @@ class SlimeBoss extends MasterEnemy {
         [slimeBossStateEnum.regenerating]: "regenerating",
         [slimeBossStateEnum.splattered]: "splatter",
     };
-    canJumpToPlayer: slimeBossAllowanceInterface = {
-        [slimeBossStateEnum.jumpingToPlayer]: false,
-        [slimeBossStateEnum.jumpingToWall]: false,
-        [slimeBossStateEnum.idle]: true,
-        [slimeBossStateEnum.death]: false,
-        [slimeBossStateEnum.regenerating]: false,
-        [slimeBossStateEnum.splattered]: false,
-    };
-    canJumpToWall: slimeBossAllowanceInterface = {
-        [slimeBossStateEnum.jumpingToPlayer]: false,
-        [slimeBossStateEnum.jumpingToWall]: false,
-        [slimeBossStateEnum.idle]: true,
-        [slimeBossStateEnum.death]: false,
-        [slimeBossStateEnum.regenerating]: false,
-        [slimeBossStateEnum.splattered]: false,
-    };
-    canSplatter: slimeBossAllowanceInterface = {
-        [slimeBossStateEnum.jumpingToPlayer]: true,
-        [slimeBossStateEnum.jumpingToWall]: false,
-        [slimeBossStateEnum.idle]: false,
-        [slimeBossStateEnum.death]: false,
-        [slimeBossStateEnum.regenerating]: false,
-        [slimeBossStateEnum.splattered]: false,
-    };
-    canRegenerate: slimeBossAllowanceInterface = {
-        [slimeBossStateEnum.jumpingToPlayer]: false,
-        [slimeBossStateEnum.jumpingToWall]: false,
-        [slimeBossStateEnum.idle]: false,
-        [slimeBossStateEnum.death]: false,
-        [slimeBossStateEnum.regenerating]: true,
-        [slimeBossStateEnum.splattered]: true,
-    };
-    canDoNothing: slimeBossAllowanceInterface = {
-        [slimeBossStateEnum.jumpingToPlayer]: false,
-        [slimeBossStateEnum.jumpingToWall]: false,
-        [slimeBossStateEnum.idle]: false,
-        [slimeBossStateEnum.death]: false,
-        [slimeBossStateEnum.regenerating]: true,
-        [slimeBossStateEnum.splattered]: false,
-    };
+    canJumpToPlayer = slimeBossAllowance([
+        slimeBossStateEnum.idle
+    ]);
+    canJumpToWall = slimeBossAllowance([
+        slimeBossStateEnum.idle
+    ]);
+    canSplatter = slimeBossAllowance([
+        slimeBossStateEnum.jumpingToPlayer
+    ]);
+    canRegenerate = slimeBossAllowance([
+        slimeBossStateEnum.regenerating,
+        slimeBossStateEnum.splattered
+    ]);
+    canDoNothing = slimeBossAllowance([
+        slimeBossStateEnum.regenerating
+    ]);
     bodyWidth: number;
     bodyHeight: number;
     defaultDirection = -1;
@@ -61,6 +37,8 @@ class SlimeBoss extends MasterEnemy {
     enemyGroup: Phaser.Group;
     fakeHealth: number;
     bossOverlay: Phaser.Group;
+    canSpawnNormalEnemy = true;
+    damageFrames = [26];
     constructor(game: Phaser.Game, x: number, y: number, ground: Phaser.Group, walls: Phaser.Group, player: Player, enemyGroup: Phaser.Group) {
         super(game, x, y, "slimeboss", 0);
         this.enemyGroup = enemyGroup;
@@ -90,6 +68,7 @@ class SlimeBoss extends MasterEnemy {
         this.animations.add("walk", [4, 5, 6, 7], 10, true);
         this.animations.add("jump", [26], 10, false);
         this.animations.add("death", [17, 18, 19, 20], 10, false).onComplete.add(() => {
+            this.bossOverlay.destroy();
             this.kill();
         });
         this.animations.add("splatter", [17, 18, 19, 20], 10, false).onComplete.add(() => {
@@ -124,6 +103,13 @@ class SlimeBoss extends MasterEnemy {
         this.updateHitbox();
     }
 
+    handleDeath() {
+        if (this.stats.health <= 0 && this.slimeBossState !== slimeBossStateEnum.death) {
+            this.invincible = true;
+            this.slimeBossState = slimeBossStateEnum.death;
+        }
+    }
+
     handleRotation() {
         if (this.onGround()) {
             this.angle = 0;
@@ -147,9 +133,7 @@ class SlimeBoss extends MasterEnemy {
     }
 
     checkForHitting() {
-        if (this.animations.currentAnim.name === "jump" &&
-            this.animations.frame >= 26 &&
-            this.animations.frame <= 26 &&
+        if (this.damageFrames.indexOf(this.animations.frame) >= 0 &&
             this.game.physics.arcade.overlap(this, this.player) &&
             this.slimeBossState === slimeBossStateEnum.jumpingToPlayer
         ) {
@@ -216,6 +200,7 @@ class SlimeBoss extends MasterEnemy {
             this.regenerate();
         }
         if (this.slimeBossState === slimeBossStateEnum.jumpingToWall &&
+            this.canSpawnNormalEnemy &&
             this.x < this.player.x &&
             this.x + this.width > this.player.x + this.player.width
         ) {
@@ -226,6 +211,10 @@ class SlimeBoss extends MasterEnemy {
     }
 
     spawnNormalEnemy() {
+        this.canSpawnNormalEnemy = false;
+        setTimeout(() => {
+            this.canSpawnNormalEnemy = true;
+        }, 1000);
         this.stats.health -= 5;
         this.fakeHealth = this.stats.health;
         const slime = new Slime(this.game, this.centerX, this.y - 30);
@@ -293,4 +282,22 @@ class SlimeBoss extends MasterEnemy {
             this.enemyGroup.add(new SlimeBaby(this.game, this.centerX, this.y - 30, this, this.player));
         }
     }
+}
+
+function slimeBossAllowance(array: Array<slimeBossStateEnum>): slimeBossAllowanceInterface {
+
+    const obj: slimeBossAllowanceInterface = {
+        [slimeBossStateEnum.jumpingToPlayer]: false,
+        [slimeBossStateEnum.jumpingToWall]: false,
+        [slimeBossStateEnum.idle]: false,
+        [slimeBossStateEnum.death]: false,
+        [slimeBossStateEnum.regenerating]: false,
+        [slimeBossStateEnum.splattered]: false,
+    };
+
+    array.forEach((v) => {
+        obj[v] = true;
+    });
+
+    return obj;
 }
