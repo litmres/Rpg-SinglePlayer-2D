@@ -73,9 +73,7 @@ class RogueEnemy extends MasterEnemy {
     }
 
     checkForHitting() {
-        if (this.animations.currentAnim.name === "attack1" &&
-            this.animations.frame >= 34 &&
-            this.animations.frame <= 36 &&
+        if (this.damageFrames.indexOf(this.animations.frame) >= 0 &&
             this.game.physics.arcade.overlap(this.hitBox1, this.player)
         ) {
             this.player.takeDamage(this.stats.attack * 20, this.x);

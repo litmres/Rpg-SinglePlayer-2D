@@ -194,18 +194,14 @@ var MasterEnemy = /** @class */ (function (_super) {
     };
     // tslint:disable-next-line:cyclomatic-complexity
     MasterEnemy.prototype.checkForGettingHit = function () {
-        if (this.player && this.player.playerState === playerStateEnum.attack1) {
-            if (this.game.physics.arcade.overlap(this, this.player.hitBox1)) {
+        if (this.player && this.player.damageFrames.indexOf(this.player.animations.frame) >= 0) {
+            if (this.player.playerState === playerStateEnum.attack1 && this.game.physics.arcade.overlap(this, this.player.hitBox1)) {
                 this.takeDamage(this.player.stats.attack * 50, this.player.x);
             }
-        }
-        else if (this.player && this.player.playerState === playerStateEnum.attack2) {
-            if (this.game.physics.arcade.overlap(this, this.player.hitBox2)) {
+            else if (this.player.playerState === playerStateEnum.attack2 && this.game.physics.arcade.overlap(this, this.player.hitBox2)) {
                 this.takeDamage(this.player.stats.attack * 50, this.player.x);
             }
-        }
-        else if (this.player && this.player.playerState === playerStateEnum.attack3) {
-            if (this.game.physics.arcade.overlap(this, this.player.hitBox3)) {
+            else if (this.player.playerState === playerStateEnum.attack3 && this.game.physics.arcade.overlap(this, this.player.hitBox3)) {
                 this.takeDamage(this.player.stats.attack * 50, this.player.x);
             }
         }
@@ -430,9 +426,7 @@ var AdventurerEnemy = /** @class */ (function (_super) {
         this.updateHitbox();
     };
     AdventurerEnemy.prototype.checkForHitting = function () {
-        if (this.animations.currentAnim.name === "attack1" &&
-            this.animations.frame >= 45 &&
-            this.animations.frame <= 46 &&
+        if (this.damageFrames.indexOf(this.animations.frame) >= 0 &&
             this.game.physics.arcade.overlap(this.hitBox1, this.player)) {
             this.player.takeDamage(this.stats.attack * 20, this.x);
         }
@@ -534,9 +528,7 @@ var KoboldEnemy = /** @class */ (function (_super) {
         this.updateHitbox();
     };
     KoboldEnemy.prototype.checkForHitting = function () {
-        if (this.animations.currentAnim.name === "attack1" &&
-            this.animations.frame >= 12 &&
-            this.animations.frame <= 14 &&
+        if (this.damageFrames.indexOf(this.animations.frame) >= 0 &&
             this.game.physics.arcade.overlap(this.hitBox1, this.player)) {
             this.player.takeDamage(this.stats.attack * 20, this.x);
         }
@@ -619,9 +611,7 @@ var RogueEnemy = /** @class */ (function (_super) {
         this.updateHitbox();
     };
     RogueEnemy.prototype.checkForHitting = function () {
-        if (this.animations.currentAnim.name === "attack1" &&
-            this.animations.frame >= 34 &&
-            this.animations.frame <= 36 &&
+        if (this.damageFrames.indexOf(this.animations.frame) >= 0 &&
             this.game.physics.arcade.overlap(this.hitBox1, this.player)) {
             this.player.takeDamage(this.stats.attack * 20, this.x);
         }
@@ -705,9 +695,7 @@ var Slime = /** @class */ (function (_super) {
         this.updateHitbox();
     };
     Slime.prototype.checkForHitting = function () {
-        if (this.animations.currentAnim.name === "attack1" &&
-            this.animations.frame >= 10 &&
-            this.animations.frame <= 11 &&
+        if (this.damageFrames.indexOf(this.animations.frame) >= 0 &&
             this.game.physics.arcade.overlap(this.hitBox1, this.player)) {
             this.player.takeDamage(this.stats.attack * 20, this.x);
         }
@@ -938,9 +926,7 @@ var SlimeBoss = /** @class */ (function (_super) {
         }
     };
     SlimeBoss.prototype.checkForHitting = function () {
-        if (this.animations.currentAnim.name === "jump" &&
-            this.animations.frame >= 26 &&
-            this.animations.frame <= 26 &&
+        if (this.damageFrames.indexOf(this.animations.frame) >= 0 &&
             this.game.physics.arcade.overlap(this, this.player) &&
             this.slimeBossState === slimeBossStateEnum.jumpingToPlayer) {
             this.player.takeDamage(this.stats.attack * 20, this.x);
@@ -1762,20 +1748,16 @@ var MasterNpc = /** @class */ (function (_super) {
     };
     // tslint:disable-next-line:cyclomatic-complexity
     MasterNpc.prototype.checkForGettingHit = function () {
-        if (this.player && this.player.playerState === playerStateEnum.attack1) {
-            if (this.game.physics.arcade.overlap(this, this.player.hitBox1)) {
+        if (this.player && this.player.damageFrames.indexOf(this.player.animations.frame) >= 0) {
+            if (this.player.playerState === playerStateEnum.attack1 && this.game.physics.arcade.overlap(this, this.player.hitBox1)) {
                 this.friendly = false;
                 this.takeDamage(this.player.stats.attack * 50, this.player.x);
             }
-        }
-        else if (this.player && this.player.playerState === playerStateEnum.attack2) {
-            if (this.game.physics.arcade.overlap(this, this.player.hitBox2)) {
+            else if (this.player.playerState === playerStateEnum.attack2 && this.game.physics.arcade.overlap(this, this.player.hitBox2)) {
                 this.friendly = false;
                 this.takeDamage(this.player.stats.attack * 50, this.player.x);
             }
-        }
-        else if (this.player && this.player.playerState === playerStateEnum.attack3) {
-            if (this.game.physics.arcade.overlap(this, this.player.hitBox3)) {
+            else if (this.player.playerState === playerStateEnum.attack3 && this.game.physics.arcade.overlap(this, this.player.hitBox3)) {
                 this.friendly = false;
                 this.takeDamage(this.player.stats.attack * 50, this.player.x);
             }
@@ -2047,9 +2029,7 @@ var RogueNpc = /** @class */ (function (_super) {
         this.updateHitbox();
     };
     RogueNpc.prototype.checkForHitting = function () {
-        if (this.animations.currentAnim.name === "attack1" &&
-            this.animations.frame >= 34 &&
-            this.animations.frame <= 36 &&
+        if (this.damageFrames.indexOf(this.animations.frame) >= 0 &&
             this.game.physics.arcade.overlap(this.hitBox1, this.player)) {
             this.player.takeDamage(this.stats.attack * 50, this.x);
         }

@@ -133,9 +133,7 @@ class SlimeBoss extends MasterEnemy {
     }
 
     checkForHitting() {
-        if (this.animations.currentAnim.name === "jump" &&
-            this.animations.frame >= 26 &&
-            this.animations.frame <= 26 &&
+        if (this.damageFrames.indexOf(this.animations.frame) >= 0 &&
             this.game.physics.arcade.overlap(this, this.player) &&
             this.slimeBossState === slimeBossStateEnum.jumpingToPlayer
         ) {
