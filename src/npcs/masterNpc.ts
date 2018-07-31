@@ -4,7 +4,7 @@ class MasterNpc extends Phaser.Sprite {
         "..."
     ];
     npcDialogueLine = 0;
-    player: Player;
+    player: Player | null = null;
     targetX = 0;
     targetY = 0;
     maxWanderRange = 100;
@@ -56,7 +56,7 @@ class MasterNpc extends Phaser.Sprite {
     };
     invincible = false;
     hitBoxes: Phaser.Group;
-    hitBox1: Phaser.Group | null = null;
+    hitBox1: Phaser.Sprite | null = null;
     damageFrames: number[] = [];
     constructor(game: Phaser.Game, x: number, y: number, key?: string, frame?: number) {
         super(game, x, y, key, frame);
@@ -113,7 +113,8 @@ class MasterNpc extends Phaser.Sprite {
     }
 
     checkForHitting() {
-        if (this.damageFrames.indexOf(this.animations.frame) >= 0 &&
+        if (this.player &&
+            this.damageFrames.indexOf(this.animations.frame) >= 0 &&
             this.game.physics.arcade.overlap(this.hitBox1, this.player)
         ) {
             this.player.takeDamage(this.stats.attack * 50, this.x);
@@ -196,7 +197,7 @@ class MasterNpc extends Phaser.Sprite {
     }
 
     attack() {
-        if (this.player.x > this.x) {
+        if (this.player && this.player.x > this.x) {
             this.scale.setTo(1, 1);
         } else {
             this.scale.setTo(-1, 1);
@@ -205,6 +206,7 @@ class MasterNpc extends Phaser.Sprite {
     }
 
     chase() {
+        if (!this.player) { return; }
         this.npcState = npcStateEnum.movingChase;
         if (this.player.x > this.x) {
             this.scale.setTo(1, 1);

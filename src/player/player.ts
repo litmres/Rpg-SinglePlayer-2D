@@ -45,7 +45,7 @@ class Player extends Phaser.Sprite {
     bodyHeight: number;
     controls: any;
     currentRoom = 0;
-    EnterLevelHandler = {
+    EnterLevelHandler: any | null = {
         Next: false,
         Previous: false,
         Text: null,

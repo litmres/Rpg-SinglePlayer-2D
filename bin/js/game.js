@@ -107,6 +107,7 @@ var MasterEnemy = /** @class */ (function (_super) {
         _this.enemyState = enemyStateEnum.idle;
         _this.friendly = false;
         _this.wanderRange = 100;
+        _this.player = null;
         _this.targetX = 0;
         _this.targetY = 0;
         _this.defaultScaleWidth = 1;
@@ -248,7 +249,8 @@ var MasterEnemy = /** @class */ (function (_super) {
         }, this);
     };
     MasterEnemy.prototype.checkForHitting = function () {
-        if (this.damageFrames.indexOf(this.animations.frame) >= 0 &&
+        if (this.player &&
+            this.damageFrames.indexOf(this.animations.frame) >= 0 &&
             this.game.physics.arcade.overlap(this.hitBox1, this.player)) {
             this.player.takeDamage(this.stats.attack * 20, this.x);
         }
@@ -275,7 +277,7 @@ var MasterEnemy = /** @class */ (function (_super) {
         }
     };
     MasterEnemy.prototype.attack = function () {
-        if (this.player.x > this.x) {
+        if (this.player && this.player.x > this.x) {
             this.scale.setTo(this.defaultDirection * this.defaultScaleWidth, this.defaultScaleHeight);
         }
         else {
@@ -284,6 +286,9 @@ var MasterEnemy = /** @class */ (function (_super) {
         this.enemyState = enemyStateEnum.attack1;
     };
     MasterEnemy.prototype.chase = function () {
+        if (!this.player) {
+            return;
+        }
         this.enemyState = enemyStateEnum.movingChase;
         if (this.player.x > this.x) {
             this.updateScale(1);
@@ -1649,6 +1654,7 @@ var MasterNpc = /** @class */ (function (_super) {
             "..."
         ];
         _this.npcDialogueLine = 0;
+        _this.player = null;
         _this.targetX = 0;
         _this.targetY = 0;
         _this.maxWanderRange = 100;
@@ -1748,7 +1754,8 @@ var MasterNpc = /** @class */ (function (_super) {
         }
     };
     MasterNpc.prototype.checkForHitting = function () {
-        if (this.damageFrames.indexOf(this.animations.frame) >= 0 &&
+        if (this.player &&
+            this.damageFrames.indexOf(this.animations.frame) >= 0 &&
             this.game.physics.arcade.overlap(this.hitBox1, this.player)) {
             this.player.takeDamage(this.stats.attack * 50, this.x);
         }
@@ -1820,7 +1827,7 @@ var MasterNpc = /** @class */ (function (_super) {
         return true;
     };
     MasterNpc.prototype.attack = function () {
-        if (this.player.x > this.x) {
+        if (this.player && this.player.x > this.x) {
             this.scale.setTo(1, 1);
         }
         else {
@@ -1829,6 +1836,9 @@ var MasterNpc = /** @class */ (function (_super) {
         this.npcState = npcStateEnum.attack1;
     };
     MasterNpc.prototype.chase = function () {
+        if (!this.player) {
+            return;
+        }
         this.npcState = npcStateEnum.movingChase;
         if (this.player.x > this.x) {
             this.scale.setTo(1, 1);

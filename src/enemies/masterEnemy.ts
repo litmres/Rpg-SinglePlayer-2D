@@ -2,7 +2,7 @@ class MasterEnemy extends Phaser.Sprite {
     enemyState: enemyStateEnum = enemyStateEnum.idle;
     friendly = false;
     wanderRange = 100;
-    player: Player;
+    player: Player | null = null;
     targetX = 0;
     targetY = 0;
     defaultScaleWidth = 1;
@@ -45,7 +45,7 @@ class MasterEnemy extends Phaser.Sprite {
         [enemyStateEnum.idleSpecial]: "idlespecial",
         [enemyStateEnum.knockBack]: "knockback",
     };
-    hitBox1: Phaser.Group | null = null;
+    hitBox1: Phaser.Sprite | null = null;
     invincible = false;
     hitBoxes: Phaser.Group;
     damageFrames: number[] = [];
@@ -157,7 +157,8 @@ class MasterEnemy extends Phaser.Sprite {
     }
 
     checkForHitting() {
-        if (this.damageFrames.indexOf(this.animations.frame) >= 0 &&
+        if (this.player &&
+            this.damageFrames.indexOf(this.animations.frame) >= 0 &&
             this.game.physics.arcade.overlap(this.hitBox1, this.player)
         ) {
             this.player.takeDamage(this.stats.attack * 20, this.x);
@@ -192,7 +193,7 @@ class MasterEnemy extends Phaser.Sprite {
     }
 
     attack() {
-        if (this.player.x > this.x) {
+        if (this.player && this.player.x > this.x) {
             this.scale.setTo(this.defaultDirection * this.defaultScaleWidth, this.defaultScaleHeight);
         } else {
             this.scale.setTo(this.defaultDirection * this.defaultScaleWidth * -1, this.defaultScaleHeight);
@@ -201,6 +202,7 @@ class MasterEnemy extends Phaser.Sprite {
     }
 
     chase() {
+        if (!this.player) { return; }
         this.enemyState = enemyStateEnum.movingChase;
         if (this.player.x > this.x) {
             this.updateScale(1);
