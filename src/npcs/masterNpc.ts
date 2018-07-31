@@ -56,6 +56,7 @@ class MasterNpc extends Phaser.Sprite {
     };
     invincible = false;
     hitBoxes: Phaser.Group;
+    hitBox1: Phaser.Group | null = null;
     damageFrames: number[] = [];
     constructor(game: Phaser.Game, x: number, y: number, key?: string, frame?: number) {
         super(game, x, y, key, frame);
@@ -108,6 +109,14 @@ class MasterNpc extends Phaser.Sprite {
                 this.friendly = false;
                 this.takeDamage(this.player.stats.attack * 50, this.player.x);
             }
+        }
+    }
+
+    checkForHitting() {
+        if (this.damageFrames.indexOf(this.animations.frame) >= 0 &&
+            this.game.physics.arcade.overlap(this.hitBox1, this.player)
+        ) {
+            this.player.takeDamage(this.stats.attack * 50, this.x);
         }
     }
 

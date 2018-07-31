@@ -45,6 +45,7 @@ class MasterEnemy extends Phaser.Sprite {
         [enemyStateEnum.idleSpecial]: "idlespecial",
         [enemyStateEnum.knockBack]: "knockback",
     };
+    hitBox1: Phaser.Group | null = null;
     invincible = false;
     hitBoxes: Phaser.Group;
     damageFrames: number[] = [];
@@ -153,6 +154,14 @@ class MasterEnemy extends Phaser.Sprite {
             this.y = toY;
             this.enemyState = endState;
         }, this);
+    }
+
+    checkForHitting() {
+        if (this.damageFrames.indexOf(this.animations.frame) >= 0 &&
+            this.game.physics.arcade.overlap(this.hitBox1, this.player)
+        ) {
+            this.player.takeDamage(this.stats.attack * 20, this.x);
+        }
     }
 
     resetInvincable() {

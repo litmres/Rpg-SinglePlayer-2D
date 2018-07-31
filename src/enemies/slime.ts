@@ -73,14 +73,6 @@ class Slime extends MasterEnemy {
         this.updateHitbox();
     }
 
-    checkForHitting() {
-        if (this.damageFrames.indexOf(this.animations.frame) >= 0 &&
-            this.game.physics.arcade.overlap(this.hitBox1, this.player)
-        ) {
-            this.player.takeDamage(this.stats.attack * 20, this.x);
-        }
-    }
-
     handleInput() {
         if (this.player) {
             const distance = this.game.physics.arcade.distanceBetween(this, this.player);

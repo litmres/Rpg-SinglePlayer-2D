@@ -146,6 +146,7 @@ var MasterEnemy = /** @class */ (function (_super) {
             _a[enemyStateEnum.idleSpecial] = "idlespecial",
             _a[enemyStateEnum.knockBack] = "knockback",
             _a);
+        _this.hitBox1 = null;
         _this.invincible = false;
         _this.damageFrames = [];
         _this.anchor.setTo(0.5, 0);
@@ -245,6 +246,12 @@ var MasterEnemy = /** @class */ (function (_super) {
             _this.y = toY;
             _this.enemyState = endState;
         }, this);
+    };
+    MasterEnemy.prototype.checkForHitting = function () {
+        if (this.damageFrames.indexOf(this.animations.frame) >= 0 &&
+            this.game.physics.arcade.overlap(this.hitBox1, this.player)) {
+            this.player.takeDamage(this.stats.attack * 20, this.x);
+        }
     };
     MasterEnemy.prototype.resetInvincable = function () {
         this.invincible = false;
@@ -425,12 +432,6 @@ var AdventurerEnemy = /** @class */ (function (_super) {
         this.handleDeath();
         this.updateHitbox();
     };
-    AdventurerEnemy.prototype.checkForHitting = function () {
-        if (this.damageFrames.indexOf(this.animations.frame) >= 0 &&
-            this.game.physics.arcade.overlap(this.hitBox1, this.player)) {
-            this.player.takeDamage(this.stats.attack * 20, this.x);
-        }
-    };
     AdventurerEnemy.prototype.handleInput = function () {
         if (this.player) {
             var distance = this.game.physics.arcade.distanceBetween(this, this.player);
@@ -527,12 +528,6 @@ var KoboldEnemy = /** @class */ (function (_super) {
         this.handleDeath();
         this.updateHitbox();
     };
-    KoboldEnemy.prototype.checkForHitting = function () {
-        if (this.damageFrames.indexOf(this.animations.frame) >= 0 &&
-            this.game.physics.arcade.overlap(this.hitBox1, this.player)) {
-            this.player.takeDamage(this.stats.attack * 20, this.x);
-        }
-    };
     KoboldEnemy.prototype.handleInput = function () {
         if (this.player) {
             var distance = this.game.physics.arcade.distanceBetween(this, this.player);
@@ -609,12 +604,6 @@ var RogueEnemy = /** @class */ (function (_super) {
         this.checkForGettingHit();
         this.handleDeath();
         this.updateHitbox();
-    };
-    RogueEnemy.prototype.checkForHitting = function () {
-        if (this.damageFrames.indexOf(this.animations.frame) >= 0 &&
-            this.game.physics.arcade.overlap(this.hitBox1, this.player)) {
-            this.player.takeDamage(this.stats.attack * 20, this.x);
-        }
     };
     RogueEnemy.prototype.handleInput = function () {
         if (this.player) {
@@ -693,12 +682,6 @@ var Slime = /** @class */ (function (_super) {
         this.checkForGettingHit();
         this.handleDeath();
         this.updateHitbox();
-    };
-    Slime.prototype.checkForHitting = function () {
-        if (this.damageFrames.indexOf(this.animations.frame) >= 0 &&
-            this.game.physics.arcade.overlap(this.hitBox1, this.player)) {
-            this.player.takeDamage(this.stats.attack * 20, this.x);
-        }
     };
     Slime.prototype.handleInput = function () {
         if (this.player) {
@@ -1712,6 +1695,7 @@ var MasterNpc = /** @class */ (function (_super) {
             _a[npcStateEnum.knockBack] = "knockback",
             _a);
         _this.invincible = false;
+        _this.hitBox1 = null;
         _this.damageFrames = [];
         _this.anchor.setTo(0.5, 0);
         game.physics.arcade.enableBody(_this);
@@ -1761,6 +1745,12 @@ var MasterNpc = /** @class */ (function (_super) {
                 this.friendly = false;
                 this.takeDamage(this.player.stats.attack * 50, this.player.x);
             }
+        }
+    };
+    MasterNpc.prototype.checkForHitting = function () {
+        if (this.damageFrames.indexOf(this.animations.frame) >= 0 &&
+            this.game.physics.arcade.overlap(this.hitBox1, this.player)) {
+            this.player.takeDamage(this.stats.attack * 50, this.x);
         }
     };
     MasterNpc.prototype.updateHitbox = function () {
@@ -2027,12 +2017,6 @@ var RogueNpc = /** @class */ (function (_super) {
         this.checkForGettingHit();
         this.handleDeath();
         this.updateHitbox();
-    };
-    RogueNpc.prototype.checkForHitting = function () {
-        if (this.damageFrames.indexOf(this.animations.frame) >= 0 &&
-            this.game.physics.arcade.overlap(this.hitBox1, this.player)) {
-            this.player.takeDamage(this.stats.attack * 50, this.x);
-        }
     };
     RogueNpc.prototype.handleInput = function () {
         if (this.player) {
