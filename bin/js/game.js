@@ -857,6 +857,7 @@ var SlimeBoss = /** @class */ (function (_super) {
         _this.defaultDirection = -1;
         _this.isDoingJumpAttack = false;
         _this.goingToJump = false;
+        _this.canSpawnNormalEnemy = true;
         _this.damageFrames = [26];
         _this.enemyGroup = enemyGroup;
         _this.player = player;
@@ -884,6 +885,7 @@ var SlimeBoss = /** @class */ (function (_super) {
         _this.animations.add("walk", [4, 5, 6, 7], 10, true);
         _this.animations.add("jump", [26], 10, false);
         _this.animations.add("death", [17, 18, 19, 20], 10, false).onComplete.add(function () {
+            _this.bossOverlay.destroy();
             _this.kill();
         });
         _this.animations.add("splatter", [17, 18, 19, 20], 10, false).onComplete.add(function () {
@@ -906,6 +908,12 @@ var SlimeBoss = /** @class */ (function (_super) {
         this.handleDeath();
         this.handleRotation();
         this.updateHitbox();
+    };
+    SlimeBoss.prototype.handleDeath = function () {
+        if (this.stats.health <= 0 && this.slimeBossState !== slimeBossStateEnum.death) {
+            this.invincible = true;
+            this.slimeBossState = slimeBossStateEnum.death;
+        }
     };
     SlimeBoss.prototype.handleRotation = function () {
         if (this.onGround()) {
@@ -993,6 +1001,7 @@ var SlimeBoss = /** @class */ (function (_super) {
             this.regenerate();
         }
         if (this.slimeBossState === slimeBossStateEnum.jumpingToWall &&
+            this.canSpawnNormalEnemy &&
             this.x < this.player.x &&
             this.x + this.width > this.player.x + this.player.width) {
             this.spawnNormalEnemy();
@@ -1000,6 +1009,11 @@ var SlimeBoss = /** @class */ (function (_super) {
         this.idle();
     };
     SlimeBoss.prototype.spawnNormalEnemy = function () {
+        var _this = this;
+        this.canSpawnNormalEnemy = false;
+        setTimeout(function () {
+            _this.canSpawnNormalEnemy = true;
+        }, 1000);
         this.stats.health -= 5;
         this.fakeHealth = this.stats.health;
         var slime = new Slime(this.game, this.centerX, this.y - 30);
