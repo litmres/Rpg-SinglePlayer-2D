@@ -8,6 +8,7 @@ class KoboldEnemy extends MasterEnemy {
     aggroRange = 100;
     defaultDirection = -1;
     hitBox1: Phaser.Sprite;
+    damageFrames = [12, 13, 14];
     constructor(game: Phaser.Game, x: number, y: number) {
         super(game, x, y, "kobold", 0);
         this.bodyWidth = 18;

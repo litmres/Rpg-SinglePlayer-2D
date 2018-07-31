@@ -7,6 +7,7 @@ class RogueEnemy extends MasterEnemy {
     maxWanderRange = 100;
     aggroRange = 100;
     hitBox1: Phaser.Sprite;
+    damageFrames = [34, 35, 36];
     constructor(game: Phaser.Game, x: number, y: number) {
         super(game, x, y, "rogue", 0);
         this.bodyWidth = 16;

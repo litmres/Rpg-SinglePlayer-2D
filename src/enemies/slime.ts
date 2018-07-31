@@ -8,6 +8,7 @@ class Slime extends MasterEnemy {
     aggroRange = 100;
     hitBox1: Phaser.Sprite;
     defaultDirection = -1;
+    damageFrames = [10, 11];
     constructor(game: Phaser.Game, x: number, y: number) {
         super(game, x, y, "slime", 0);
         this.bodyWidth = 16;

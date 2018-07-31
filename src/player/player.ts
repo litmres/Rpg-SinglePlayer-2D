@@ -74,6 +74,7 @@ class Player extends Phaser.Sprite {
         boundsAlignH: "center",
         boundsAlignV: "middle"
     };
+    damageFrames = [45, 46, 50, 51, 56, 57, 58];
     constructor(game: Phaser.Game, x: number, y: number) {
         super(game, x, y, "player", 0);
         this.game.camera.follow(this, Phaser.Camera.FOLLOW_PLATFORMER, 0.05, 0.05);
@@ -210,6 +211,8 @@ class Player extends Phaser.Sprite {
 
         this.handleInput();
 
+        this.handleRoll();
+
         this.handleEnteringLevel();
 
         this.handleDeath();
@@ -237,7 +240,7 @@ class Player extends Phaser.Sprite {
     handleRoll() {
         if (this.playerState === playerStateEnum.roll) {
             this.invincible = true;
-        } else {
+        } else if (this.playerState !== playerStateEnum.knockBack) {
             this.resetInvincable();
         }
     }

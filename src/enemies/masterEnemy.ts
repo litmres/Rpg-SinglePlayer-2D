@@ -47,6 +47,7 @@ class MasterEnemy extends Phaser.Sprite {
     };
     invincible = false;
     hitBoxes: Phaser.Group;
+    damageFrames: number[] = [];
     constructor(game: Phaser.Game, x: number, y: number, key?: string, frame?: number) {
         super(game, x, y, key, frame);
         this.anchor.setTo(0.5, 0);
