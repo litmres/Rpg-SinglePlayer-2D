@@ -40,16 +40,10 @@ class RogueNpc extends MasterNpc {
             luck: 1,
         };
         this.animations.add("idle", [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], 10, false).onComplete.add(() => {
-            const rndNumber = this.game.rnd.integerInRange(1, 100);
-            if (rndNumber > 90) {
-                this.npcState = npcStateEnum.idleSpecial;
-            } else if (!this.friendly && rndNumber > 20 && rndNumber < 90) {
-                this.wander();
-            }
+
         });
         this.animations.add("idlespecial", [10, 11, 12, 13, 14, 15, 16, 17, 18, 19], 10, false).onComplete.add(() => {
             this.animations.stop();
-            this.npcState = npcStateEnum.idle;
         });
         this.animations.add("walk", [20, 21, 22, 23, 24, 25, 26, 27, 28, 29], 10, true);
         this.animations.add("attack1", [30, 31, 32, 33, 34, 35, 36, 37, 38, 39], 10, false).onComplete.add(() => {
@@ -65,40 +59,6 @@ class RogueNpc extends MasterNpc {
         this.game.physics.enable(this.hitBoxes, Phaser.Physics.ARCADE);
         this.hitBox1.body.setSize(15, 10);
         this.hitBox1.name = "attack1";
-    }
-
-    update() {
-        this.resetVelocity();
-
-        this.animations.play(this.npcAnimations[this.npcState]);
-
-        if (!this.friendly) {
-            this.handleInput();
-            this.stopMovingTo();
-            this.idle();
-            this.canInteract = false;
-        }
-
-        this.interaction();
-
-        this.checkForHitting();
-
-        this.checkForGettingHit();
-
-        this.handleDeath();
-
-        this.updateHitbox();
-    }
-
-    handleInput() {
-        if (this.player) {
-            const distance = this.game.physics.arcade.distanceBetween(this, this.player);
-            if (distance < Math.abs(this.hitBox1.width) && this.canAttack[this.npcState]) {
-                this.attack();
-            } else if (distance < this.aggroRange && this.canChase[this.npcState]) {
-                this.chase();
-            }
-        }
     }
 
     interaction() {

@@ -14,6 +14,11 @@ class MasterNpc extends Phaser.Sprite {
     aggroRange = 100;
     canInteract = false;
     canInteractText!: Phaser.Text | null;
+    maxRestRange = 40;
+    maxAggroRange = 100;
+    attackCooldown = 2000;
+    attackTimer: null | number = null;
+    allowAttack = true;
     DialogueStyle = {
         font: "bold 10px Arial",
         fill: "#fff",
@@ -33,7 +38,7 @@ class MasterNpc extends Phaser.Sprite {
         npcStateEnum.idleSpecial,
         npcStateEnum.movingChase
     ]);
-    canAttack = ([
+    canAttack = npcAllowance([
         npcStateEnum.movingWalk,
         npcStateEnum.idle,
         npcStateEnum.idleSpecial,
@@ -83,6 +88,83 @@ class MasterNpc extends Phaser.Sprite {
         this.hitBoxes = this.game.add.group();
 
         this.addChild(this.hitBoxes);
+    }
+
+    update() {
+        this.resetVelocity();
+
+        this.animations.play(this.npcAnimations[this.npcState]);
+
+        if (!this.friendly) {
+            this.handleInput();
+            this.stopMovingTo();
+            this.idle();
+            this.canInteract = false;
+        }
+
+        this.interaction();
+
+        this.checkForHitting();
+
+        this.checkForGettingHit();
+
+        this.handleDeath();
+
+        this.updateHitbox();
+    }
+
+    handleInput() {
+        if (this.player) {
+            const distance = this.game.physics.arcade.distanceBetween(this, this.player);
+            if (this.isAllowedToAttack(distance)) {
+                this.attack();
+            } else if (this.isAllowedToChase(distance)) {
+                this.chase();
+            } else if (this.isAllowedToWander()) {
+                //this.wander();
+            } else {
+                this.idle();
+            }
+        }
+    }
+
+    isAllowedToWander() {
+        if (this.canWalk[this.npcState]) {
+            return true;
+        }
+        return false;
+    }
+
+    isAllowedToChase(distance: number) {
+        if (!this.allowRestRange(distance) &&
+            this.betweenAggroRange(distance) &&
+            this.canChase[this.npcState]) {
+            return true;
+        }
+        return false;
+    }
+
+    isAllowedToAttack(distance: number) {
+        if (this.game.physics.arcade.overlap(this.player, this.hitBox1) &&
+            this.canAttack[this.npcState] &&
+            this.allowAttack) {
+            return true;
+        }
+        return false;
+    }
+
+    allowRestRange(distance: number) {
+        if (!this.allowAttack && distance < this.maxRestRange) {
+            return true;
+        }
+        return false;
+    }
+
+    betweenAggroRange(distance: number) {
+        if (!this.game.physics.arcade.overlap(this.player, this.hitBox1) && distance < this.maxAggroRange) {
+            return true;
+        }
+        return false;
     }
 
     stopMovingTo() {
@@ -299,7 +381,12 @@ class MasterNpc extends Phaser.Sprite {
 
     idle() {
         if (this.canIdle[this.npcState]) {
-            this.npcState = npcStateEnum.idle;
+            const rndNumber = this.game.rnd.integerInRange(1, 100);
+            if (rndNumber > 90) {
+                this.npcState = npcStateEnum.idleSpecial;
+            } else {
+                this.npcState = npcStateEnum.idle;
+            }
         }
     }
 }

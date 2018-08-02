@@ -1,11 +1,11 @@
 /// <reference path="./masterEnemy.ts"/>
 
 class AdventurerEnemy extends MasterEnemy {
-    wanderRange = 100;
+    minWanderRange = 100;
     maxWanderRange = 100;
     bodyWidth: number;
     bodyHeight: number;
-    aggroRange = 100;
+    maxAggroRange = 100;
     hitBox1: Phaser.Sprite;
     damageFrames = [45, 46];
     constructor(game: Phaser.Game, x: number, y: number) {
@@ -25,12 +25,7 @@ class AdventurerEnemy extends MasterEnemy {
             luck: 1,
         };
         this.animations.add("idle", [0, 1, 2, 3], 10, false).onComplete.add(() => {
-            const rndNumber = this.game.rnd.integerInRange(1, 100);
-            if (rndNumber > 90) {
-                this.enemyState = enemyStateEnum.idleSpecial;
-            } else if (!this.friendly && rndNumber > 20 && rndNumber < 90) {
-                this.wander();
-            }
+
         });
         this.animations.add("idlespecial", [38, 39, 40, 41], 10, false).onComplete.add(() => {
             this.animations.stop();
@@ -50,36 +45,5 @@ class AdventurerEnemy extends MasterEnemy {
         this.game.physics.enable(this.hitBoxes, Phaser.Physics.ARCADE);
         this.hitBox1.body.setSize(25, 10);
         this.hitBox1.name = "attack1";
-    }
-
-    update() {
-        this.resetVelocity();
-
-        this.animations.play(this.enemyAnimations[this.enemyState]);
-
-        if (!this.friendly) {
-            this.handleInput();
-            this.stopMovingTo();
-            this.idle();
-        }
-
-        this.checkForHitting();
-
-        this.checkForGettingHit();
-
-        this.handleDeath();
-
-        this.updateHitbox();
-    }
-
-    handleInput() {
-        if (this.player) {
-            const distance = this.game.physics.arcade.distanceBetween(this, this.player);
-            if (distance < Math.abs(this.hitBox1.width) && this.canAttack[this.enemyState]) {
-                this.attack();
-            } else if (distance < this.aggroRange && this.canChase[this.enemyState]) {
-                this.chase();
-            }
-        }
     }
 }

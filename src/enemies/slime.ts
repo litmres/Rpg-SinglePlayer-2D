@@ -1,11 +1,11 @@
 /// <reference path="./masterEnemy.ts"/>
 
 class Slime extends MasterEnemy {
-    wanderRange = 100;
+    minWanderRange = 100;
     bodyWidth: number;
     bodyHeight: number;
     maxWanderRange = 100;
-    aggroRange = 100;
+    maxAggroRange = 100;
     hitBox1: Phaser.Sprite;
     defaultDirection = -1;
     damageFrames = [10, 11];
@@ -26,12 +26,7 @@ class Slime extends MasterEnemy {
             luck: 1,
         };
         this.animations.add("idle", [0, 1, 2, 3], 10, false).onComplete.add(() => {
-            const rndNumber = this.game.rnd.integerInRange(1, 100);
-            if (rndNumber > 90) {
-                this.enemyState = enemyStateEnum.idleSpecial;
-            } else if (!this.friendly && rndNumber > 20 && rndNumber < 90) {
-                this.wander();
-            }
+
         });
         this.animations.add("idlespecial", [0, 1, 2, 3], 10, false).onComplete.add(() => {
             this.animations.stop();
@@ -51,36 +46,5 @@ class Slime extends MasterEnemy {
         this.game.physics.enable(this.hitBoxes, Phaser.Physics.ARCADE);
         this.hitBox1.body.setSize(15, 10);
         this.hitBox1.name = "attack1";
-    }
-
-    update() {
-        this.resetVelocity();
-
-        this.animations.play(this.enemyAnimations[this.enemyState]);
-
-        if (!this.friendly) {
-            this.handleInput();
-            this.stopMovingTo();
-            this.idle();
-        }
-
-        this.checkForHitting();
-
-        this.checkForGettingHit();
-
-        this.handleDeath();
-
-        this.updateHitbox();
-    }
-
-    handleInput() {
-        if (this.player) {
-            const distance = this.game.physics.arcade.distanceBetween(this, this.player);
-            if (distance < Math.abs(this.hitBox1.width) && this.canAttack[this.enemyState]) {
-                this.attack();
-            } else if (distance < this.aggroRange && this.canChase[this.enemyState]) {
-                this.chase();
-            }
-        }
     }
 }
