@@ -43,6 +43,8 @@ class PreloadState extends Phaser.State {
         this.game.load.image("inventorybar", "bin/assets/UI/inventorybar.png");
         this.game.load.image("bubble", "bin/assets/UI/bubble.png");
 
+        this.game.load.image("sign", "bin/assets/sign/sign.png");
+
         this.game.load.spritesheet("item", "bin/assets/items/item.png", 15, 15);
         this.game.load.spritesheet("rogue", "bin/assets/rogue/rogue.png", 32, 32);
         this.game.load.spritesheet("bonfire", "bin/assets/bonfire/bonfire.png", 500, 740);
@@ -71,6 +73,7 @@ class PreloadState extends Phaser.State {
         this.game.load.spritesheet("wasp", "bin/assets/wasp/wasp.png", 32, 32);
         this.game.load.spritesheet("werewolf", "bin/assets/werewolf/werewolf.png", 73, 43);
         this.game.load.spritesheet("yeti", "bin/assets/yeti/yeti.png", 73, 57);
+
     }
 
     finishedLoading(this: PreloadState) {

@@ -49,7 +49,7 @@ class SlimeBoss extends MasterEnemy {
         this.bodyWidth = 75;
         this.bodyHeight = 60;
         this.body.setSize(this.bodyWidth / this.scale.x, this.bodyHeight / this.scale.y, (this.width - this.bodyWidth) / 2, this.height - this.bodyHeight - 6);
-        this.maxHealth = 500;
+        this.maxHealth = 250;
         this.stats = {
             level: 1,
             maxHealth: this.maxHealth,

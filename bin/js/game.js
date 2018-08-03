@@ -1129,7 +1129,7 @@ var SlimeBoss = /** @class */ (function (_super) {
         _this.bodyWidth = 75;
         _this.bodyHeight = 60;
         _this.body.setSize(_this.bodyWidth / _this.scale.x, _this.bodyHeight / _this.scale.y, (_this.width - _this.bodyWidth) / 2, _this.height - _this.bodyHeight - 6);
-        _this.maxHealth = 500;
+        _this.maxHealth = 250;
         _this.stats = {
             level: 1,
             maxHealth: _this.maxHealth,
@@ -1455,6 +1455,7 @@ var MasterLevel = /** @class */ (function (_super) {
         this.game.physics.arcade.collide(this.npcs, this.platforms);
         this.game.physics.arcade.collide(this.bonfires, this.platforms);
         this.game.physics.arcade.collide(this.items, this.platforms);
+        this.game.physics.arcade.collide(this.signs, this.platforms);
         this.game.physics.arcade.collide(this.player, this.gates);
         this.game.physics.arcade.collide(this.enemies, this.gates);
         this.game.physics.arcade.collide(this.npcs, this.gates);
@@ -1463,19 +1464,23 @@ var MasterLevel = /** @class */ (function (_super) {
         this.game.physics.arcade.collide(this.npcs, this.grounds);
         this.game.physics.arcade.collide(this.bonfires, this.grounds);
         this.game.physics.arcade.collide(this.items, this.grounds);
+        this.game.physics.arcade.collide(this.signs, this.grounds);
         this.game.physics.arcade.collide(this.player, this.walls);
         this.game.physics.arcade.collide(this.enemies, this.walls);
         this.game.physics.arcade.collide(this.npcs, this.walls);
         this.game.physics.arcade.collide(this.bonfires, this.walls);
         this.game.physics.arcade.collide(this.items, this.walls);
+        this.game.physics.arcade.collide(this.signs, this.walls);
         this.game.physics.arcade.collide(this.player, this.ceilings);
         this.game.physics.arcade.collide(this.enemies, this.ceilings);
         this.game.physics.arcade.collide(this.npcs, this.ceilings);
         this.game.physics.arcade.collide(this.bonfires, this.ceilings);
         this.game.physics.arcade.collide(this.items, this.ceilings);
+        this.game.physics.arcade.collide(this.signs, this.ceilings);
         this.playerFacingBonfire();
         this.playerFacingNpc();
         this.playerFacingItem();
+        this.playerFacingSign();
         if (this.debugMode) {
             this.debug();
         }
@@ -1497,6 +1502,7 @@ var MasterLevel = /** @class */ (function (_super) {
         this.npcs = this.game.add.group();
         this.bonfires = this.game.add.group();
         this.items = this.game.add.group();
+        this.signs = this.game.add.group();
     };
     MasterLevel.prototype.addPlayerToNpcs = function () {
         var _this = this;
@@ -1555,6 +1561,19 @@ var MasterLevel = /** @class */ (function (_super) {
             }
         });
     };
+    MasterLevel.prototype.playerFacingSign = function () {
+        var _this = this;
+        this.signs.forEach(function (v) {
+            if (_this.game.physics.arcade.overlap(_this.player, v)) {
+                v.canInteract = true;
+                _this.player.facingSign = v;
+            }
+            else {
+                v.canInteract = false;
+                _this.player.facingSign = null;
+            }
+        });
+    };
     MasterLevel.prototype.roomIsClear = function () {
         if (this.enemies.children.length === 0) {
             this.gates.forEach(function (v) {
@@ -1577,6 +1596,9 @@ var MasterLevel = /** @class */ (function (_super) {
             _this.game.debug.physicsGroup(v.hitBoxes);
         });
         this.bonfires.forEach(function (v) {
+            _this.game.debug.body(v);
+        });
+        this.signs.forEach(function (v) {
             _this.game.debug.body(v);
         });
         this.gates.forEach(function (v) {
@@ -1625,9 +1647,7 @@ var Level0 = /** @class */ (function (_super) {
         });
         this.npcs.add(new RogueNpc(this.game, 600, ground.y - ground.height));
         this.items.add(new Item(this.game, 450, ground.y - ground.height, new RingOfStrength()));
-        this.enemies.add(new RatEnemy(this.game, 200, ground.y - ground.height * 2));
-        this.enemies.add(new MandrakeEnemy(this.game, 400, ground.y - ground.height * 2));
-        this.enemies.add(new SatyrEnemy(this.game, 800, ground.y - ground.height * 2));
+        this.signs.add(new Sign(this.game, 200, ground.y - ground.height));
         this.updateFpsTimer();
         this.enablePhysics();
     };
@@ -1680,17 +1700,18 @@ var Level1 = /** @class */ (function (_super) {
         this.walls.forEach(function (platform) {
             platform.body.immovable = true;
         });
-        this.enemies.add(new DjinnBanditEnemy(this.game, 200, ground.y - ground.height * 2));
-        this.enemies.add(new WerewolfEnemy(this.game, 400, ground.y - ground.height * 2));
-        this.enemies.add(new YetiEnemy(this.game, 600, ground.y - ground.height * 2));
-        this.enemies.add(new MinotaurEnemy(this.game, 800, ground.y - ground.height * 3));
-        this.enemies.add(new RedOgreEnemy(this.game, 1000, ground.y - ground.height * 2));
-        this.enemies.add(new OgreEnemy(this.game, 1200, ground.y - ground.height * 2));
-        this.enemies.add(new RogueEnemy(this.game, 1400, ground.y - ground.height));
-        this.enemies.add(new KoboldEnemy(this.game, 1600, ground.y - ground.height * 2));
-        this.enemies.add(new Slime(this.game, 1500, ground.y - ground.height * 2));
-        this.enemies.add(new Slime(this.game, 1700, ground.y - ground.height * 2));
-        this.enemies.add(new AdventurerEnemy(this.game, 1800, ground.y - ground.height * 2));
+        this.enemies.add(new Slime(this.game, 300, ground.y - ground.height * 2));
+        this.enemies.add(new RogueEnemy(this.game, 400, ground.y - ground.height));
+        this.enemies.add(new Slime(this.game, 500, ground.y - ground.height * 2));
+        this.enemies.add(new AdventurerEnemy(this.game, 600, ground.y - ground.height * 2));
+        this.enemies.add(new Slime(this.game, 700, ground.y - ground.height * 2));
+        this.enemies.add(new Slime(this.game, 750, ground.y - ground.height * 2));
+        this.enemies.add(new KoboldEnemy(this.game, 800, ground.y - ground.height * 2));
+        this.enemies.add(new Slime(this.game, 1000, ground.y - ground.height * 2));
+        this.enemies.add(new Slime(this.game, 1100, ground.y - ground.height * 2));
+        this.enemies.add(new KoboldEnemy(this.game, 1200, ground.y - ground.height * 2));
+        this.enemies.add(new KoboldEnemy(this.game, 1400, ground.y - ground.height * 2));
+        this.enemies.add(new Slime(this.game, 1600, ground.y - ground.height * 2));
         this.bonfires.add(new Bonfire(this.game, 500, ground.y - ground.height));
         this.updateFpsTimer();
         this.enablePhysics();
@@ -1763,6 +1784,68 @@ var Level2 = /** @class */ (function (_super) {
         this.addPlayerToGates();
     };
     return Level2;
+}(MasterLevel));
+/// <reference path="./masterLevel.ts"/>
+var Level3 = /** @class */ (function (_super) {
+    __extends(Level3, _super);
+    function Level3() {
+        var _this = _super !== null && _super.apply(this, arguments) || this;
+        _this.levelNumber = levelsEnum.level1;
+        return _this;
+    }
+    Level3.prototype.preload = function () {
+        this.game.world.setBounds(0, 0, this.game.world.width + 1000, this.game.world.height);
+        this.addGroups();
+        this.background = 0x49801;
+        this.platforms.enableBody = true;
+        this.grounds.enableBody = true;
+        this.ceilings.enableBody = true;
+        this.walls.enableBody = true;
+        var ground = this.grounds.create(0, this.game.world.bounds.height, "floor");
+        ground.y -= ground.height;
+        ground.width = this.game.world.bounds.width;
+        var ceiling = this.ceilings.create(0, 0, "ceiling");
+        ceiling.width = this.game.world.bounds.width;
+        var wall = this.walls.create(0, ceiling.height, "wall");
+        wall.height = this.game.world.bounds.height - wall.height * 2 - ceiling.height * 2;
+        var wall2 = this.walls.create(this.world.bounds.width - wall.width, ceiling.height, "wall");
+        wall2.height = this.game.world.bounds.height - wall2.height * 2 - ceiling.height * 2;
+        this.platforms.forEach(function (platform) {
+            platform.body.immovable = true;
+        });
+        this.grounds.forEach(function (platform) {
+            platform.body.immovable = true;
+        });
+        this.ceilings.forEach(function (platform) {
+            platform.body.immovable = true;
+        });
+        this.walls.forEach(function (platform) {
+            platform.body.immovable = true;
+        });
+        this.enemies.add(new RatEnemy(this.game, 200, ground.y - ground.height * 2));
+        this.enemies.add(new MandrakeEnemy(this.game, 400, ground.y - ground.height * 2));
+        this.enemies.add(new SatyrEnemy(this.game, 600, ground.y - ground.height * 2));
+        this.enemies.add(new DjinnBanditEnemy(this.game, 800, ground.y - ground.height * 2));
+        this.enemies.add(new WerewolfEnemy(this.game, 1000, ground.y - ground.height * 2));
+        this.enemies.add(new YetiEnemy(this.game, 1200, ground.y - ground.height * 2));
+        this.enemies.add(new MinotaurEnemy(this.game, 1400, ground.y - ground.height * 3));
+        this.enemies.add(new RedOgreEnemy(this.game, 1600, ground.y - ground.height * 2));
+        this.enemies.add(new OgreEnemy(this.game, 1800, ground.y - ground.height * 2));
+        this.bonfires.add(new Bonfire(this.game, 500, ground.y - ground.height));
+        this.bonfires.add(new Bonfire(this.game, 1500, ground.y - ground.height));
+        this.updateFpsTimer();
+        this.enablePhysics();
+    };
+    Level3.prototype.create = function () {
+        this.game.stage.backgroundColor = this.background;
+        this.player = new Player(this.game, 0, 0);
+        this.player.currentRoom = this.levelNumber;
+        this.player.loadPlayer(this.playerStorage);
+        this.addPlayerToEnemies();
+        this.addPlayerToNpcs();
+        this.addPlayerToGates();
+    };
+    return Level3;
 }(MasterLevel));
 var Inventory = /** @class */ (function (_super) {
     __extends(Inventory, _super);
@@ -2502,6 +2585,7 @@ var Bonfire = /** @class */ (function (_super) {
         _this.scale.setTo(0.05, 0.05);
         game.add.existing(_this);
         _this.body.collideWorldBounds = true;
+        _this.body.gravity.y = 1000;
         game.physics.enable(_this, Phaser.Physics.ARCADE);
         _this.animations.add("bonfire_not_lit", [0]);
         _this.animations.add("bonfire_lit", [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], 5, true);
@@ -2582,6 +2666,73 @@ var Gate = /** @class */ (function (_super) {
         }
     };
     return Gate;
+}(Phaser.Sprite));
+var Sign = /** @class */ (function (_super) {
+    __extends(Sign, _super);
+    function Sign(game, x, y) {
+        var _this = _super.call(this, game, x, y, "sign", 0) || this;
+        _this.signDialogue = [
+            "Press E to interact",
+            "i am the mighty sign of knowledge",
+            "you seem like a worthy adventurer",
+            "hmmm, yes, yes",
+            "i've decided!",
+            "hear me out, and i shall bless you with power",
+            "Press A to walk left",
+            "Press D to walk right",
+            "Press SPACE to dodge",
+            "Press E to interact with things",
+            "Press Left Mouse Button to attack",
+            "Press I to open inventory",
+            "Press Escape or P to pause",
+            "Bonfires will heal you",
+            "now shoo you're wasting my precious time",
+            "*mumbles i hate this job*",
+            "..."
+        ];
+        _this.signDialogueLine = 0;
+        _this.canInteract = false;
+        _this.DialogueStyle = {
+            font: "bold 10px Arial",
+            fill: "#fff",
+            boundsAlignH: "center",
+            boundsAlignV: "middle"
+        };
+        _this.anchor.setTo(0.5, 0);
+        game.physics.arcade.enableBody(_this);
+        game.add.existing(_this);
+        _this.body.collideWorldBounds = true;
+        _this.body.gravity.y = 1000;
+        game.physics.enable(_this, Phaser.Physics.ARCADE);
+        return _this;
+    }
+    Sign.prototype.update = function () {
+        this.interaction();
+    };
+    Sign.prototype.interaction = function () {
+        if (!this.canInteractText) {
+            this.canInteractText = this.game.add.text(this.x - this.width, this.y - this.height, "", this.DialogueStyle);
+            this.canInteractText.setTextBounds(30, 0, 0, 0);
+        }
+        if (this.canInteract) {
+            if (this.signDialogueLine >= this.signDialogue.length) {
+                this.signDialogueLine = this.signDialogue.length - 1;
+            }
+            this.canInteractText.setText(this.signDialogue[this.signDialogueLine]);
+        }
+        else if (!this.canInteract) {
+            this.canInteractText.setText("");
+            if (this.signDialogueLine > 0) {
+                this.signDialogueLine = 1;
+            }
+        }
+    };
+    Sign.prototype.nextDialogueText = function () {
+        if (this.canInteract) {
+            this.signDialogueLine++;
+        }
+    };
+    return Sign;
 }(Phaser.Sprite));
 var Item = /** @class */ (function (_super) {
     __extends(Item, _super);
@@ -2997,6 +3148,9 @@ var Player = /** @class */ (function (_super) {
         else if (this.controls.E.justPressed() && this.facingNpc) {
             this.handleNpc();
         }
+        else if (this.controls.E.justPressed() && this.facingSign) {
+            this.handleSign();
+        }
         else if (this.controls.E.justPressed() && this.facingItem) {
             this.handleItem();
         }
@@ -3087,6 +3241,9 @@ var Player = /** @class */ (function (_super) {
     };
     Player.prototype.handleNpc = function () {
         this.facingNpc.nextDialogueText();
+    };
+    Player.prototype.handleSign = function () {
+        this.facingSign.nextDialogueText();
     };
     Player.prototype.handleAttack = function () {
         if (this.controls.LMB.justPressed() && this.canAttack[this.playerState]) {
@@ -3245,6 +3402,7 @@ var PreloadState = /** @class */ (function (_super) {
         this.game.load.image("inventory", "bin/assets/UI/inventory.png");
         this.game.load.image("inventorybar", "bin/assets/UI/inventorybar.png");
         this.game.load.image("bubble", "bin/assets/UI/bubble.png");
+        this.game.load.image("sign", "bin/assets/sign/sign.png");
         this.game.load.spritesheet("item", "bin/assets/items/item.png", 15, 15);
         this.game.load.spritesheet("rogue", "bin/assets/rogue/rogue.png", 32, 32);
         this.game.load.spritesheet("bonfire", "bin/assets/bonfire/bonfire.png", 500, 740);

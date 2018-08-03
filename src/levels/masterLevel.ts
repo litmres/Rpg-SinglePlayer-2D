@@ -13,6 +13,7 @@ class MasterLevel extends Phaser.State {
     bonfires!: Phaser.Group;
     gates!: Phaser.Group;
     items!: Phaser.Group;
+    signs!: Phaser.Group;
     debugMode = true;
 
     update() {
@@ -21,6 +22,7 @@ class MasterLevel extends Phaser.State {
         this.game.physics.arcade.collide(this.npcs, this.platforms);
         this.game.physics.arcade.collide(this.bonfires, this.platforms);
         this.game.physics.arcade.collide(this.items, this.platforms);
+        this.game.physics.arcade.collide(this.signs, this.platforms);
 
         this.game.physics.arcade.collide(this.player, this.gates);
         this.game.physics.arcade.collide(this.enemies, this.gates);
@@ -31,12 +33,15 @@ class MasterLevel extends Phaser.State {
         this.game.physics.arcade.collide(this.npcs, this.grounds);
         this.game.physics.arcade.collide(this.bonfires, this.grounds);
         this.game.physics.arcade.collide(this.items, this.grounds);
+        this.game.physics.arcade.collide(this.signs, this.grounds);
+
 
         this.game.physics.arcade.collide(this.player, this.walls);
         this.game.physics.arcade.collide(this.enemies, this.walls);
         this.game.physics.arcade.collide(this.npcs, this.walls);
         this.game.physics.arcade.collide(this.bonfires, this.walls);
         this.game.physics.arcade.collide(this.items, this.walls);
+        this.game.physics.arcade.collide(this.signs, this.walls);
 
 
         this.game.physics.arcade.collide(this.player, this.ceilings);
@@ -44,6 +49,7 @@ class MasterLevel extends Phaser.State {
         this.game.physics.arcade.collide(this.npcs, this.ceilings);
         this.game.physics.arcade.collide(this.bonfires, this.ceilings);
         this.game.physics.arcade.collide(this.items, this.ceilings);
+        this.game.physics.arcade.collide(this.signs, this.ceilings);
 
 
 
@@ -51,6 +57,7 @@ class MasterLevel extends Phaser.State {
         this.playerFacingBonfire();
         this.playerFacingNpc();
         this.playerFacingItem();
+        this.playerFacingSign();
 
         if (this.debugMode) {
             this.debug();
@@ -76,6 +83,7 @@ class MasterLevel extends Phaser.State {
         this.npcs = this.game.add.group();
         this.bonfires = this.game.add.group();
         this.items = this.game.add.group();
+        this.signs = this.game.add.group();
     }
 
     addPlayerToNpcs() {
@@ -132,6 +140,18 @@ class MasterLevel extends Phaser.State {
         });
     }
 
+    playerFacingSign() {
+        this.signs.forEach((v: Sign) => {
+            if (this.game.physics.arcade.overlap(this.player, v)) {
+                v.canInteract = true;
+                this.player.facingSign = v;
+            } else {
+                v.canInteract = false;
+                this.player.facingSign = null;
+            }
+        });
+    }
+
     roomIsClear(): boolean {
         if (this.enemies.children.length === 0) {
             this.gates.forEach((v: Gate) => {
@@ -154,6 +174,9 @@ class MasterLevel extends Phaser.State {
             this.game.debug.physicsGroup(v.hitBoxes);
         });
         this.bonfires.forEach((v: Bonfire) => {
+            this.game.debug.body(v);
+        });
+        this.signs.forEach((v: Sign) => {
             this.game.debug.body(v);
         });
         this.gates.forEach((v: Gate) => {

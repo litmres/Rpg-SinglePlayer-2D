@@ -1,6 +1,6 @@
 /// <reference path="./masterLevel.ts"/>
 
-class Level1 extends MasterLevel {
+class Level3 extends MasterLevel {
     levelNumber = levelsEnum.level1;
 
     preload() {
@@ -43,20 +43,19 @@ class Level1 extends MasterLevel {
             platform.body.immovable = true;
         });
 
-        this.enemies.add(new Slime(this.game, 300, ground.y - ground.height * 2));
-        this.enemies.add(new RogueEnemy(this.game, 400, ground.y - ground.height));
-        this.enemies.add(new Slime(this.game, 500, ground.y - ground.height * 2));
-        this.enemies.add(new AdventurerEnemy(this.game, 600, ground.y - ground.height * 2));
-        this.enemies.add(new Slime(this.game, 700, ground.y - ground.height * 2));
-        this.enemies.add(new Slime(this.game, 750, ground.y - ground.height * 2));
-        this.enemies.add(new KoboldEnemy(this.game, 800, ground.y - ground.height * 2));
-        this.enemies.add(new Slime(this.game, 1000, ground.y - ground.height * 2));
-        this.enemies.add(new Slime(this.game, 1100, ground.y - ground.height * 2));
-        this.enemies.add(new KoboldEnemy(this.game, 1200, ground.y - ground.height * 2));
-        this.enemies.add(new KoboldEnemy(this.game, 1400, ground.y - ground.height * 2));
-        this.enemies.add(new Slime(this.game, 1600, ground.y - ground.height * 2));
+
+        this.enemies.add(new RatEnemy(this.game, 200, ground.y - ground.height * 2));
+        this.enemies.add(new MandrakeEnemy(this.game, 400, ground.y - ground.height * 2));
+        this.enemies.add(new SatyrEnemy(this.game, 600, ground.y - ground.height * 2));
+        this.enemies.add(new DjinnBanditEnemy(this.game, 800, ground.y - ground.height * 2));
+        this.enemies.add(new WerewolfEnemy(this.game, 1000, ground.y - ground.height * 2));
+        this.enemies.add(new YetiEnemy(this.game, 1200, ground.y - ground.height * 2));
+        this.enemies.add(new MinotaurEnemy(this.game, 1400, ground.y - ground.height * 3));
+        this.enemies.add(new RedOgreEnemy(this.game, 1600, ground.y - ground.height * 2));
+        this.enemies.add(new OgreEnemy(this.game, 1800, ground.y - ground.height * 2));
 
         this.bonfires.add(new Bonfire(this.game, 500, ground.y - ground.height));
+        this.bonfires.add(new Bonfire(this.game, 1500, ground.y - ground.height));
 
         this.updateFpsTimer();
 

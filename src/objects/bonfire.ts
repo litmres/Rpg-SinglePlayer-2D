@@ -19,6 +19,7 @@ class Bonfire extends Phaser.Sprite {
         this.scale.setTo(0.05, 0.05);
         game.add.existing(this);
         this.body.collideWorldBounds = true;
+        this.body.gravity.y = 1000;
         game.physics.enable(this, Phaser.Physics.ARCADE);
         this.animations.add("bonfire_not_lit", [0]);
         this.animations.add("bonfire_lit", [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], 5, true);
