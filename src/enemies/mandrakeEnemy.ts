@@ -25,7 +25,7 @@ class MandrakeEnemy extends MasterEnemy {
             movespeed: 180,
             luck: 1,
         };
-        this.animations.add("idle", [5], 10, false).onComplete.add(() => {
+        this.animations.add("idle", [0], 10, false).onComplete.add(() => {
 
         });
         this.animations.add("walk", [6, 7, 8, 9, 10, 11, 12, 13, 14], 10, true);

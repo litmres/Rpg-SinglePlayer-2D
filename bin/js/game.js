@@ -660,7 +660,7 @@ var MandrakeEnemy = /** @class */ (function (_super) {
             movespeed: 180,
             luck: 1,
         };
-        _this.animations.add("idle", [5], 10, false).onComplete.add(function () {
+        _this.animations.add("idle", [0], 10, false).onComplete.add(function () {
         });
         _this.animations.add("walk", [6, 7, 8, 9, 10, 11, 12, 13, 14], 10, true);
         _this.animations.add("attack1", [15, 16, 17, 18, 19, 20, 21], 10, false).onComplete.add(function () {
@@ -1625,15 +1625,9 @@ var Level0 = /** @class */ (function (_super) {
         });
         this.npcs.add(new RogueNpc(this.game, 600, ground.y - ground.height));
         this.items.add(new Item(this.game, 450, ground.y - ground.height, new RingOfStrength()));
-        //this.enemies.add(new DjinnBanditEnemy(this.game, 200, ground.y - ground.height * 2));
-        //this.enemies.add(new MandrakeEnemy(this.game, 300, ground.y - ground.height * 2));
-        //this.enemies.add(new WerewolfEnemy(this.game, 400, ground.y - ground.height * 2));
-        //this.enemies.add(new YetiEnemy(this.game, 500, ground.y - ground.height * 2));
-        //this.enemies.add(new MinotaurEnemy(this.game, 200, ground.y - ground.height * 3));
-        //this.enemies.add(new SatyrEnemy(this.game, 300, ground.y - ground.height * 2));
-        //this.enemies.add(new RatEnemy(this.game, 200, ground.y - ground.height * 2));
-        //this.enemies.add(new RedOgreEnemy(this.game, 200, ground.y - ground.height * 2));
-        this.enemies.add(new OgreEnemy(this.game, 300, ground.y - ground.height * 2));
+        this.enemies.add(new RatEnemy(this.game, 200, ground.y - ground.height * 2));
+        this.enemies.add(new MandrakeEnemy(this.game, 400, ground.y - ground.height * 2));
+        this.enemies.add(new SatyrEnemy(this.game, 800, ground.y - ground.height * 2));
         this.updateFpsTimer();
         this.enablePhysics();
     };
@@ -1686,15 +1680,17 @@ var Level1 = /** @class */ (function (_super) {
         this.walls.forEach(function (platform) {
             platform.body.immovable = true;
         });
-        this.enemies.add(new RogueEnemy(this.game, 600, ground.y - ground.height));
-        this.enemies.add(new KoboldEnemy(this.game, 800, ground.y - ground.height * 2));
-        this.enemies.add(new KoboldEnemy(this.game, 1000, ground.y - ground.height * 2));
-        this.enemies.add(new KoboldEnemy(this.game, 1200, ground.y - ground.height * 2));
-        this.enemies.add(new Slime(this.game, 300, ground.y - ground.height * 2));
-        this.enemies.add(new Slime(this.game, 500, ground.y - ground.height * 2));
-        this.enemies.add(new Slime(this.game, 1300, ground.y - ground.height * 2));
-        this.enemies.add(new Slime(this.game, 1600, ground.y - ground.height * 2));
-        this.enemies.add(new AdventurerEnemy(this.game, 1400, ground.y - ground.height * 2));
+        this.enemies.add(new DjinnBanditEnemy(this.game, 200, ground.y - ground.height * 2));
+        this.enemies.add(new WerewolfEnemy(this.game, 400, ground.y - ground.height * 2));
+        this.enemies.add(new YetiEnemy(this.game, 600, ground.y - ground.height * 2));
+        this.enemies.add(new MinotaurEnemy(this.game, 800, ground.y - ground.height * 3));
+        this.enemies.add(new RedOgreEnemy(this.game, 1000, ground.y - ground.height * 2));
+        this.enemies.add(new OgreEnemy(this.game, 1200, ground.y - ground.height * 2));
+        this.enemies.add(new RogueEnemy(this.game, 1400, ground.y - ground.height));
+        this.enemies.add(new KoboldEnemy(this.game, 1600, ground.y - ground.height * 2));
+        this.enemies.add(new Slime(this.game, 1500, ground.y - ground.height * 2));
+        this.enemies.add(new Slime(this.game, 1700, ground.y - ground.height * 2));
+        this.enemies.add(new AdventurerEnemy(this.game, 1800, ground.y - ground.height * 2));
         this.bonfires.add(new Bonfire(this.game, 500, ground.y - ground.height));
         this.updateFpsTimer();
         this.enablePhysics();
