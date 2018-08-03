@@ -91,6 +91,7 @@ var SimpleGame = /** @class */ (function (_super) {
         _this.state.add("level0", new Level0());
         _this.state.add("level1", new Level1());
         _this.state.add("level2", new Level2());
+        _this.state.add("level3", new Level3());
         _this.state.start("boot");
         return _this;
     }
@@ -1712,7 +1713,7 @@ var Level1 = /** @class */ (function (_super) {
         this.enemies.add(new KoboldEnemy(this.game, 1200, ground.y - ground.height * 2));
         this.enemies.add(new KoboldEnemy(this.game, 1400, ground.y - ground.height * 2));
         this.enemies.add(new Slime(this.game, 1600, ground.y - ground.height * 2));
-        this.bonfires.add(new Bonfire(this.game, 500, ground.y - ground.height));
+        this.bonfires.add(new Bonfire(this.game, 500, ground.y - ground.height * 2));
         this.updateFpsTimer();
         this.enablePhysics();
     };
@@ -1831,8 +1832,8 @@ var Level3 = /** @class */ (function (_super) {
         this.enemies.add(new MinotaurEnemy(this.game, 1400, ground.y - ground.height * 3));
         this.enemies.add(new RedOgreEnemy(this.game, 1600, ground.y - ground.height * 2));
         this.enemies.add(new OgreEnemy(this.game, 1800, ground.y - ground.height * 2));
-        this.bonfires.add(new Bonfire(this.game, 500, ground.y - ground.height));
-        this.bonfires.add(new Bonfire(this.game, 1500, ground.y - ground.height));
+        this.bonfires.add(new Bonfire(this.game, 500, ground.y - ground.height * 2));
+        this.bonfires.add(new Bonfire(this.game, 1500, ground.y - ground.height * 2));
         this.updateFpsTimer();
         this.enablePhysics();
     };
@@ -2582,6 +2583,9 @@ var Bonfire = /** @class */ (function (_super) {
         };
         _this.anchor.setTo(0.5, 0);
         game.physics.arcade.enableBody(_this);
+        _this.bodyWidth = _this.width;
+        _this.bodyHeight = _this.height - _this.height / 15;
+        _this.body.setSize(_this.bodyWidth / _this.scale.x, _this.bodyHeight / _this.scale.y, (_this.width - _this.bodyWidth) / 2, -100);
         _this.scale.setTo(0.05, 0.05);
         game.add.existing(_this);
         _this.body.collideWorldBounds = true;

@@ -12,10 +12,15 @@ class Bonfire extends Phaser.Sprite {
         boundsAlignH: "center",
         boundsAlignV: "middle"
     };
+    bodyWidth: number;
+    bodyHeight: number;
     constructor(game: Phaser.Game, x: number, y: number) {
         super(game, x, y, "bonfire", 0);
         this.anchor.setTo(0.5, 0);
         game.physics.arcade.enableBody(this);
+        this.bodyWidth = this.width;
+        this.bodyHeight = this.height - this.height / 15;
+        this.body.setSize(this.bodyWidth / this.scale.x, this.bodyHeight / this.scale.y, (this.width - this.bodyWidth) / 2, -100);
         this.scale.setTo(0.05, 0.05);
         game.add.existing(this);
         this.body.collideWorldBounds = true;

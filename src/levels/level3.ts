@@ -54,8 +54,8 @@ class Level3 extends MasterLevel {
         this.enemies.add(new RedOgreEnemy(this.game, 1600, ground.y - ground.height * 2));
         this.enemies.add(new OgreEnemy(this.game, 1800, ground.y - ground.height * 2));
 
-        this.bonfires.add(new Bonfire(this.game, 500, ground.y - ground.height));
-        this.bonfires.add(new Bonfire(this.game, 1500, ground.y - ground.height));
+        this.bonfires.add(new Bonfire(this.game, 500, ground.y - ground.height * 2));
+        this.bonfires.add(new Bonfire(this.game, 1500, ground.y - ground.height * 2));
 
         this.updateFpsTimer();
 

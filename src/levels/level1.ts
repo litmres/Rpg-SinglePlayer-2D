@@ -56,7 +56,7 @@ class Level1 extends MasterLevel {
         this.enemies.add(new KoboldEnemy(this.game, 1400, ground.y - ground.height * 2));
         this.enemies.add(new Slime(this.game, 1600, ground.y - ground.height * 2));
 
-        this.bonfires.add(new Bonfire(this.game, 500, ground.y - ground.height));
+        this.bonfires.add(new Bonfire(this.game, 500, ground.y - ground.height * 2));
 
         this.updateFpsTimer();
 
