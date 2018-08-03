@@ -523,6 +523,49 @@ var BossOverlay = /** @class */ (function (_super) {
     return BossOverlay;
 }(Phaser.Image));
 /// <reference path="./masterEnemy.ts"/>
+var DjinnBanditEnemy = /** @class */ (function (_super) {
+    __extends(DjinnBanditEnemy, _super);
+    function DjinnBanditEnemy(game, x, y) {
+        var _this = _super.call(this, game, x, y, "djinnbandit", 0) || this;
+        _this.minWanderRange = 100;
+        _this.maxWanderRange = 100;
+        _this.maxAggroRange = 100;
+        _this.damageFrames = [13, 14];
+        _this.bodyWidth = 10;
+        _this.bodyHeight = 32;
+        _this.defaultDirection = -1;
+        _this.body.setSize(_this.bodyWidth / _this.scale.x, _this.bodyHeight / _this.scale.y, (_this.width - _this.bodyWidth) / 1.3, 8);
+        _this.stats = {
+            level: 1,
+            maxHealth: _this.maxHealth,
+            health: _this.maxHealth,
+            maxStamina: _this.maxHealth,
+            stamina: _this.maxHealth,
+            attack: 1,
+            defense: 1,
+            movespeed: 180,
+            luck: 1,
+        };
+        _this.animations.add("idle", [0, 1, 2, 3], 10, false).onComplete.add(function () {
+        });
+        _this.animations.add("walk", [4, 5, 6, 7, 8, 9], 10, true);
+        _this.animations.add("attack1", [10, 11, 12, 13, 14, 15], 10, false).onComplete.add(function () {
+            _this.animations.stop();
+            _this.enemyState = enemyStateEnum.idle;
+        });
+        _this.animations.add("death", [20, 21, 22, 23, 24, 25, 26], 10, false).onComplete.add(function () {
+            _this.kill();
+        });
+        _this.health = _this.maxHealth;
+        _this.hitBox1 = _this.hitBoxes.create(5, _this.height / 2);
+        _this.game.physics.enable(_this.hitBoxes, Phaser.Physics.ARCADE);
+        _this.hitBox1.body.setSize(20, 10);
+        _this.hitBox1.name = "attack1";
+        return _this;
+    }
+    return DjinnBanditEnemy;
+}(MasterEnemy));
+/// <reference path="./masterEnemy.ts"/>
 var KoboldEnemy = /** @class */ (function (_super) {
     __extends(KoboldEnemy, _super);
     function KoboldEnemy(game, x, y) {
@@ -594,6 +637,221 @@ var KoboldEnemy = /** @class */ (function (_super) {
     return KoboldEnemy;
 }(MasterEnemy));
 /// <reference path="./masterEnemy.ts"/>
+var MandrakeEnemy = /** @class */ (function (_super) {
+    __extends(MandrakeEnemy, _super);
+    function MandrakeEnemy(game, x, y) {
+        var _this = _super.call(this, game, x, y, "mandrake", 0) || this;
+        _this.minWanderRange = 100;
+        _this.maxWanderRange = 100;
+        _this.maxAggroRange = 100;
+        _this.damageFrames = [19, 20];
+        _this.defaultDirection = -1;
+        _this.bodyWidth = 10;
+        _this.bodyHeight = 32;
+        _this.body.setSize(_this.bodyWidth / _this.scale.x, _this.bodyHeight / _this.scale.y, (_this.width - _this.bodyWidth) / 1.5, 5);
+        _this.stats = {
+            level: 1,
+            maxHealth: _this.maxHealth,
+            health: _this.maxHealth,
+            maxStamina: _this.maxHealth,
+            stamina: _this.maxHealth,
+            attack: 1,
+            defense: 1,
+            movespeed: 180,
+            luck: 1,
+        };
+        _this.animations.add("idle", [5], 10, false).onComplete.add(function () {
+        });
+        _this.animations.add("walk", [6, 7, 8, 9, 10, 11, 12, 13, 14], 10, true);
+        _this.animations.add("attack1", [15, 16, 17, 18, 19, 20, 21], 10, false).onComplete.add(function () {
+            _this.animations.stop();
+            _this.enemyState = enemyStateEnum.idle;
+        });
+        _this.animations.add("death", [29, 30, 31, 32, 33, 34], 10, false).onComplete.add(function () {
+            _this.kill();
+        });
+        _this.health = _this.maxHealth;
+        _this.hitBox1 = _this.hitBoxes.create(10, _this.height / 2);
+        _this.game.physics.enable(_this.hitBoxes, Phaser.Physics.ARCADE);
+        _this.hitBox1.body.setSize(25, 10);
+        _this.hitBox1.name = "attack1";
+        return _this;
+    }
+    return MandrakeEnemy;
+}(MasterEnemy));
+/// <reference path="./masterEnemy.ts"/>
+var MinotaurEnemy = /** @class */ (function (_super) {
+    __extends(MinotaurEnemy, _super);
+    function MinotaurEnemy(game, x, y) {
+        var _this = _super.call(this, game, x, y, "minotaur", 0) || this;
+        _this.minWanderRange = 100;
+        _this.maxWanderRange = 100;
+        _this.maxAggroRange = 100;
+        _this.damageFrames = [17, 18];
+        _this.defaultDirection = -1;
+        _this.bodyWidth = 25;
+        _this.bodyHeight = 46;
+        _this.body.setSize(_this.bodyWidth / _this.scale.x, _this.bodyHeight / _this.scale.y, (_this.width - _this.bodyWidth) / 1.6, 30);
+        _this.stats = {
+            level: 1,
+            maxHealth: _this.maxHealth,
+            health: _this.maxHealth,
+            maxStamina: _this.maxHealth,
+            stamina: _this.maxHealth,
+            attack: 1,
+            defense: 1,
+            movespeed: 180,
+            luck: 1,
+        };
+        _this.animations.add("idle", [0, 1, 2, 3], 10, false).onComplete.add(function () {
+        });
+        _this.animations.add("walk", [6, 7, 8, 9, 10, 11], 3, true);
+        _this.animations.add("attack1", [12, 13, 14, 15, 16, 17, 18, 19, 20], 10, false).onComplete.add(function () {
+            _this.animations.stop();
+            _this.enemyState = enemyStateEnum.idle;
+        });
+        _this.animations.add("death", [37, 38, 39, 40, 41, 42], 10, false).onComplete.add(function () {
+            _this.kill();
+        });
+        _this.health = _this.maxHealth;
+        _this.hitBox1 = _this.hitBoxes.create(-10, _this.height / 2);
+        _this.game.physics.enable(_this.hitBoxes, Phaser.Physics.ARCADE);
+        _this.hitBox1.body.setSize(36, 36);
+        _this.hitBox1.name = "attack1";
+        return _this;
+    }
+    return MinotaurEnemy;
+}(MasterEnemy));
+/// <reference path="./masterEnemy.ts"/>
+var OgreEnemy = /** @class */ (function (_super) {
+    __extends(OgreEnemy, _super);
+    function OgreEnemy(game, x, y) {
+        var _this = _super.call(this, game, x, y, "ogre", 0) || this;
+        _this.minWanderRange = 100;
+        _this.maxWanderRange = 100;
+        _this.maxAggroRange = 100;
+        _this.damageFrames = [13, 14];
+        _this.defaultDirection = -1;
+        _this.bodyWidth = 15;
+        _this.bodyHeight = 36;
+        _this.body.setSize(_this.bodyWidth / _this.scale.x, _this.bodyHeight / _this.scale.y, (_this.width - _this.bodyWidth) / 1.6, 5);
+        _this.stats = {
+            level: 1,
+            maxHealth: _this.maxHealth,
+            health: _this.maxHealth,
+            maxStamina: _this.maxHealth,
+            stamina: _this.maxHealth,
+            attack: 1,
+            defense: 1,
+            movespeed: 180,
+            luck: 1,
+        };
+        _this.animations.add("idle", [0, 1, 2, 3], 10, false).onComplete.add(function () {
+        });
+        _this.animations.add("walk", [4, 5, 6, 7, 8, 9], 3, true);
+        _this.animations.add("attack1", [10, 11, 12, 13, 14, 15, 16], 10, false).onComplete.add(function () {
+            _this.animations.stop();
+            _this.enemyState = enemyStateEnum.idle;
+        });
+        _this.animations.add("death", [23, 24, 25, 26, 27, 28], 10, false).onComplete.add(function () {
+            _this.kill();
+        });
+        _this.health = _this.maxHealth;
+        _this.hitBox1 = _this.hitBoxes.create(0, _this.height / 2);
+        _this.game.physics.enable(_this.hitBoxes, Phaser.Physics.ARCADE);
+        _this.hitBox1.body.setSize(26, 10);
+        _this.hitBox1.name = "attack1";
+        return _this;
+    }
+    return OgreEnemy;
+}(MasterEnemy));
+/// <reference path="./masterEnemy.ts"/>
+var RatEnemy = /** @class */ (function (_super) {
+    __extends(RatEnemy, _super);
+    function RatEnemy(game, x, y) {
+        var _this = _super.call(this, game, x, y, "rat", 0) || this;
+        _this.minWanderRange = 100;
+        _this.maxWanderRange = 100;
+        _this.maxAggroRange = 100;
+        _this.damageFrames = [12, 13];
+        _this.defaultDirection = -1;
+        _this.bodyWidth = 20;
+        _this.bodyHeight = 15;
+        _this.body.setSize(_this.bodyWidth / _this.scale.x, _this.bodyHeight / _this.scale.y, (_this.width - _this.bodyWidth) / 3, 5);
+        _this.stats = {
+            level: 1,
+            maxHealth: _this.maxHealth,
+            health: _this.maxHealth,
+            maxStamina: _this.maxHealth,
+            stamina: _this.maxHealth,
+            attack: 1,
+            defense: 1,
+            movespeed: 180,
+            luck: 1,
+        };
+        _this.animations.add("idle", [0, 1, 2, 3], 10, false).onComplete.add(function () {
+        });
+        _this.animations.add("walk", [4, 5, 6, 7], 3, true);
+        _this.animations.add("attack1", [8, 9, 10, 11, 12, 13], 10, false).onComplete.add(function () {
+            _this.animations.stop();
+            _this.enemyState = enemyStateEnum.idle;
+        });
+        _this.animations.add("death", [20, 21], 10, false).onComplete.add(function () {
+            _this.kill();
+        });
+        _this.health = _this.maxHealth;
+        _this.hitBox1 = _this.hitBoxes.create(0, _this.height / 2);
+        _this.game.physics.enable(_this.hitBoxes, Phaser.Physics.ARCADE);
+        _this.hitBox1.body.setSize(22, 10);
+        _this.hitBox1.name = "attack1";
+        return _this;
+    }
+    return RatEnemy;
+}(MasterEnemy));
+/// <reference path="./masterEnemy.ts"/>
+var RedOgreEnemy = /** @class */ (function (_super) {
+    __extends(RedOgreEnemy, _super);
+    function RedOgreEnemy(game, x, y) {
+        var _this = _super.call(this, game, x, y, "redogre", 0) || this;
+        _this.minWanderRange = 100;
+        _this.maxWanderRange = 100;
+        _this.maxAggroRange = 100;
+        _this.damageFrames = [16, 17];
+        _this.defaultDirection = -1;
+        _this.bodyWidth = 15;
+        _this.bodyHeight = 40;
+        _this.body.setSize(_this.bodyWidth / _this.scale.x, _this.bodyHeight / _this.scale.y, (_this.width - _this.bodyWidth) / 1.6, 5);
+        _this.stats = {
+            level: 1,
+            maxHealth: _this.maxHealth,
+            health: _this.maxHealth,
+            maxStamina: _this.maxHealth,
+            stamina: _this.maxHealth,
+            attack: 1,
+            defense: 1,
+            movespeed: 180,
+            luck: 1,
+        };
+        _this.animations.add("idle", [0, 1, 2, 3], 10, false).onComplete.add(function () {
+        });
+        _this.animations.add("walk", [4, 5, 6, 7, 8, 9, 10], 10, true);
+        _this.animations.add("attack1", [11, 12, 13, 14, 15, 16, 17, 18], 10, false).onComplete.add(function () {
+            _this.animations.stop();
+            _this.enemyState = enemyStateEnum.idle;
+        });
+        _this.animations.add("death", [25, 26, 27, 28, 29], 10, false).onComplete.add(function () {
+            _this.kill();
+        });
+        _this.health = _this.maxHealth;
+        _this.hitBox1 = _this.hitBoxes.create(0, _this.height / 2);
+        _this.game.physics.enable(_this.hitBoxes, Phaser.Physics.ARCADE);
+        _this.hitBox1.body.setSize(25, 10);
+        _this.hitBox1.name = "attack1";
+        return _this;
+    }
+    return RedOgreEnemy;
+}(MasterEnemy));
+/// <reference path="./masterEnemy.ts"/>
 var RogueEnemy = /** @class */ (function (_super) {
     __extends(RogueEnemy, _super);
     function RogueEnemy(game, x, y) {
@@ -638,6 +896,49 @@ var RogueEnemy = /** @class */ (function (_super) {
         return _this;
     }
     return RogueEnemy;
+}(MasterEnemy));
+/// <reference path="./masterEnemy.ts"/>
+var SatyrEnemy = /** @class */ (function (_super) {
+    __extends(SatyrEnemy, _super);
+    function SatyrEnemy(game, x, y) {
+        var _this = _super.call(this, game, x, y, "satyr", 0) || this;
+        _this.minWanderRange = 100;
+        _this.maxWanderRange = 100;
+        _this.maxAggroRange = 100;
+        _this.damageFrames = [13, 14];
+        _this.defaultDirection = -1;
+        _this.bodyWidth = 10;
+        _this.bodyHeight = 36;
+        _this.body.setSize(_this.bodyWidth / _this.scale.x, _this.bodyHeight / _this.scale.y, (_this.width - _this.bodyWidth) / 1.4, 8);
+        _this.stats = {
+            level: 1,
+            maxHealth: _this.maxHealth,
+            health: _this.maxHealth,
+            maxStamina: _this.maxHealth,
+            stamina: _this.maxHealth,
+            attack: 1,
+            defense: 1,
+            movespeed: 180,
+            luck: 1,
+        };
+        _this.animations.add("idle", [0, 1, 2, 3], 10, false).onComplete.add(function () {
+        });
+        _this.animations.add("walk", [4, 5, 6, 7, 8, 9], 3, true);
+        _this.animations.add("attack1", [10, 11, 12, 13, 14, 15, 16], 10, false).onComplete.add(function () {
+            _this.animations.stop();
+            _this.enemyState = enemyStateEnum.idle;
+        });
+        _this.animations.add("death", [23, 24, 25, 26, 27], 10, false).onComplete.add(function () {
+            _this.kill();
+        });
+        _this.health = _this.maxHealth;
+        _this.hitBox1 = _this.hitBoxes.create(5, _this.height / 2);
+        _this.game.physics.enable(_this.hitBoxes, Phaser.Physics.ARCADE);
+        _this.hitBox1.body.setSize(30, 10);
+        _this.hitBox1.name = "attack1";
+        return _this;
+    }
+    return SatyrEnemy;
 }(MasterEnemy));
 /// <reference path="./masterEnemy.ts"/>
 var Slime = /** @class */ (function (_super) {
@@ -1053,13 +1354,99 @@ function slimeBossAllowance(array) {
     });
     return obj;
 }
+/// <reference path="./masterEnemy.ts"/>
+var WerewolfEnemy = /** @class */ (function (_super) {
+    __extends(WerewolfEnemy, _super);
+    function WerewolfEnemy(game, x, y) {
+        var _this = _super.call(this, game, x, y, "werewolf", 0) || this;
+        _this.minWanderRange = 100;
+        _this.maxWanderRange = 100;
+        _this.maxAggroRange = 100;
+        _this.damageFrames = [13, 14];
+        _this.defaultDirection = -1;
+        _this.bodyWidth = 20;
+        _this.bodyHeight = 37;
+        _this.body.setSize(_this.bodyWidth / _this.scale.x, _this.bodyHeight / _this.scale.y, (_this.width - _this.bodyWidth) / 1.4, 5);
+        _this.stats = {
+            level: 1,
+            maxHealth: _this.maxHealth,
+            health: _this.maxHealth,
+            maxStamina: _this.maxHealth,
+            stamina: _this.maxHealth,
+            attack: 1,
+            defense: 1,
+            movespeed: 180,
+            luck: 1,
+        };
+        _this.animations.add("idle", [0, 1, 2, 3], 10, false).onComplete.add(function () {
+        });
+        _this.animations.add("walk", [4, 5, 6, 7, 8, 9], 10, true);
+        _this.animations.add("attack1", [10, 11, 12, 13, 14, 15, 16], 10, false).onComplete.add(function () {
+            _this.animations.stop();
+            _this.enemyState = enemyStateEnum.idle;
+        });
+        _this.animations.add("death", [21, 22, 23, 24, 25, 26, 27], 10, false).onComplete.add(function () {
+            _this.kill();
+        });
+        _this.health = _this.maxHealth;
+        _this.hitBox1 = _this.hitBoxes.create(35, _this.height / 2);
+        _this.game.physics.enable(_this.hitBoxes, Phaser.Physics.ARCADE);
+        _this.hitBox1.body.setSize(70, 10);
+        _this.hitBox1.name = "attack1";
+        return _this;
+    }
+    return WerewolfEnemy;
+}(MasterEnemy));
+/// <reference path="./masterEnemy.ts"/>
+var YetiEnemy = /** @class */ (function (_super) {
+    __extends(YetiEnemy, _super);
+    function YetiEnemy(game, x, y) {
+        var _this = _super.call(this, game, x, y, "yeti", 0) || this;
+        _this.minWanderRange = 100;
+        _this.maxWanderRange = 100;
+        _this.maxAggroRange = 100;
+        _this.damageFrames = [12];
+        _this.defaultDirection = -1;
+        _this.bodyWidth = 20;
+        _this.bodyHeight = 50;
+        _this.body.setSize(_this.bodyWidth / _this.scale.x, _this.bodyHeight / _this.scale.y, (_this.width - _this.bodyWidth) / 1.4, 5);
+        _this.stats = {
+            level: 1,
+            maxHealth: _this.maxHealth,
+            health: _this.maxHealth,
+            maxStamina: _this.maxHealth,
+            stamina: _this.maxHealth,
+            attack: 1,
+            defense: 1,
+            movespeed: 180,
+            luck: 1,
+        };
+        _this.animations.add("idle", [0, 1, 2, 3], 10, false).onComplete.add(function () {
+        });
+        _this.animations.add("walk", [4, 5, 6, 7, 8, 9], 10, true);
+        _this.animations.add("attack1", [10, 11, 12, 13, 14], 10, false).onComplete.add(function () {
+            _this.animations.stop();
+            _this.enemyState = enemyStateEnum.idle;
+        });
+        _this.animations.add("death", [28, 29, 30, 31, 32, 33], 10, false).onComplete.add(function () {
+            _this.kill();
+        });
+        _this.health = _this.maxHealth;
+        _this.hitBox1 = _this.hitBoxes.create(0, _this.height / 2);
+        _this.game.physics.enable(_this.hitBoxes, Phaser.Physics.ARCADE);
+        _this.hitBox1.body.setSize(25, 10);
+        _this.hitBox1.name = "attack1";
+        return _this;
+    }
+    return YetiEnemy;
+}(MasterEnemy));
 var MasterLevel = /** @class */ (function (_super) {
     __extends(MasterLevel, _super);
     function MasterLevel() {
         var _this = _super !== null && _super.apply(this, arguments) || this;
         _this.levelNumber = levelsEnum.level0;
         _this.playerStorage = JSON.parse(window.localStorage.getItem("player"));
-        _this.debugMode = false;
+        _this.debugMode = true;
         return _this;
     }
     MasterLevel.prototype.update = function () {
@@ -1238,6 +1625,15 @@ var Level0 = /** @class */ (function (_super) {
         });
         this.npcs.add(new RogueNpc(this.game, 600, ground.y - ground.height));
         this.items.add(new Item(this.game, 450, ground.y - ground.height, new RingOfStrength()));
+        //this.enemies.add(new DjinnBanditEnemy(this.game, 200, ground.y - ground.height * 2));
+        //this.enemies.add(new MandrakeEnemy(this.game, 300, ground.y - ground.height * 2));
+        //this.enemies.add(new WerewolfEnemy(this.game, 400, ground.y - ground.height * 2));
+        //this.enemies.add(new YetiEnemy(this.game, 500, ground.y - ground.height * 2));
+        //this.enemies.add(new MinotaurEnemy(this.game, 200, ground.y - ground.height * 3));
+        //this.enemies.add(new SatyrEnemy(this.game, 300, ground.y - ground.height * 2));
+        //this.enemies.add(new RatEnemy(this.game, 200, ground.y - ground.height * 2));
+        //this.enemies.add(new RedOgreEnemy(this.game, 200, ground.y - ground.height * 2));
+        this.enemies.add(new OgreEnemy(this.game, 300, ground.y - ground.height * 2));
         this.updateFpsTimer();
         this.enablePhysics();
     };
@@ -2859,7 +3255,7 @@ var PreloadState = /** @class */ (function (_super) {
         this.game.load.spritesheet("chest", "bin/assets/chest/chest.png", 30, 30);
         this.game.load.spritesheet("explosion", "bin/assets/explosion/explosion.png", 30, 30);
         this.game.load.spritesheet("adventurer", "bin/assets/adventurer/adventurer.png", 50, 37);
-        this.game.load.spritesheet("djinnbandit", "bin/assets/djinnbandit/djinnbandit.png", 32, 32);
+        this.game.load.spritesheet("djinnbandit", "bin/assets/djinnbandit/djinnbandit.png", 48, 42);
         this.game.load.spritesheet("earthwhisp", "bin/assets/earthwhisp/earthwhisp.png", 32, 32);
         this.game.load.spritesheet("firewhisp", "bin/assets/firewhisp/firewhisp.png", 32, 32);
         this.game.load.spritesheet("waterwhisp", "bin/assets/waterwhisp/waterwhisp.png", 32, 32);
@@ -2867,20 +3263,20 @@ var PreloadState = /** @class */ (function (_super) {
         this.game.load.spritesheet("goblin", "bin/assets/goblin/goblin.png", 32, 32);
         this.game.load.spritesheet("golem", "bin/assets/golem/golem.png", 32, 32);
         this.game.load.spritesheet("kobold", "bin/assets/kobold/kobold.png", 68, 35);
-        this.game.load.spritesheet("mandrake", "bin/assets/mandrake/mandrake.png", 32, 32);
+        this.game.load.spritesheet("mandrake", "bin/assets/mandrake/mandrake.png", 56, 38);
         this.game.load.spritesheet("mimic", "bin/assets/mimic/mimic.png", 32, 32);
-        this.game.load.spritesheet("minotaur", "bin/assets/minotaur/minotaur.png", 32, 32);
+        this.game.load.spritesheet("minotaur", "bin/assets/minotaur/minotaur.png", 96, 77);
         this.game.load.spritesheet("oculothorax", "bin/assets/oculothorax/oculothorax.png", 32, 32);
-        this.game.load.spritesheet("ogre", "bin/assets/ogre/ogre.png", 32, 32);
-        this.game.load.spritesheet("rat", "bin/assets/rat/rat.png", 32, 32);
-        this.game.load.spritesheet("redogre", "bin/assets/redogre/redogre.png", 32, 32);
-        this.game.load.spritesheet("satyr", "bin/assets/satyr/satyr.png", 32, 32);
+        this.game.load.spritesheet("ogre", "bin/assets/ogre/ogre.png", 58, 42);
+        this.game.load.spritesheet("rat", "bin/assets/rat/rat.png", 42, 22);
+        this.game.load.spritesheet("redogre", "bin/assets/redogre/redogre.png", 73, 46);
+        this.game.load.spritesheet("satyr", "bin/assets/satyr/satyr.png", 68, 46);
         this.game.load.spritesheet("shade", "bin/assets/shade/shade.png", 32, 32);
         this.game.load.spritesheet("slime", "bin/assets/slime/slime.png", 32, 25);
         this.game.load.spritesheet("slimeboss", "bin/assets/slime/slimeboss.png", 128, 100);
         this.game.load.spritesheet("wasp", "bin/assets/wasp/wasp.png", 32, 32);
-        this.game.load.spritesheet("werewolf", "bin/assets/werewolf/werewolf.png", 32, 32);
-        this.game.load.spritesheet("yeti", "bin/assets/yeti/yeti.png", 32, 32);
+        this.game.load.spritesheet("werewolf", "bin/assets/werewolf/werewolf.png", 73, 43);
+        this.game.load.spritesheet("yeti", "bin/assets/yeti/yeti.png", 73, 57);
     };
     PreloadState.prototype.finishedLoading = function () {
         this.loadingText.setText("Load Complete");

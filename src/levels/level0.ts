@@ -43,6 +43,17 @@ class Level0 extends MasterLevel {
 
         this.items.add(new Item(this.game, 450, ground.y - ground.height, new RingOfStrength()));
 
+        //this.enemies.add(new DjinnBanditEnemy(this.game, 200, ground.y - ground.height * 2));
+        //this.enemies.add(new MandrakeEnemy(this.game, 300, ground.y - ground.height * 2));
+        //this.enemies.add(new WerewolfEnemy(this.game, 400, ground.y - ground.height * 2));
+        //this.enemies.add(new YetiEnemy(this.game, 500, ground.y - ground.height * 2));
+        //this.enemies.add(new MinotaurEnemy(this.game, 200, ground.y - ground.height * 3));
+        //this.enemies.add(new SatyrEnemy(this.game, 300, ground.y - ground.height * 2));
+        //this.enemies.add(new RatEnemy(this.game, 200, ground.y - ground.height * 2));
+        //this.enemies.add(new RedOgreEnemy(this.game, 200, ground.y - ground.height * 2));
+        this.enemies.add(new OgreEnemy(this.game, 300, ground.y - ground.height * 2));
+
+
         this.updateFpsTimer();
 
         this.enablePhysics();
