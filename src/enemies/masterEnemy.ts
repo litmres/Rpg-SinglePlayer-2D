@@ -1,7 +1,6 @@
 class MasterEnemy extends Phaser.Sprite {
     enemyState: enemyStateEnum = enemyStateEnum.idle;
     friendly = false;
-    wanderRange = 100;
     player: Player | null = null;
     targetX = 0;
     targetY = 0;
@@ -11,13 +10,18 @@ class MasterEnemy extends Phaser.Sprite {
     maxWanderRange = 100;
     spawnPositionX: number;
     spawnPositionY: number;
-    aggroRange = 100;
+    maxRestRange = 40;
+    maxAggroRange = 100;
+    attackCooldown = 2000;
+    attackTimer: null | number = null;
+    allowAttack = true;
     canWalk = enemyAllowance([
-        enemyStateEnum.movingWalk,
         enemyStateEnum.idle,
         enemyStateEnum.idleSpecial,
     ]);
-    canIdle = enemyAllowance([]);
+    canIdle = enemyAllowance([
+        enemyStateEnum.movingChase
+    ]);
     canChase = enemyAllowance([
         enemyStateEnum.movingWalk,
         enemyStateEnum.idle,
@@ -48,7 +52,9 @@ class MasterEnemy extends Phaser.Sprite {
     hitBox1: Phaser.Sprite | null = null;
     invincible = false;
     hitBoxes: Phaser.Group;
+    patrolDirection = 1;
     damageFrames: number[] = [];
+    moveOption = moveOption.guard;
     constructor(game: Phaser.Game, x: number, y: number, key?: string, frame?: number) {
         super(game, x, y, key, frame);
         this.anchor.setTo(0.5, 0);
@@ -75,11 +81,88 @@ class MasterEnemy extends Phaser.Sprite {
         this.addChild(this.hitBoxes);
     }
 
+    update() {
+        this.resetVelocity();
+
+        this.animations.play(this.enemyAnimations[this.enemyState]);
+
+        if (!this.friendly) {
+            this.handleInput();
+            this.stopMovingTo();
+        }
+
+        this.checkForHitting();
+
+        this.checkForGettingHit();
+
+        this.handleDeath();
+
+        this.updateHitbox();
+    }
+
+    handleInput() {
+        if (this.player) {
+            const distance = this.game.physics.arcade.distanceBetween(this, this.player);
+            if (this.isAllowedToAttack()) {
+                this.attack();
+            } else if (this.isAllowedToChase(distance)) {
+                this.chase();
+            } else if (this.isAllowedToWander()) {
+                if (this.moveOption === moveOption.patrol) {
+                    this.patrol();
+                } else if (this.moveOption === moveOption.wander) {
+                    this.wander();
+                }
+            } else {
+                this.idle();
+            }
+        }
+    }
+
+    isAllowedToWander() {
+        if (this.canWalk[this.enemyState]) {
+            return true;
+        }
+        return false;
+    }
+
+    isAllowedToChase(distance: number) {
+        if (!this.allowRestRange(distance) &&
+            this.betweenAggroRange(distance) &&
+            this.canChase[this.enemyState]) {
+            return true;
+        }
+        return false;
+    }
+
+    isAllowedToAttack() {
+        if (this.game.physics.arcade.overlap(this.player, this.hitBox1) &&
+            this.canAttack[this.enemyState] &&
+            this.allowAttack) {
+            return true;
+        }
+        return false;
+    }
+
+    allowRestRange(distance: number) {
+        if (!this.allowAttack && distance < this.maxRestRange) {
+            return true;
+        }
+        return false;
+    }
+
+    betweenAggroRange(distance: number) {
+        if (!this.game.physics.arcade.overlap(this.player, this.hitBox1) && distance < this.maxAggroRange) {
+            return true;
+        }
+        return false;
+    }
+
     stopMovingTo() {
         if (this.enemyState === enemyStateEnum.movingWalk) {
-            if (this.game.physics.arcade.distanceToXY(this, this.targetX, this.targetY) < 5) {
+            if (Math.abs(this.targetX - this.x) < 5) {
                 this.x = this.targetX;
-                this.y = this.targetY;
+                this.y = this.y;
                 this.body.velocity.setTo(0, 0);
                 this.enemyState = enemyStateEnum.idle;
             }
@@ -122,9 +205,18 @@ class MasterEnemy extends Phaser.Sprite {
             this.invincible = true;
             if (this.stats.health > 0) {
                 this.game.time.events.add(1000, this.resetInvincable, this);
+                //this.hurt();
+                //fix knockback
                 this.knockBack(objPositionX);
             }
         }
+    }
+
+    hurt() {
+        this.enemyState = enemyStateEnum.knockBack;
+        setTimeout(() => {
+            this.enemyState = enemyStateEnum.idle;
+        }, 750);
     }
 
     knockBack(objPositionX: number) {
@@ -199,6 +291,10 @@ class MasterEnemy extends Phaser.Sprite {
             this.scale.setTo(this.defaultDirection * this.defaultScaleWidth * -1, this.defaultScaleHeight);
         }
         this.enemyState = enemyStateEnum.attack1;
+        this.allowAttack = false;
+        this.attackTimer = setTimeout(() => {
+            this.allowAttack = true;
+        }, this.attackCooldown);
     }
 
     chase() {
@@ -212,13 +308,30 @@ class MasterEnemy extends Phaser.Sprite {
         this.game.physics.arcade.moveToXY(this, this.player.x, this.y, this.stats.movespeed);
     }
 
+    patrol() {
+        if (this.x > this.spawnPositionX + this.maxWanderRange) {
+            this.patrolDirection = 1;
+        } else if (this.x < this.spawnPositionX - this.maxWanderRange) {
+            this.patrolDirection = 0;
+        }
+
+        if (this.patrolDirection) {
+            this.moveLeft(this.maxWanderRange);
+        } else {
+            this.moveRight(this.maxWanderRange);
+        }
+    }
+
     wander() {
-        if (this.game.physics.arcade.distanceToXY(this, this.spawnPositionX, this.spawnPositionY) > this.maxWanderRange) {
+        if (this.x > this.spawnPositionX + this.maxWanderRange) {
+            this.moveEnemyTo(this.spawnPositionX, this.spawnPositionY, this.stats.movespeed);
+            return;
+        } else if (this.x < this.spawnPositionX - this.maxWanderRange) {
             this.moveEnemyTo(this.spawnPositionX, this.spawnPositionY, this.stats.movespeed);
             return;
         }
         const direction = this.game.rnd.integerInRange(0, 1);
-        const distance = this.game.rnd.integerInRange(10, this.maxWanderRange);
+        const distance = this.game.rnd.integerInRange(20, this.maxWanderRange);
         if (direction) {
             this.moveLeft(distance);
         } else {
@@ -262,7 +375,12 @@ class MasterEnemy extends Phaser.Sprite {
 
     idle() {
         if (this.canIdle[this.enemyState]) {
-            this.enemyState = enemyStateEnum.idle;
+            const rndNumber = this.game.rnd.integerInRange(1, 100);
+            if (rndNumber > 90) {
+                this.enemyState = enemyStateEnum.idleSpecial;
+            } else {
+                this.enemyState = enemyStateEnum.idle;
+            }
         }
     }
 

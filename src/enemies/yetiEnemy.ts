@@ -1,19 +1,19 @@
 /// <reference path="./masterEnemy.ts"/>
 
-class AdventurerEnemy extends MasterEnemy {
+class YetiEnemy extends MasterEnemy {
     minWanderRange = 100;
     maxWanderRange = 100;
     bodyWidth: number;
     bodyHeight: number;
     maxAggroRange = 100;
     hitBox1: Phaser.Sprite;
-    damageFrames = [45, 46];
-    moveOption = moveOption.wander;
+    damageFrames = [12];
+    defaultDirection = -1;
     constructor(game: Phaser.Game, x: number, y: number) {
-        super(game, x, y, "adventurer", 0);
-        this.bodyWidth = 10;
-        this.bodyHeight = 30;
-        this.body.setSize(this.bodyWidth / this.scale.x, this.bodyHeight / this.scale.y, (this.width - this.bodyWidth) / 2, 5);
+        super(game, x, y, "yeti", 0);
+        this.bodyWidth = 20;
+        this.bodyHeight = 50;
+        this.body.setSize(this.bodyWidth / this.scale.x, this.bodyHeight / this.scale.y, (this.width - this.bodyWidth) / 1.4, 5);
         this.stats = {
             level: 1,
             maxHealth: this.maxHealth,
@@ -28,19 +28,15 @@ class AdventurerEnemy extends MasterEnemy {
         this.animations.add("idle", [0, 1, 2, 3], 10, false).onComplete.add(() => {
 
         });
-        this.animations.add("idlespecial", [38, 39, 40, 41], 10, false).onComplete.add(() => {
+        this.animations.add("walk", [4, 5, 6, 7, 8, 9], 10, true);
+        this.animations.add("attack1", [10, 11, 12, 13, 14], 10, false).onComplete.add(() => {
             this.animations.stop();
             this.enemyState = enemyStateEnum.idle;
         });
-        this.animations.add("walk", [8, 9, 10], 3, true);
-        this.animations.add("attack1", [42, 43, 44, 45, 46, 47, 48, 49], 10, false).onComplete.add(() => {
-            this.animations.stop();
-            this.enemyState = enemyStateEnum.idle;
-        });
-        this.animations.add("death", [62, 63, 64, 65, 66, 67, 68], 10, false).onComplete.add(() => {
+        this.animations.add("death", [28, 29, 30, 31, 32, 33], 10, false).onComplete.add(() => {
             this.kill();
         });
-        this.animations.add("knockback", [57, 58, 59, 60, 61], 10, false);
+        this.animations.add("knockback", [23, 24, 25, 26, 27], 10, false);
         this.health = this.maxHealth;
 
         this.hitBox1 = this.hitBoxes.create(0, this.height / 2);

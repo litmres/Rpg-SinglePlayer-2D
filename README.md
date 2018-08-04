@@ -12,5 +12,8 @@ D: move right
 E: action
 LMB: attack
 
+I: inventory
+SPACE: dodge
+
 ESC: pause
 P: pause

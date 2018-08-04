@@ -31,6 +31,7 @@ class Player extends Phaser.Sprite {
     facingNpc: MasterNpc | null | undefined;
     facingBonfire: Bonfire | null | undefined;
     facingItem: Item | null | undefined;
+    facingSign: Sign | null | undefined;
     hitBoxes: Phaser.Group;
     hitBox1: Phaser.Sprite;
     hitBox2: Phaser.Sprite;
@@ -302,6 +303,8 @@ class Player extends Phaser.Sprite {
             this.handleBonfire();
         } else if (this.controls.E.justPressed() && this.facingNpc) {
             this.handleNpc();
+        } else if (this.controls.E.justPressed() && this.facingSign) {
+            this.handleSign();
         } else if (this.controls.E.justPressed() && this.facingItem) {
             this.handleItem();
         } else if (this.canIdle[this.playerState]) {
@@ -402,6 +405,10 @@ class Player extends Phaser.Sprite {
 
     handleNpc() {
         this.facingNpc!.nextDialogueText();
+    }
+
+    handleSign() {
+        this.facingSign!.nextDialogueText();
     }
 
     handleAttack() {

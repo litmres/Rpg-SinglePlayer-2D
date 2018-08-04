@@ -43,6 +43,8 @@ class Level0 extends MasterLevel {
 
         this.items.add(new Item(this.game, 450, ground.y - ground.height, new RingOfStrength()));
 
+        this.signs.add(new Sign(this.game, 200, ground.y - ground.height));
+
         this.updateFpsTimer();
 
         this.enablePhysics();

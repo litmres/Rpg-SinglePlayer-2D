@@ -81,6 +81,12 @@ var levelsEnum;
     levelsEnum[levelsEnum["level2"] = 2] = "level2";
     levelsEnum[levelsEnum["level3"] = 3] = "level3";
 })(levelsEnum || (levelsEnum = {}));
+var moveOption;
+(function (moveOption) {
+    moveOption[moveOption["guard"] = 0] = "guard";
+    moveOption[moveOption["wander"] = 1] = "wander";
+    moveOption[moveOption["patrol"] = 2] = "patrol";
+})(moveOption || (moveOption = {}));
 var SimpleGame = /** @class */ (function (_super) {
     __extends(SimpleGame, _super);
     function SimpleGame() {
@@ -91,6 +97,7 @@ var SimpleGame = /** @class */ (function (_super) {
         _this.state.add("level0", new Level0());
         _this.state.add("level1", new Level1());
         _this.state.add("level2", new Level2());
+        _this.state.add("level3", new Level3());
         _this.state.start("boot");
         return _this;
     }
@@ -106,7 +113,6 @@ var MasterEnemy = /** @class */ (function (_super) {
         var _this = _super.call(this, game, x, y, key, frame) || this;
         _this.enemyState = enemyStateEnum.idle;
         _this.friendly = false;
-        _this.wanderRange = 100;
         _this.player = null;
         _this.targetX = 0;
         _this.targetY = 0;
@@ -114,13 +120,18 @@ var MasterEnemy = /** @class */ (function (_super) {
         _this.defaultScaleHeight = 1;
         _this.defaultDirection = 1;
         _this.maxWanderRange = 100;
-        _this.aggroRange = 100;
+        _this.maxRestRange = 40;
+        _this.maxAggroRange = 100;
+        _this.attackCooldown = 2000;
+        _this.attackTimer = null;
+        _this.allowAttack = true;
         _this.canWalk = enemyAllowance([
-            enemyStateEnum.movingWalk,
             enemyStateEnum.idle,
             enemyStateEnum.idleSpecial,
         ]);
-        _this.canIdle = enemyAllowance([]);
+        _this.canIdle = enemyAllowance([
+            enemyStateEnum.movingChase
+        ]);
         _this.canChase = enemyAllowance([
             enemyStateEnum.movingWalk,
             enemyStateEnum.idle,
@@ -149,7 +160,9 @@ var MasterEnemy = /** @class */ (function (_super) {
             _a);
         _this.hitBox1 = null;
         _this.invincible = false;
+        _this.patrolDirection = 1;
         _this.damageFrames = [];
+        _this.moveOption = moveOption.guard;
         _this.anchor.setTo(0.5, 0);
         game.physics.arcade.enableBody(_this);
         game.add.existing(_this);
@@ -173,11 +186,79 @@ var MasterEnemy = /** @class */ (function (_super) {
         _this.addChild(_this.hitBoxes);
         return _this;
     }
+    MasterEnemy.prototype.update = function () {
+        this.resetVelocity();
+        this.animations.play(this.enemyAnimations[this.enemyState]);
+        if (!this.friendly) {
+            this.handleInput();
+            this.stopMovingTo();
+        }
+        this.checkForHitting();
+        this.checkForGettingHit();
+        this.handleDeath();
+        this.updateHitbox();
+    };
+    MasterEnemy.prototype.handleInput = function () {
+        if (this.player) {
+            var distance = this.game.physics.arcade.distanceBetween(this, this.player);
+            if (this.isAllowedToAttack()) {
+                this.attack();
+            }
+            else if (this.isAllowedToChase(distance)) {
+                this.chase();
+            }
+            else if (this.isAllowedToWander()) {
+                if (this.moveOption === moveOption.patrol) {
+                    this.patrol();
+                }
+                else if (this.moveOption === moveOption.wander) {
+                    this.wander();
+                }
+            }
+            else {
+                this.idle();
+            }
+        }
+    };
+    MasterEnemy.prototype.isAllowedToWander = function () {
+        if (this.canWalk[this.enemyState]) {
+            return true;
+        }
+        return false;
+    };
+    MasterEnemy.prototype.isAllowedToChase = function (distance) {
+        if (!this.allowRestRange(distance) &&
+            this.betweenAggroRange(distance) &&
+            this.canChase[this.enemyState]) {
+            return true;
+        }
+        return false;
+    };
+    MasterEnemy.prototype.isAllowedToAttack = function () {
+        if (this.game.physics.arcade.overlap(this.player, this.hitBox1) &&
+            this.canAttack[this.enemyState] &&
+            this.allowAttack) {
+            return true;
+        }
+        return false;
+    };
+    MasterEnemy.prototype.allowRestRange = function (distance) {
+        if (!this.allowAttack && distance < this.maxRestRange) {
+            return true;
+        }
+        return false;
+    };
+    MasterEnemy.prototype.betweenAggroRange = function (distance) {
+        if (!this.game.physics.arcade.overlap(this.player, this.hitBox1) && distance < this.maxAggroRange) {
+            return true;
+        }
+        return false;
+    };
     MasterEnemy.prototype.stopMovingTo = function () {
         if (this.enemyState === enemyStateEnum.movingWalk) {
-            if (this.game.physics.arcade.distanceToXY(this, this.targetX, this.targetY) < 5) {
+            if (Math.abs(this.targetX - this.x) < 5) {
                 this.x = this.targetX;
-                this.y = this.targetY;
+                this.y = this.y;
                 this.body.velocity.setTo(0, 0);
                 this.enemyState = enemyStateEnum.idle;
             }
@@ -220,9 +301,18 @@ var MasterEnemy = /** @class */ (function (_super) {
             this.invincible = true;
             if (this.stats.health > 0) {
                 this.game.time.events.add(1000, this.resetInvincable, this);
+                //this.hurt();
+                //fix knockback
                 this.knockBack(objPositionX);
             }
         }
+    };
+    MasterEnemy.prototype.hurt = function () {
+        var _this = this;
+        this.enemyState = enemyStateEnum.knockBack;
+        setTimeout(function () {
+            _this.enemyState = enemyStateEnum.idle;
+        }, 750);
     };
     MasterEnemy.prototype.knockBack = function (objPositionX) {
         this.enemyState = enemyStateEnum.knockBack;
@@ -277,6 +367,7 @@ var MasterEnemy = /** @class */ (function (_super) {
         }
     };
     MasterEnemy.prototype.attack = function () {
+        var _this = this;
         if (this.player && this.player.x > this.x) {
             this.scale.setTo(this.defaultDirection * this.defaultScaleWidth, this.defaultScaleHeight);
         }
@@ -284,6 +375,10 @@ var MasterEnemy = /** @class */ (function (_super) {
             this.scale.setTo(this.defaultDirection * this.defaultScaleWidth * -1, this.defaultScaleHeight);
         }
         this.enemyState = enemyStateEnum.attack1;
+        this.allowAttack = false;
+        this.attackTimer = setTimeout(function () {
+            _this.allowAttack = true;
+        }, this.attackCooldown);
     };
     MasterEnemy.prototype.chase = function () {
         if (!this.player) {
@@ -298,13 +393,31 @@ var MasterEnemy = /** @class */ (function (_super) {
         }
         this.game.physics.arcade.moveToXY(this, this.player.x, this.y, this.stats.movespeed);
     };
+    MasterEnemy.prototype.patrol = function () {
+        if (this.x > this.spawnPositionX + this.maxWanderRange) {
+            this.patrolDirection = 1;
+        }
+        else if (this.x < this.spawnPositionX - this.maxWanderRange) {
+            this.patrolDirection = 0;
+        }
+        if (this.patrolDirection) {
+            this.moveLeft(this.maxWanderRange);
+        }
+        else {
+            this.moveRight(this.maxWanderRange);
+        }
+    };
     MasterEnemy.prototype.wander = function () {
-        if (this.game.physics.arcade.distanceToXY(this, this.spawnPositionX, this.spawnPositionY) > this.maxWanderRange) {
+        if (this.x > this.spawnPositionX + this.maxWanderRange) {
+            this.moveEnemyTo(this.spawnPositionX, this.spawnPositionY, this.stats.movespeed);
+            return;
+        }
+        else if (this.x < this.spawnPositionX - this.maxWanderRange) {
             this.moveEnemyTo(this.spawnPositionX, this.spawnPositionY, this.stats.movespeed);
             return;
         }
         var direction = this.game.rnd.integerInRange(0, 1);
-        var distance = this.game.rnd.integerInRange(10, this.maxWanderRange);
+        var distance = this.game.rnd.integerInRange(20, this.maxWanderRange);
         if (direction) {
             this.moveLeft(distance);
         }
@@ -342,7 +455,13 @@ var MasterEnemy = /** @class */ (function (_super) {
     };
     MasterEnemy.prototype.idle = function () {
         if (this.canIdle[this.enemyState]) {
-            this.enemyState = enemyStateEnum.idle;
+            var rndNumber = this.game.rnd.integerInRange(1, 100);
+            if (rndNumber > 90) {
+                this.enemyState = enemyStateEnum.idleSpecial;
+            }
+            else {
+                this.enemyState = enemyStateEnum.idle;
+            }
         }
     };
     MasterEnemy.prototype.updateScale = function (direction, upsideDown) {
@@ -378,10 +497,11 @@ var AdventurerEnemy = /** @class */ (function (_super) {
     __extends(AdventurerEnemy, _super);
     function AdventurerEnemy(game, x, y) {
         var _this = _super.call(this, game, x, y, "adventurer", 0) || this;
-        _this.wanderRange = 100;
+        _this.minWanderRange = 100;
         _this.maxWanderRange = 100;
-        _this.aggroRange = 100;
+        _this.maxAggroRange = 100;
         _this.damageFrames = [45, 46];
+        _this.moveOption = moveOption.wander;
         _this.bodyWidth = 10;
         _this.bodyHeight = 30;
         _this.body.setSize(_this.bodyWidth / _this.scale.x, _this.bodyHeight / _this.scale.y, (_this.width - _this.bodyWidth) / 2, 5);
@@ -397,13 +517,6 @@ var AdventurerEnemy = /** @class */ (function (_super) {
             luck: 1,
         };
         _this.animations.add("idle", [0, 1, 2, 3], 10, false).onComplete.add(function () {
-            var rndNumber = _this.game.rnd.integerInRange(1, 100);
-            if (rndNumber > 90) {
-                _this.enemyState = enemyStateEnum.idleSpecial;
-            }
-            else if (!_this.friendly && rndNumber > 20 && rndNumber < 90) {
-                _this.wander();
-            }
         });
         _this.animations.add("idlespecial", [38, 39, 40, 41], 10, false).onComplete.add(function () {
             _this.animations.stop();
@@ -417,6 +530,7 @@ var AdventurerEnemy = /** @class */ (function (_super) {
         _this.animations.add("death", [62, 63, 64, 65, 66, 67, 68], 10, false).onComplete.add(function () {
             _this.kill();
         });
+        _this.animations.add("knockback", [57, 58, 59, 60, 61], 10, false);
         _this.health = _this.maxHealth;
         _this.hitBox1 = _this.hitBoxes.create(0, _this.height / 2);
         _this.game.physics.enable(_this.hitBoxes, Phaser.Physics.ARCADE);
@@ -424,30 +538,6 @@ var AdventurerEnemy = /** @class */ (function (_super) {
         _this.hitBox1.name = "attack1";
         return _this;
     }
-    AdventurerEnemy.prototype.update = function () {
-        this.resetVelocity();
-        this.animations.play(this.enemyAnimations[this.enemyState]);
-        if (!this.friendly) {
-            this.handleInput();
-            this.stopMovingTo();
-            this.idle();
-        }
-        this.checkForHitting();
-        this.checkForGettingHit();
-        this.handleDeath();
-        this.updateHitbox();
-    };
-    AdventurerEnemy.prototype.handleInput = function () {
-        if (this.player) {
-            var distance = this.game.physics.arcade.distanceBetween(this, this.player);
-            if (distance < Math.abs(this.hitBox1.width) && this.canAttack[this.enemyState]) {
-                this.attack();
-            }
-            else if (distance < this.aggroRange && this.canChase[this.enemyState]) {
-                this.chase();
-            }
-        }
-    };
     return AdventurerEnemy;
 }(MasterEnemy));
 var BossOverlay = /** @class */ (function (_super) {
@@ -475,15 +565,63 @@ var BossOverlay = /** @class */ (function (_super) {
     return BossOverlay;
 }(Phaser.Image));
 /// <reference path="./masterEnemy.ts"/>
+var DjinnBanditEnemy = /** @class */ (function (_super) {
+    __extends(DjinnBanditEnemy, _super);
+    function DjinnBanditEnemy(game, x, y) {
+        var _this = _super.call(this, game, x, y, "djinnbandit", 0) || this;
+        _this.minWanderRange = 100;
+        _this.maxWanderRange = 100;
+        _this.maxAggroRange = 100;
+        _this.damageFrames = [13, 14];
+        _this.bodyWidth = 10;
+        _this.bodyHeight = 32;
+        _this.defaultDirection = -1;
+        _this.body.setSize(_this.bodyWidth / _this.scale.x, _this.bodyHeight / _this.scale.y, (_this.width - _this.bodyWidth) / 1.3, 8);
+        _this.stats = {
+            level: 1,
+            maxHealth: _this.maxHealth,
+            health: _this.maxHealth,
+            maxStamina: _this.maxHealth,
+            stamina: _this.maxHealth,
+            attack: 1,
+            defense: 1,
+            movespeed: 180,
+            luck: 1,
+        };
+        _this.animations.add("idle", [0, 1, 2, 3], 10, false).onComplete.add(function () {
+        });
+        _this.animations.add("walk", [4, 5, 6, 7, 8, 9], 10, true);
+        _this.animations.add("attack1", [10, 11, 12, 13, 14, 15], 10, false).onComplete.add(function () {
+            _this.animations.stop();
+            _this.enemyState = enemyStateEnum.idle;
+        });
+        _this.animations.add("death", [20, 21, 22, 23, 24, 25, 26], 10, false).onComplete.add(function () {
+            _this.kill();
+        });
+        _this.animations.add("knockback", [15, 16, 17, 18, 19], 10, false);
+        _this.health = _this.maxHealth;
+        _this.hitBox1 = _this.hitBoxes.create(5, _this.height / 2);
+        _this.game.physics.enable(_this.hitBoxes, Phaser.Physics.ARCADE);
+        _this.hitBox1.body.setSize(20, 10);
+        _this.hitBox1.name = "attack1";
+        return _this;
+    }
+    return DjinnBanditEnemy;
+}(MasterEnemy));
+/// <reference path="./masterEnemy.ts"/>
 var KoboldEnemy = /** @class */ (function (_super) {
     __extends(KoboldEnemy, _super);
     function KoboldEnemy(game, x, y) {
         var _this = _super.call(this, game, x, y, "kobold", 0) || this;
-        _this.wanderRange = 100;
+        _this.minWanderRange = 100;
         _this.maxWanderRange = 100;
-        _this.aggroRange = 100;
+        _this.maxAggroRange = 100;
         _this.defaultDirection = -1;
         _this.damageFrames = [12, 13, 14];
+        _this.attackCount = 0;
+        _this.resetAttackCount = null;
+        _this.attackCooldown = 5000;
+        _this.moveOption = moveOption.patrol;
         _this.bodyWidth = 18;
         _this.bodyHeight = 28;
         _this.body.setSize(_this.bodyWidth / _this.scale.x, _this.bodyHeight / _this.scale.y, (_this.width - _this.bodyWidth) / 2 + 10, 5);
@@ -499,10 +637,6 @@ var KoboldEnemy = /** @class */ (function (_super) {
             luck: 1,
         };
         _this.animations.add("idle", [0, 1, 2, 3], 10, false).onComplete.add(function () {
-            var rndNumber = _this.game.rnd.integerInRange(1, 100);
-            if (!_this.friendly && rndNumber > 20 && rndNumber < 90) {
-                _this.wander();
-            }
         });
         _this.animations.add("walk", [4, 5, 6, 7, 8, 9], 3, true);
         _this.animations.add("attack1", [10, 11, 12, 13, 14], 10, false).onComplete.add(function () {
@@ -520,40 +654,258 @@ var KoboldEnemy = /** @class */ (function (_super) {
         _this.hitBox1.name = "attack1";
         return _this;
     }
-    KoboldEnemy.prototype.update = function () {
-        this.resetVelocity();
-        this.animations.play(this.enemyAnimations[this.enemyState]);
-        if (!this.friendly) {
-            this.handleInput();
-            this.stopMovingTo();
-            this.idle();
+    KoboldEnemy.prototype.attack = function () {
+        var _this = this;
+        if (this.player && this.player.x > this.x) {
+            this.scale.setTo(this.defaultDirection * this.defaultScaleWidth, this.defaultScaleHeight);
         }
-        this.checkForHitting();
-        this.checkForGettingHit();
-        this.handleDeath();
-        this.updateHitbox();
-    };
-    KoboldEnemy.prototype.handleInput = function () {
-        if (this.player) {
-            var distance = this.game.physics.arcade.distanceBetween(this, this.player);
-            if (distance < Math.abs(this.hitBox1.width) && this.canAttack[this.enemyState]) {
-                this.attack();
-            }
-            else if (distance < this.aggroRange && this.canChase[this.enemyState]) {
-                this.chase();
-            }
+        else {
+            this.scale.setTo(this.defaultDirection * this.defaultScaleWidth * -1, this.defaultScaleHeight);
         }
+        this.enemyState = enemyStateEnum.attack1;
+        this.attackCount++;
+        if (this.attackCount >= 3) {
+            this.allowAttack = false;
+        }
+        if (this.resetAttackCount) {
+            clearTimeout(this.resetAttackCount);
+        }
+        this.resetAttackCount = setTimeout(function () {
+            _this.attackCount = 0;
+        }, 3000);
+        this.attackTimer = setTimeout(function () {
+            _this.allowAttack = true;
+            _this.attackCount = 0;
+        }, this.attackCooldown);
     };
     return KoboldEnemy;
+}(MasterEnemy));
+/// <reference path="./masterEnemy.ts"/>
+var MandrakeEnemy = /** @class */ (function (_super) {
+    __extends(MandrakeEnemy, _super);
+    function MandrakeEnemy(game, x, y) {
+        var _this = _super.call(this, game, x, y, "mandrake", 0) || this;
+        _this.maxWanderRange = 100;
+        _this.maxAggroRange = 100;
+        _this.damageFrames = [19, 20];
+        _this.defaultDirection = -1;
+        _this.bodyWidth = 10;
+        _this.bodyHeight = 32;
+        _this.body.setSize(_this.bodyWidth / _this.scale.x, _this.bodyHeight / _this.scale.y, (_this.width - _this.bodyWidth) / 1.5, 5);
+        _this.stats = {
+            level: 1,
+            maxHealth: _this.maxHealth,
+            health: _this.maxHealth,
+            maxStamina: _this.maxHealth,
+            stamina: _this.maxHealth,
+            attack: 1,
+            defense: 1,
+            movespeed: 180,
+            luck: 1,
+        };
+        _this.animations.add("idle", [0], 10, false).onComplete.add(function () {
+        });
+        _this.animations.add("walk", [6, 7, 8, 9, 10, 11, 12, 13, 14], 10, true);
+        _this.animations.add("attack1", [15, 16, 17, 18, 19, 20, 21], 10, false).onComplete.add(function () {
+            _this.animations.stop();
+            _this.enemyState = enemyStateEnum.idle;
+        });
+        _this.animations.add("death", [29, 30, 31, 32, 33, 34], 10, false).onComplete.add(function () {
+            _this.kill();
+        });
+        _this.animations.add("knockback", [22, 23, 24, 25, 26, 27, 28, 29], 10, false);
+        _this.health = _this.maxHealth;
+        _this.hitBox1 = _this.hitBoxes.create(10, _this.height / 2);
+        _this.game.physics.enable(_this.hitBoxes, Phaser.Physics.ARCADE);
+        _this.hitBox1.body.setSize(25, 10);
+        _this.hitBox1.name = "attack1";
+        return _this;
+    }
+    return MandrakeEnemy;
+}(MasterEnemy));
+/// <reference path="./masterEnemy.ts"/>
+var MinotaurEnemy = /** @class */ (function (_super) {
+    __extends(MinotaurEnemy, _super);
+    function MinotaurEnemy(game, x, y) {
+        var _this = _super.call(this, game, x, y, "minotaur", 0) || this;
+        _this.minWanderRange = 100;
+        _this.maxWanderRange = 100;
+        _this.maxAggroRange = 100;
+        _this.damageFrames = [17, 18];
+        _this.defaultDirection = -1;
+        _this.bodyWidth = 25;
+        _this.bodyHeight = 46;
+        _this.body.setSize(_this.bodyWidth / _this.scale.x, _this.bodyHeight / _this.scale.y, (_this.width - _this.bodyWidth) / 1.6, 30);
+        _this.stats = {
+            level: 1,
+            maxHealth: _this.maxHealth,
+            health: _this.maxHealth,
+            maxStamina: _this.maxHealth,
+            stamina: _this.maxHealth,
+            attack: 1,
+            defense: 1,
+            movespeed: 180,
+            luck: 1,
+        };
+        _this.animations.add("idle", [0, 1, 2, 3], 10, false).onComplete.add(function () {
+        });
+        _this.animations.add("walk", [6, 7, 8, 9, 10, 11], 3, true);
+        _this.animations.add("attack1", [12, 13, 14, 15, 16, 17, 18, 19, 20], 10, false).onComplete.add(function () {
+            _this.animations.stop();
+            _this.enemyState = enemyStateEnum.idle;
+        });
+        _this.animations.add("death", [37, 38, 39, 40, 41, 42], 10, false).onComplete.add(function () {
+            _this.kill();
+        });
+        _this.animations.add("knockback", [31, 32, 33, 34, 35, 36], 10, false);
+        _this.health = _this.maxHealth;
+        _this.hitBox1 = _this.hitBoxes.create(-10, _this.height / 2);
+        _this.game.physics.enable(_this.hitBoxes, Phaser.Physics.ARCADE);
+        _this.hitBox1.body.setSize(36, 36);
+        _this.hitBox1.name = "attack1";
+        return _this;
+    }
+    return MinotaurEnemy;
+}(MasterEnemy));
+/// <reference path="./masterEnemy.ts"/>
+var OgreEnemy = /** @class */ (function (_super) {
+    __extends(OgreEnemy, _super);
+    function OgreEnemy(game, x, y) {
+        var _this = _super.call(this, game, x, y, "ogre", 0) || this;
+        _this.minWanderRange = 100;
+        _this.maxWanderRange = 100;
+        _this.maxAggroRange = 100;
+        _this.damageFrames = [13, 14];
+        _this.defaultDirection = -1;
+        _this.bodyWidth = 15;
+        _this.bodyHeight = 36;
+        _this.body.setSize(_this.bodyWidth / _this.scale.x, _this.bodyHeight / _this.scale.y, (_this.width - _this.bodyWidth) / 1.6, 5);
+        _this.stats = {
+            level: 1,
+            maxHealth: _this.maxHealth,
+            health: _this.maxHealth,
+            maxStamina: _this.maxHealth,
+            stamina: _this.maxHealth,
+            attack: 1,
+            defense: 1,
+            movespeed: 180,
+            luck: 1,
+        };
+        _this.animations.add("idle", [0, 1, 2, 3], 10, false).onComplete.add(function () {
+        });
+        _this.animations.add("walk", [4, 5, 6, 7, 8, 9], 3, true);
+        _this.animations.add("attack1", [10, 11, 12, 13, 14, 15, 16], 10, false).onComplete.add(function () {
+            _this.animations.stop();
+            _this.enemyState = enemyStateEnum.idle;
+        });
+        _this.animations.add("death", [23, 24, 25, 26, 27, 28], 10, false).onComplete.add(function () {
+            _this.kill();
+        });
+        _this.animations.add("knockback", [18, 19, 20, 21, 22], 10, false);
+        _this.health = _this.maxHealth;
+        _this.hitBox1 = _this.hitBoxes.create(0, _this.height / 2);
+        _this.game.physics.enable(_this.hitBoxes, Phaser.Physics.ARCADE);
+        _this.hitBox1.body.setSize(26, 10);
+        _this.hitBox1.name = "attack1";
+        return _this;
+    }
+    return OgreEnemy;
+}(MasterEnemy));
+/// <reference path="./masterEnemy.ts"/>
+var RatEnemy = /** @class */ (function (_super) {
+    __extends(RatEnemy, _super);
+    function RatEnemy(game, x, y) {
+        var _this = _super.call(this, game, x, y, "rat", 0) || this;
+        _this.minWanderRange = 100;
+        _this.maxWanderRange = 100;
+        _this.maxAggroRange = 100;
+        _this.damageFrames = [12, 13];
+        _this.defaultDirection = -1;
+        _this.bodyWidth = 20;
+        _this.bodyHeight = 15;
+        _this.body.setSize(_this.bodyWidth / _this.scale.x, _this.bodyHeight / _this.scale.y, (_this.width - _this.bodyWidth) / 3, 5);
+        _this.stats = {
+            level: 1,
+            maxHealth: _this.maxHealth,
+            health: _this.maxHealth,
+            maxStamina: _this.maxHealth,
+            stamina: _this.maxHealth,
+            attack: 1,
+            defense: 1,
+            movespeed: 180,
+            luck: 1,
+        };
+        _this.animations.add("idle", [0, 1, 2, 3], 10, false).onComplete.add(function () {
+        });
+        _this.animations.add("walk", [4, 5, 6, 7], 3, true);
+        _this.animations.add("attack1", [8, 9, 10, 11, 12, 13], 10, false).onComplete.add(function () {
+            _this.animations.stop();
+            _this.enemyState = enemyStateEnum.idle;
+        });
+        _this.animations.add("death", [20, 21], 10, false).onComplete.add(function () {
+            _this.kill();
+        });
+        _this.animations.add("knockback", [18, 19], 10, false);
+        _this.health = _this.maxHealth;
+        _this.hitBox1 = _this.hitBoxes.create(0, _this.height / 2);
+        _this.game.physics.enable(_this.hitBoxes, Phaser.Physics.ARCADE);
+        _this.hitBox1.body.setSize(22, 10);
+        _this.hitBox1.name = "attack1";
+        return _this;
+    }
+    return RatEnemy;
+}(MasterEnemy));
+/// <reference path="./masterEnemy.ts"/>
+var RedOgreEnemy = /** @class */ (function (_super) {
+    __extends(RedOgreEnemy, _super);
+    function RedOgreEnemy(game, x, y) {
+        var _this = _super.call(this, game, x, y, "redogre", 0) || this;
+        _this.minWanderRange = 100;
+        _this.maxWanderRange = 100;
+        _this.maxAggroRange = 100;
+        _this.damageFrames = [16, 17];
+        _this.defaultDirection = -1;
+        _this.bodyWidth = 15;
+        _this.bodyHeight = 40;
+        _this.body.setSize(_this.bodyWidth / _this.scale.x, _this.bodyHeight / _this.scale.y, (_this.width - _this.bodyWidth) / 1.6, 5);
+        _this.stats = {
+            level: 1,
+            maxHealth: _this.maxHealth,
+            health: _this.maxHealth,
+            maxStamina: _this.maxHealth,
+            stamina: _this.maxHealth,
+            attack: 1,
+            defense: 1,
+            movespeed: 180,
+            luck: 1,
+        };
+        _this.animations.add("idle", [0, 1, 2, 3], 10, false).onComplete.add(function () {
+        });
+        _this.animations.add("walk", [4, 5, 6, 7, 8, 9, 10], 10, true);
+        _this.animations.add("attack1", [11, 12, 13, 14, 15, 16, 17, 18], 10, false).onComplete.add(function () {
+            _this.animations.stop();
+            _this.enemyState = enemyStateEnum.idle;
+        });
+        _this.animations.add("death", [25, 26, 27, 28, 29], 10, false).onComplete.add(function () {
+            _this.kill();
+        });
+        _this.animations.add("knockback", [20, 21, 22, 23, 24], 10, false);
+        _this.health = _this.maxHealth;
+        _this.hitBox1 = _this.hitBoxes.create(0, _this.height / 2);
+        _this.game.physics.enable(_this.hitBoxes, Phaser.Physics.ARCADE);
+        _this.hitBox1.body.setSize(25, 10);
+        _this.hitBox1.name = "attack1";
+        return _this;
+    }
+    return RedOgreEnemy;
 }(MasterEnemy));
 /// <reference path="./masterEnemy.ts"/>
 var RogueEnemy = /** @class */ (function (_super) {
     __extends(RogueEnemy, _super);
     function RogueEnemy(game, x, y) {
         var _this = _super.call(this, game, x, y, "rogue", 0) || this;
-        _this.wanderRange = 100;
         _this.maxWanderRange = 100;
-        _this.aggroRange = 100;
+        _this.maxAggroRange = 100;
         _this.damageFrames = [34, 35, 36];
         _this.bodyWidth = 16;
         _this.bodyHeight = 32;
@@ -570,13 +922,6 @@ var RogueEnemy = /** @class */ (function (_super) {
             luck: 1,
         };
         _this.animations.add("idle", [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], 10, false).onComplete.add(function () {
-            var rndNumber = _this.game.rnd.integerInRange(1, 100);
-            if (rndNumber > 90) {
-                _this.enemyState = enemyStateEnum.idleSpecial;
-            }
-            else if (!_this.friendly && rndNumber > 20 && rndNumber < 90) {
-                _this.wander();
-            }
         });
         _this.animations.add("idlespecial", [10, 11, 12, 13, 14, 15, 16, 17, 18, 19], 10, false).onComplete.add(function () {
             _this.animations.stop();
@@ -590,6 +935,7 @@ var RogueEnemy = /** @class */ (function (_super) {
         _this.animations.add("death", [40, 41, 42, 43, 44, 45, 46, 47, 48, 49], 10, false).onComplete.add(function () {
             _this.kill();
         });
+        _this.animations.add("knockback", [40], 10, false);
         _this.health = _this.maxHealth;
         _this.hitBox1 = _this.hitBoxes.create(0, _this.height / 2);
         _this.game.physics.enable(_this.hitBoxes, Phaser.Physics.ARCADE);
@@ -597,42 +943,62 @@ var RogueEnemy = /** @class */ (function (_super) {
         _this.hitBox1.name = "attack1";
         return _this;
     }
-    RogueEnemy.prototype.update = function () {
-        this.resetVelocity();
-        this.animations.play(this.enemyAnimations[this.enemyState]);
-        if (!this.friendly) {
-            this.handleInput();
-            this.stopMovingTo();
-            this.idle();
-        }
-        this.checkForHitting();
-        this.checkForGettingHit();
-        this.handleDeath();
-        this.updateHitbox();
-    };
-    RogueEnemy.prototype.handleInput = function () {
-        if (this.player) {
-            var distance = this.game.physics.arcade.distanceBetween(this, this.player);
-            if (distance < Math.abs(this.hitBox1.width) && this.canAttack[this.enemyState]) {
-                this.attack();
-            }
-            else if (distance < this.aggroRange && this.canChase[this.enemyState]) {
-                this.chase();
-            }
-        }
-    };
     return RogueEnemy;
+}(MasterEnemy));
+/// <reference path="./masterEnemy.ts"/>
+var SatyrEnemy = /** @class */ (function (_super) {
+    __extends(SatyrEnemy, _super);
+    function SatyrEnemy(game, x, y) {
+        var _this = _super.call(this, game, x, y, "satyr", 0) || this;
+        _this.minWanderRange = 100;
+        _this.maxWanderRange = 100;
+        _this.maxAggroRange = 100;
+        _this.damageFrames = [13, 14];
+        _this.defaultDirection = -1;
+        _this.bodyWidth = 10;
+        _this.bodyHeight = 36;
+        _this.body.setSize(_this.bodyWidth / _this.scale.x, _this.bodyHeight / _this.scale.y, (_this.width - _this.bodyWidth) / 1.4, 8);
+        _this.stats = {
+            level: 1,
+            maxHealth: _this.maxHealth,
+            health: _this.maxHealth,
+            maxStamina: _this.maxHealth,
+            stamina: _this.maxHealth,
+            attack: 1,
+            defense: 1,
+            movespeed: 180,
+            luck: 1,
+        };
+        _this.animations.add("idle", [0, 1, 2, 3], 10, false).onComplete.add(function () {
+        });
+        _this.animations.add("walk", [4, 5, 6, 7, 8, 9], 3, true);
+        _this.animations.add("attack1", [10, 11, 12, 13, 14, 15, 16], 10, false).onComplete.add(function () {
+            _this.animations.stop();
+            _this.enemyState = enemyStateEnum.idle;
+        });
+        _this.animations.add("death", [23, 24, 25, 26, 27], 10, false).onComplete.add(function () {
+            _this.kill();
+        });
+        _this.animations.add("knockback", [18, 19, 20, 21, 22], 10, false);
+        _this.health = _this.maxHealth;
+        _this.hitBox1 = _this.hitBoxes.create(5, _this.height / 2);
+        _this.game.physics.enable(_this.hitBoxes, Phaser.Physics.ARCADE);
+        _this.hitBox1.body.setSize(30, 10);
+        _this.hitBox1.name = "attack1";
+        return _this;
+    }
+    return SatyrEnemy;
 }(MasterEnemy));
 /// <reference path="./masterEnemy.ts"/>
 var Slime = /** @class */ (function (_super) {
     __extends(Slime, _super);
     function Slime(game, x, y) {
         var _this = _super.call(this, game, x, y, "slime", 0) || this;
-        _this.wanderRange = 100;
         _this.maxWanderRange = 100;
-        _this.aggroRange = 100;
+        _this.maxAggroRange = 100;
         _this.defaultDirection = -1;
         _this.damageFrames = [10, 11];
+        _this.moveOption = moveOption.wander;
         _this.bodyWidth = 16;
         _this.bodyHeight = 15;
         _this.body.setSize(_this.bodyWidth / _this.scale.x, _this.bodyHeight / _this.scale.y, (_this.width - _this.bodyWidth) / 2, _this.height - _this.bodyHeight);
@@ -648,13 +1014,6 @@ var Slime = /** @class */ (function (_super) {
             luck: 1,
         };
         _this.animations.add("idle", [0, 1, 2, 3], 10, false).onComplete.add(function () {
-            var rndNumber = _this.game.rnd.integerInRange(1, 100);
-            if (rndNumber > 90) {
-                _this.enemyState = enemyStateEnum.idleSpecial;
-            }
-            else if (!_this.friendly && rndNumber > 20 && rndNumber < 90) {
-                _this.wander();
-            }
         });
         _this.animations.add("idlespecial", [0, 1, 2, 3], 10, false).onComplete.add(function () {
             _this.animations.stop();
@@ -668,6 +1027,7 @@ var Slime = /** @class */ (function (_super) {
         _this.animations.add("death", [17, 18, 19, 20], 10, false).onComplete.add(function () {
             _this.kill();
         });
+        _this.animations.add("knockback", [13, 14, 15, 16], 10, false);
         _this.health = _this.maxHealth;
         _this.hitBox1 = _this.hitBoxes.create(0, _this.height / 2);
         _this.game.physics.enable(_this.hitBoxes, Phaser.Physics.ARCADE);
@@ -675,30 +1035,6 @@ var Slime = /** @class */ (function (_super) {
         _this.hitBox1.name = "attack1";
         return _this;
     }
-    Slime.prototype.update = function () {
-        this.resetVelocity();
-        this.animations.play(this.enemyAnimations[this.enemyState]);
-        if (!this.friendly) {
-            this.handleInput();
-            this.stopMovingTo();
-            this.idle();
-        }
-        this.checkForHitting();
-        this.checkForGettingHit();
-        this.handleDeath();
-        this.updateHitbox();
-    };
-    Slime.prototype.handleInput = function () {
-        if (this.player) {
-            var distance = this.game.physics.arcade.distanceBetween(this, this.player);
-            if (distance < Math.abs(this.hitBox1.width) && this.canAttack[this.enemyState]) {
-                this.attack();
-            }
-            else if (distance < this.aggroRange && this.canChase[this.enemyState]) {
-                this.chase();
-            }
-        }
-    };
     return Slime;
 }(MasterEnemy));
 /// <reference path="./masterEnemy.ts"/>
@@ -843,7 +1179,7 @@ var SlimeBoss = /** @class */ (function (_super) {
         _this.bodyWidth = 75;
         _this.bodyHeight = 60;
         _this.body.setSize(_this.bodyWidth / _this.scale.x, _this.bodyHeight / _this.scale.y, (_this.width - _this.bodyWidth) / 2, _this.height - _this.bodyHeight - 6);
-        _this.maxHealth = 500;
+        _this.maxHealth = 250;
         _this.stats = {
             level: 1,
             maxHealth: _this.maxHealth,
@@ -1068,6 +1404,94 @@ function slimeBossAllowance(array) {
     });
     return obj;
 }
+/// <reference path="./masterEnemy.ts"/>
+var WerewolfEnemy = /** @class */ (function (_super) {
+    __extends(WerewolfEnemy, _super);
+    function WerewolfEnemy(game, x, y) {
+        var _this = _super.call(this, game, x, y, "werewolf", 0) || this;
+        _this.minWanderRange = 100;
+        _this.maxWanderRange = 100;
+        _this.maxAggroRange = 100;
+        _this.damageFrames = [13, 14];
+        _this.defaultDirection = -1;
+        _this.bodyWidth = 20;
+        _this.bodyHeight = 37;
+        _this.body.setSize(_this.bodyWidth / _this.scale.x, _this.bodyHeight / _this.scale.y, (_this.width - _this.bodyWidth) / 1.4, 5);
+        _this.stats = {
+            level: 1,
+            maxHealth: _this.maxHealth,
+            health: _this.maxHealth,
+            maxStamina: _this.maxHealth,
+            stamina: _this.maxHealth,
+            attack: 1,
+            defense: 1,
+            movespeed: 180,
+            luck: 1,
+        };
+        _this.animations.add("idle", [0, 1, 2, 3], 10, false).onComplete.add(function () {
+        });
+        _this.animations.add("walk", [4, 5, 6, 7, 8, 9], 10, true);
+        _this.animations.add("attack1", [10, 11, 12, 13, 14, 15, 16], 10, false).onComplete.add(function () {
+            _this.animations.stop();
+            _this.enemyState = enemyStateEnum.idle;
+        });
+        _this.animations.add("death", [21, 22, 23, 24, 25, 26, 27], 10, false).onComplete.add(function () {
+            _this.kill();
+        });
+        _this.animations.add("knockback", [16, 17, 18, 19, 20], 10, false);
+        _this.health = _this.maxHealth;
+        _this.hitBox1 = _this.hitBoxes.create(35, _this.height / 2);
+        _this.game.physics.enable(_this.hitBoxes, Phaser.Physics.ARCADE);
+        _this.hitBox1.body.setSize(70, 10);
+        _this.hitBox1.name = "attack1";
+        return _this;
+    }
+    return WerewolfEnemy;
+}(MasterEnemy));
+/// <reference path="./masterEnemy.ts"/>
+var YetiEnemy = /** @class */ (function (_super) {
+    __extends(YetiEnemy, _super);
+    function YetiEnemy(game, x, y) {
+        var _this = _super.call(this, game, x, y, "yeti", 0) || this;
+        _this.minWanderRange = 100;
+        _this.maxWanderRange = 100;
+        _this.maxAggroRange = 100;
+        _this.damageFrames = [12];
+        _this.defaultDirection = -1;
+        _this.bodyWidth = 20;
+        _this.bodyHeight = 50;
+        _this.body.setSize(_this.bodyWidth / _this.scale.x, _this.bodyHeight / _this.scale.y, (_this.width - _this.bodyWidth) / 1.4, 5);
+        _this.stats = {
+            level: 1,
+            maxHealth: _this.maxHealth,
+            health: _this.maxHealth,
+            maxStamina: _this.maxHealth,
+            stamina: _this.maxHealth,
+            attack: 1,
+            defense: 1,
+            movespeed: 180,
+            luck: 1,
+        };
+        _this.animations.add("idle", [0, 1, 2, 3], 10, false).onComplete.add(function () {
+        });
+        _this.animations.add("walk", [4, 5, 6, 7, 8, 9], 10, true);
+        _this.animations.add("attack1", [10, 11, 12, 13, 14], 10, false).onComplete.add(function () {
+            _this.animations.stop();
+            _this.enemyState = enemyStateEnum.idle;
+        });
+        _this.animations.add("death", [28, 29, 30, 31, 32, 33], 10, false).onComplete.add(function () {
+            _this.kill();
+        });
+        _this.animations.add("knockback", [23, 24, 25, 26, 27], 10, false);
+        _this.health = _this.maxHealth;
+        _this.hitBox1 = _this.hitBoxes.create(0, _this.height / 2);
+        _this.game.physics.enable(_this.hitBoxes, Phaser.Physics.ARCADE);
+        _this.hitBox1.body.setSize(25, 10);
+        _this.hitBox1.name = "attack1";
+        return _this;
+    }
+    return YetiEnemy;
+}(MasterEnemy));
 var MasterLevel = /** @class */ (function (_super) {
     __extends(MasterLevel, _super);
     function MasterLevel() {
@@ -1083,6 +1507,7 @@ var MasterLevel = /** @class */ (function (_super) {
         this.game.physics.arcade.collide(this.npcs, this.platforms);
         this.game.physics.arcade.collide(this.bonfires, this.platforms);
         this.game.physics.arcade.collide(this.items, this.platforms);
+        this.game.physics.arcade.collide(this.signs, this.platforms);
         this.game.physics.arcade.collide(this.player, this.gates);
         this.game.physics.arcade.collide(this.enemies, this.gates);
         this.game.physics.arcade.collide(this.npcs, this.gates);
@@ -1091,19 +1516,23 @@ var MasterLevel = /** @class */ (function (_super) {
         this.game.physics.arcade.collide(this.npcs, this.grounds);
         this.game.physics.arcade.collide(this.bonfires, this.grounds);
         this.game.physics.arcade.collide(this.items, this.grounds);
+        this.game.physics.arcade.collide(this.signs, this.grounds);
         this.game.physics.arcade.collide(this.player, this.walls);
         this.game.physics.arcade.collide(this.enemies, this.walls);
         this.game.physics.arcade.collide(this.npcs, this.walls);
         this.game.physics.arcade.collide(this.bonfires, this.walls);
         this.game.physics.arcade.collide(this.items, this.walls);
+        this.game.physics.arcade.collide(this.signs, this.walls);
         this.game.physics.arcade.collide(this.player, this.ceilings);
         this.game.physics.arcade.collide(this.enemies, this.ceilings);
         this.game.physics.arcade.collide(this.npcs, this.ceilings);
         this.game.physics.arcade.collide(this.bonfires, this.ceilings);
         this.game.physics.arcade.collide(this.items, this.ceilings);
+        this.game.physics.arcade.collide(this.signs, this.ceilings);
         this.playerFacingBonfire();
         this.playerFacingNpc();
         this.playerFacingItem();
+        this.playerFacingSign();
         if (this.debugMode) {
             this.debug();
         }
@@ -1125,6 +1554,7 @@ var MasterLevel = /** @class */ (function (_super) {
         this.npcs = this.game.add.group();
         this.bonfires = this.game.add.group();
         this.items = this.game.add.group();
+        this.signs = this.game.add.group();
     };
     MasterLevel.prototype.addPlayerToNpcs = function () {
         var _this = this;
@@ -1183,6 +1613,19 @@ var MasterLevel = /** @class */ (function (_super) {
             }
         });
     };
+    MasterLevel.prototype.playerFacingSign = function () {
+        var _this = this;
+        this.signs.forEach(function (v) {
+            if (_this.game.physics.arcade.overlap(_this.player, v)) {
+                v.canInteract = true;
+                _this.player.facingSign = v;
+            }
+            else {
+                v.canInteract = false;
+                _this.player.facingSign = null;
+            }
+        });
+    };
     MasterLevel.prototype.roomIsClear = function () {
         if (this.enemies.children.length === 0) {
             this.gates.forEach(function (v) {
@@ -1205,6 +1648,9 @@ var MasterLevel = /** @class */ (function (_super) {
             _this.game.debug.physicsGroup(v.hitBoxes);
         });
         this.bonfires.forEach(function (v) {
+            _this.game.debug.body(v);
+        });
+        this.signs.forEach(function (v) {
             _this.game.debug.body(v);
         });
         this.gates.forEach(function (v) {
@@ -1253,6 +1699,7 @@ var Level0 = /** @class */ (function (_super) {
         });
         this.npcs.add(new RogueNpc(this.game, 600, ground.y - ground.height));
         this.items.add(new Item(this.game, 450, ground.y - ground.height, new RingOfStrength()));
+        this.signs.add(new Sign(this.game, 200, ground.y - ground.height));
         this.updateFpsTimer();
         this.enablePhysics();
     };
@@ -1305,16 +1752,19 @@ var Level1 = /** @class */ (function (_super) {
         this.walls.forEach(function (platform) {
             platform.body.immovable = true;
         });
-        this.enemies.add(new RogueEnemy(this.game, 600, ground.y - ground.height));
-        this.enemies.add(new KoboldEnemy(this.game, 800, ground.y - ground.height * 2));
-        this.enemies.add(new KoboldEnemy(this.game, 1000, ground.y - ground.height * 2));
-        this.enemies.add(new KoboldEnemy(this.game, 1200, ground.y - ground.height * 2));
         this.enemies.add(new Slime(this.game, 300, ground.y - ground.height * 2));
+        this.enemies.add(new RogueEnemy(this.game, 400, ground.y - ground.height));
         this.enemies.add(new Slime(this.game, 500, ground.y - ground.height * 2));
-        this.enemies.add(new Slime(this.game, 1300, ground.y - ground.height * 2));
+        this.enemies.add(new AdventurerEnemy(this.game, 600, ground.y - ground.height * 2));
+        this.enemies.add(new Slime(this.game, 700, ground.y - ground.height * 2));
+        this.enemies.add(new Slime(this.game, 750, ground.y - ground.height * 2));
+        this.enemies.add(new KoboldEnemy(this.game, 800, ground.y - ground.height * 2));
+        this.enemies.add(new Slime(this.game, 1000, ground.y - ground.height * 2));
+        this.enemies.add(new Slime(this.game, 1100, ground.y - ground.height * 2));
+        this.enemies.add(new KoboldEnemy(this.game, 1200, ground.y - ground.height * 2));
+        this.enemies.add(new KoboldEnemy(this.game, 1400, ground.y - ground.height * 2));
         this.enemies.add(new Slime(this.game, 1600, ground.y - ground.height * 2));
-        this.enemies.add(new AdventurerEnemy(this.game, 1400, ground.y - ground.height * 2));
-        this.bonfires.add(new Bonfire(this.game, 500, ground.y - ground.height));
+        this.bonfires.add(new Bonfire(this.game, 500, ground.y - ground.height * 2));
         this.updateFpsTimer();
         this.enablePhysics();
     };
@@ -1386,6 +1836,68 @@ var Level2 = /** @class */ (function (_super) {
         this.addPlayerToGates();
     };
     return Level2;
+}(MasterLevel));
+/// <reference path="./masterLevel.ts"/>
+var Level3 = /** @class */ (function (_super) {
+    __extends(Level3, _super);
+    function Level3() {
+        var _this = _super !== null && _super.apply(this, arguments) || this;
+        _this.levelNumber = levelsEnum.level1;
+        return _this;
+    }
+    Level3.prototype.preload = function () {
+        this.game.world.setBounds(0, 0, this.game.world.width + 1000, this.game.world.height);
+        this.addGroups();
+        this.background = 0x49801;
+        this.platforms.enableBody = true;
+        this.grounds.enableBody = true;
+        this.ceilings.enableBody = true;
+        this.walls.enableBody = true;
+        var ground = this.grounds.create(0, this.game.world.bounds.height, "floor");
+        ground.y -= ground.height;
+        ground.width = this.game.world.bounds.width;
+        var ceiling = this.ceilings.create(0, 0, "ceiling");
+        ceiling.width = this.game.world.bounds.width;
+        var wall = this.walls.create(0, ceiling.height, "wall");
+        wall.height = this.game.world.bounds.height - wall.height * 2 - ceiling.height * 2;
+        var wall2 = this.walls.create(this.world.bounds.width - wall.width, ceiling.height, "wall");
+        wall2.height = this.game.world.bounds.height - wall2.height * 2 - ceiling.height * 2;
+        this.platforms.forEach(function (platform) {
+            platform.body.immovable = true;
+        });
+        this.grounds.forEach(function (platform) {
+            platform.body.immovable = true;
+        });
+        this.ceilings.forEach(function (platform) {
+            platform.body.immovable = true;
+        });
+        this.walls.forEach(function (platform) {
+            platform.body.immovable = true;
+        });
+        this.enemies.add(new RatEnemy(this.game, 200, ground.y - ground.height * 2));
+        this.enemies.add(new MandrakeEnemy(this.game, 400, ground.y - ground.height * 2));
+        this.enemies.add(new SatyrEnemy(this.game, 600, ground.y - ground.height * 2));
+        this.enemies.add(new DjinnBanditEnemy(this.game, 800, ground.y - ground.height * 2));
+        this.enemies.add(new WerewolfEnemy(this.game, 1000, ground.y - ground.height * 2));
+        this.enemies.add(new YetiEnemy(this.game, 1200, ground.y - ground.height * 2));
+        this.enemies.add(new MinotaurEnemy(this.game, 1400, ground.y - ground.height * 3));
+        this.enemies.add(new RedOgreEnemy(this.game, 1600, ground.y - ground.height * 2));
+        this.enemies.add(new OgreEnemy(this.game, 1800, ground.y - ground.height * 2));
+        this.bonfires.add(new Bonfire(this.game, 500, ground.y - ground.height * 2));
+        this.bonfires.add(new Bonfire(this.game, 1500, ground.y - ground.height * 2));
+        this.updateFpsTimer();
+        this.enablePhysics();
+    };
+    Level3.prototype.create = function () {
+        this.game.stage.backgroundColor = this.background;
+        this.player = new Player(this.game, 0, 0);
+        this.player.currentRoom = this.levelNumber;
+        this.player.loadPlayer(this.playerStorage);
+        this.addPlayerToEnemies();
+        this.addPlayerToNpcs();
+        this.addPlayerToGates();
+    };
+    return Level3;
 }(MasterLevel));
 var Inventory = /** @class */ (function (_super) {
     __extends(Inventory, _super);
@@ -1657,10 +2169,18 @@ var MasterNpc = /** @class */ (function (_super) {
         _this.player = null;
         _this.targetX = 0;
         _this.targetY = 0;
+        _this.defaultScaleWidth = 1;
+        _this.defaultScaleHeight = 1;
+        _this.defaultDirection = 1;
         _this.maxWanderRange = 100;
         _this.attackRange = 0;
         _this.aggroRange = 100;
         _this.canInteract = false;
+        _this.maxRestRange = 40;
+        _this.maxAggroRange = 100;
+        _this.attackCooldown = 2000;
+        _this.attackTimer = null;
+        _this.allowAttack = true;
         _this.DialogueStyle = {
             font: "bold 10px Arial",
             fill: "#fff",
@@ -1669,18 +2189,19 @@ var MasterNpc = /** @class */ (function (_super) {
         };
         _this.friendly = true;
         _this.canWalk = npcAllowance([
-            npcStateEnum.movingWalk,
             npcStateEnum.idle,
             npcStateEnum.idleSpecial
         ]);
-        _this.canIdle = npcAllowance([]);
+        _this.canIdle = npcAllowance([
+            npcStateEnum.movingChase
+        ]);
         _this.canChase = npcAllowance([
             npcStateEnum.movingWalk,
             npcStateEnum.idle,
             npcStateEnum.idleSpecial,
             npcStateEnum.movingChase
         ]);
-        _this.canAttack = ([
+        _this.canAttack = npcAllowance([
             npcStateEnum.movingWalk,
             npcStateEnum.idle,
             npcStateEnum.idleSpecial,
@@ -1702,7 +2223,9 @@ var MasterNpc = /** @class */ (function (_super) {
             _a);
         _this.invincible = false;
         _this.hitBox1 = null;
+        _this.patrolDirection = 1;
         _this.damageFrames = [];
+        _this.moveOption = moveOption.guard;
         _this.anchor.setTo(0.5, 0);
         game.physics.arcade.enableBody(_this);
         game.add.existing(_this);
@@ -1726,11 +2249,81 @@ var MasterNpc = /** @class */ (function (_super) {
         _this.addChild(_this.hitBoxes);
         return _this;
     }
+    MasterNpc.prototype.update = function () {
+        this.resetVelocity();
+        this.animations.play(this.npcAnimations[this.npcState]);
+        if (!this.friendly) {
+            this.handleInput();
+            this.stopMovingTo();
+            this.canInteract = false;
+        }
+        this.interaction();
+        this.checkForHitting();
+        this.checkForGettingHit();
+        this.handleDeath();
+        this.updateHitbox();
+    };
+    MasterNpc.prototype.handleInput = function () {
+        if (this.player) {
+            var distance = this.game.physics.arcade.distanceBetween(this, this.player);
+            if (this.isAllowedToAttack()) {
+                this.attack();
+            }
+            else if (this.isAllowedToChase(distance)) {
+                this.chase();
+            }
+            else if (this.isAllowedToWander()) {
+                if (this.moveOption === moveOption.patrol) {
+                    this.patrol();
+                }
+                else if (this.moveOption === moveOption.wander) {
+                    this.wander();
+                }
+            }
+            else {
+                this.idle();
+            }
+        }
+    };
+    MasterNpc.prototype.isAllowedToWander = function () {
+        if (this.canWalk[this.npcState]) {
+            return true;
+        }
+        return false;
+    };
+    MasterNpc.prototype.isAllowedToChase = function (distance) {
+        if (!this.allowRestRange(distance) &&
+            this.betweenAggroRange(distance) &&
+            this.canChase[this.npcState]) {
+            return true;
+        }
+        return false;
+    };
+    MasterNpc.prototype.isAllowedToAttack = function () {
+        if (this.game.physics.arcade.overlap(this.player, this.hitBox1) &&
+            this.canAttack[this.npcState] &&
+            this.allowAttack) {
+            return true;
+        }
+        return false;
+    };
+    MasterNpc.prototype.allowRestRange = function (distance) {
+        if (!this.allowAttack && distance < this.maxRestRange) {
+            return true;
+        }
+        return false;
+    };
+    MasterNpc.prototype.betweenAggroRange = function (distance) {
+        if (!this.game.physics.arcade.overlap(this.player, this.hitBox1) && distance < this.maxAggroRange) {
+            return true;
+        }
+        return false;
+    };
     MasterNpc.prototype.stopMovingTo = function () {
         if (this.npcState === npcStateEnum.movingWalk) {
-            if (this.game.physics.arcade.distanceToXY(this, this.targetX, this.targetY) < 5) {
+            if (Math.abs(this.targetX - this.x) < 5) {
                 this.x = this.targetX;
-                this.y = this.targetY;
+                this.y = this.y;
                 this.body.velocity.setTo(0, 0);
                 this.npcState = npcStateEnum.idle;
             }
@@ -1783,9 +2376,18 @@ var MasterNpc = /** @class */ (function (_super) {
             this.invincible = true;
             if (this.stats.health > 0) {
                 this.game.time.events.add(1000, this.resetInvincable, this);
+                //this.hurt();
+                //fix knockback
                 this.knockBack(objPositionX);
             }
         }
+    };
+    MasterNpc.prototype.hurt = function () {
+        var _this = this;
+        this.npcState = npcStateEnum.knockBack;
+        setTimeout(function () {
+            _this.npcState = npcStateEnum.idle;
+        }, 750);
     };
     MasterNpc.prototype.knockBack = function (objPositionX) {
         this.npcState = npcStateEnum.knockBack;
@@ -1816,7 +2418,7 @@ var MasterNpc = /** @class */ (function (_super) {
     };
     MasterNpc.prototype.calculateDamage = function (damage) {
         if (this.stats.health - damage < 0) {
-            return 0;
+            return this.stats.health;
         }
         return damage;
     };
@@ -1827,13 +2429,18 @@ var MasterNpc = /** @class */ (function (_super) {
         return true;
     };
     MasterNpc.prototype.attack = function () {
+        var _this = this;
         if (this.player && this.player.x > this.x) {
-            this.scale.setTo(1, 1);
+            this.scale.setTo(this.defaultDirection * this.defaultScaleWidth, this.defaultScaleHeight);
         }
         else {
-            this.scale.setTo(-1, 1);
+            this.scale.setTo(this.defaultDirection * this.defaultScaleWidth * -1, this.defaultScaleHeight);
         }
         this.npcState = npcStateEnum.attack1;
+        this.allowAttack = false;
+        this.attackTimer = setTimeout(function () {
+            _this.allowAttack = true;
+        }, this.attackCooldown);
     };
     MasterNpc.prototype.chase = function () {
         if (!this.player) {
@@ -1848,13 +2455,31 @@ var MasterNpc = /** @class */ (function (_super) {
         }
         this.game.physics.arcade.moveToXY(this, this.player.x, this.y, this.stats.movespeed);
     };
+    MasterNpc.prototype.patrol = function () {
+        if (this.x > this.spawnPositionX + this.maxWanderRange) {
+            this.patrolDirection = 1;
+        }
+        else if (this.x < this.spawnPositionX - this.maxWanderRange) {
+            this.patrolDirection = 0;
+        }
+        if (this.patrolDirection) {
+            this.moveLeft(this.maxWanderRange);
+        }
+        else {
+            this.moveRight(this.maxWanderRange);
+        }
+    };
     MasterNpc.prototype.wander = function () {
-        if (this.game.physics.arcade.distanceToXY(this, this.spawnPositionX, this.spawnPositionY) > this.maxWanderRange) {
+        if (this.x > this.spawnPositionX + this.maxWanderRange) {
+            this.moveNpcTo(this.spawnPositionX, this.spawnPositionY, this.stats.movespeed);
+            return;
+        }
+        else if (this.x < this.spawnPositionX - this.maxWanderRange) {
             this.moveNpcTo(this.spawnPositionX, this.spawnPositionY, this.stats.movespeed);
             return;
         }
         var direction = this.game.rnd.integerInRange(0, 1);
-        var distance = this.game.rnd.integerInRange(10, this.maxWanderRange);
+        var distance = this.game.rnd.integerInRange(20, this.maxWanderRange);
         if (direction) {
             this.moveLeft(distance);
         }
@@ -1921,8 +2546,19 @@ var MasterNpc = /** @class */ (function (_super) {
     };
     MasterNpc.prototype.idle = function () {
         if (this.canIdle[this.npcState]) {
-            this.npcState = npcStateEnum.idle;
+            var rndNumber = this.game.rnd.integerInRange(1, 100);
+            if (rndNumber > 90) {
+                this.npcState = npcStateEnum.idleSpecial;
+            }
+            else {
+                this.npcState = npcStateEnum.idle;
+            }
         }
+    };
+    MasterNpc.prototype.updateScale = function (direction, upsideDown) {
+        if (direction === void 0) { direction = 1; }
+        if (upsideDown === void 0) { upsideDown = 1; }
+        this.scale.setTo(this.defaultDirection * this.defaultScaleWidth * direction, this.defaultScaleHeight * upsideDown);
     };
     return MasterNpc;
 }(Phaser.Sprite));
@@ -1986,17 +2622,9 @@ var RogueNpc = /** @class */ (function (_super) {
             luck: 1,
         };
         _this.animations.add("idle", [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], 10, false).onComplete.add(function () {
-            var rndNumber = _this.game.rnd.integerInRange(1, 100);
-            if (rndNumber > 90) {
-                _this.npcState = npcStateEnum.idleSpecial;
-            }
-            else if (!_this.friendly && rndNumber > 20 && rndNumber < 90) {
-                _this.wander();
-            }
         });
         _this.animations.add("idlespecial", [10, 11, 12, 13, 14, 15, 16, 17, 18, 19], 10, false).onComplete.add(function () {
             _this.animations.stop();
-            _this.npcState = npcStateEnum.idle;
         });
         _this.animations.add("walk", [20, 21, 22, 23, 24, 25, 26, 27, 28, 29], 10, true);
         _this.animations.add("attack1", [30, 31, 32, 33, 34, 35, 36, 37, 38, 39], 10, false).onComplete.add(function () {
@@ -2013,32 +2641,6 @@ var RogueNpc = /** @class */ (function (_super) {
         _this.hitBox1.name = "attack1";
         return _this;
     }
-    RogueNpc.prototype.update = function () {
-        this.resetVelocity();
-        this.animations.play(this.npcAnimations[this.npcState]);
-        if (!this.friendly) {
-            this.handleInput();
-            this.stopMovingTo();
-            this.idle();
-            this.canInteract = false;
-        }
-        this.interaction();
-        this.checkForHitting();
-        this.checkForGettingHit();
-        this.handleDeath();
-        this.updateHitbox();
-    };
-    RogueNpc.prototype.handleInput = function () {
-        if (this.player) {
-            var distance = this.game.physics.arcade.distanceBetween(this, this.player);
-            if (distance < Math.abs(this.hitBox1.width) && this.canAttack[this.npcState]) {
-                this.attack();
-            }
-            else if (distance < this.aggroRange && this.canChase[this.npcState]) {
-                this.chase();
-            }
-        }
-    };
     RogueNpc.prototype.interaction = function () {
         if (!this.canInteractText) {
             this.canInteractText = this.game.add.text(this.x - this.width, this.y - this.height, "", this.DialogueStyle);
@@ -2079,9 +2681,13 @@ var Bonfire = /** @class */ (function (_super) {
         };
         _this.anchor.setTo(0.5, 0);
         game.physics.arcade.enableBody(_this);
+        _this.bodyWidth = _this.width;
+        _this.bodyHeight = _this.height - _this.height / 15;
+        _this.body.setSize(_this.bodyWidth / _this.scale.x, _this.bodyHeight / _this.scale.y, (_this.width - _this.bodyWidth) / 2, -100);
         _this.scale.setTo(0.05, 0.05);
         game.add.existing(_this);
         _this.body.collideWorldBounds = true;
+        _this.body.gravity.y = 1000;
         game.physics.enable(_this, Phaser.Physics.ARCADE);
         _this.animations.add("bonfire_not_lit", [0]);
         _this.animations.add("bonfire_lit", [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], 5, true);
@@ -2162,6 +2768,73 @@ var Gate = /** @class */ (function (_super) {
         }
     };
     return Gate;
+}(Phaser.Sprite));
+var Sign = /** @class */ (function (_super) {
+    __extends(Sign, _super);
+    function Sign(game, x, y) {
+        var _this = _super.call(this, game, x, y, "sign", 0) || this;
+        _this.signDialogue = [
+            "Press E to interact",
+            "i am the mighty sign of knowledge",
+            "you seem like a worthy adventurer",
+            "hmmm, yes, yes",
+            "i've decided!",
+            "hear me out, and i shall bless you with power",
+            "Press A to walk left",
+            "Press D to walk right",
+            "Press SPACE to dodge",
+            "Press E to interact with things",
+            "Press Left Mouse Button to attack",
+            "Press I to open inventory",
+            "Press Escape or P to pause",
+            "Bonfires will heal you",
+            "now shoo you're wasting my precious time",
+            "*mumbles i hate this job*",
+            "..."
+        ];
+        _this.signDialogueLine = 0;
+        _this.canInteract = false;
+        _this.DialogueStyle = {
+            font: "bold 10px Arial",
+            fill: "#fff",
+            boundsAlignH: "center",
+            boundsAlignV: "middle"
+        };
+        _this.anchor.setTo(0.5, 0);
+        game.physics.arcade.enableBody(_this);
+        game.add.existing(_this);
+        _this.body.collideWorldBounds = true;
+        _this.body.gravity.y = 1000;
+        game.physics.enable(_this, Phaser.Physics.ARCADE);
+        return _this;
+    }
+    Sign.prototype.update = function () {
+        this.interaction();
+    };
+    Sign.prototype.interaction = function () {
+        if (!this.canInteractText) {
+            this.canInteractText = this.game.add.text(this.x - this.width, this.y - this.height, "", this.DialogueStyle);
+            this.canInteractText.setTextBounds(30, 0, 0, 0);
+        }
+        if (this.canInteract) {
+            if (this.signDialogueLine >= this.signDialogue.length) {
+                this.signDialogueLine = this.signDialogue.length - 1;
+            }
+            this.canInteractText.setText(this.signDialogue[this.signDialogueLine]);
+        }
+        else if (!this.canInteract) {
+            this.canInteractText.setText("");
+            if (this.signDialogueLine > 0) {
+                this.signDialogueLine = 1;
+            }
+        }
+    };
+    Sign.prototype.nextDialogueText = function () {
+        if (this.canInteract) {
+            this.signDialogueLine++;
+        }
+    };
+    return Sign;
 }(Phaser.Sprite));
 var Item = /** @class */ (function (_super) {
     __extends(Item, _super);
@@ -2577,6 +3250,9 @@ var Player = /** @class */ (function (_super) {
         else if (this.controls.E.justPressed() && this.facingNpc) {
             this.handleNpc();
         }
+        else if (this.controls.E.justPressed() && this.facingSign) {
+            this.handleSign();
+        }
         else if (this.controls.E.justPressed() && this.facingItem) {
             this.handleItem();
         }
@@ -2667,6 +3343,9 @@ var Player = /** @class */ (function (_super) {
     };
     Player.prototype.handleNpc = function () {
         this.facingNpc.nextDialogueText();
+    };
+    Player.prototype.handleSign = function () {
+        this.facingSign.nextDialogueText();
     };
     Player.prototype.handleAttack = function () {
         if (this.controls.LMB.justPressed() && this.canAttack[this.playerState]) {
@@ -2825,13 +3504,14 @@ var PreloadState = /** @class */ (function (_super) {
         this.game.load.image("inventory", "bin/assets/UI/inventory.png");
         this.game.load.image("inventorybar", "bin/assets/UI/inventorybar.png");
         this.game.load.image("bubble", "bin/assets/UI/bubble.png");
+        this.game.load.image("sign", "bin/assets/sign/sign.png");
         this.game.load.spritesheet("item", "bin/assets/items/item.png", 15, 15);
         this.game.load.spritesheet("rogue", "bin/assets/rogue/rogue.png", 32, 32);
         this.game.load.spritesheet("bonfire", "bin/assets/bonfire/bonfire.png", 500, 740);
         this.game.load.spritesheet("chest", "bin/assets/chest/chest.png", 30, 30);
         this.game.load.spritesheet("explosion", "bin/assets/explosion/explosion.png", 30, 30);
         this.game.load.spritesheet("adventurer", "bin/assets/adventurer/adventurer.png", 50, 37);
-        this.game.load.spritesheet("djinnbandit", "bin/assets/djinnbandit/djinnbandit.png", 32, 32);
+        this.game.load.spritesheet("djinnbandit", "bin/assets/djinnbandit/djinnbandit.png", 48, 42);
         this.game.load.spritesheet("earthwhisp", "bin/assets/earthwhisp/earthwhisp.png", 32, 32);
         this.game.load.spritesheet("firewhisp", "bin/assets/firewhisp/firewhisp.png", 32, 32);
         this.game.load.spritesheet("waterwhisp", "bin/assets/waterwhisp/waterwhisp.png", 32, 32);
@@ -2839,20 +3519,20 @@ var PreloadState = /** @class */ (function (_super) {
         this.game.load.spritesheet("goblin", "bin/assets/goblin/goblin.png", 32, 32);
         this.game.load.spritesheet("golem", "bin/assets/golem/golem.png", 32, 32);
         this.game.load.spritesheet("kobold", "bin/assets/kobold/kobold.png", 68, 35);
-        this.game.load.spritesheet("mandrake", "bin/assets/mandrake/mandrake.png", 32, 32);
+        this.game.load.spritesheet("mandrake", "bin/assets/mandrake/mandrake.png", 56, 38);
         this.game.load.spritesheet("mimic", "bin/assets/mimic/mimic.png", 32, 32);
-        this.game.load.spritesheet("minotaur", "bin/assets/minotaur/minotaur.png", 32, 32);
+        this.game.load.spritesheet("minotaur", "bin/assets/minotaur/minotaur.png", 96, 77);
         this.game.load.spritesheet("oculothorax", "bin/assets/oculothorax/oculothorax.png", 32, 32);
-        this.game.load.spritesheet("ogre", "bin/assets/ogre/ogre.png", 32, 32);
-        this.game.load.spritesheet("rat", "bin/assets/rat/rat.png", 32, 32);
-        this.game.load.spritesheet("redogre", "bin/assets/redogre/redogre.png", 32, 32);
-        this.game.load.spritesheet("satyr", "bin/assets/satyr/satyr.png", 32, 32);
+        this.game.load.spritesheet("ogre", "bin/assets/ogre/ogre.png", 58, 42);
+        this.game.load.spritesheet("rat", "bin/assets/rat/rat.png", 42, 22);
+        this.game.load.spritesheet("redogre", "bin/assets/redogre/redogre.png", 73, 46);
+        this.game.load.spritesheet("satyr", "bin/assets/satyr/satyr.png", 68, 46);
         this.game.load.spritesheet("shade", "bin/assets/shade/shade.png", 32, 32);
         this.game.load.spritesheet("slime", "bin/assets/slime/slime.png", 32, 25);
         this.game.load.spritesheet("slimeboss", "bin/assets/slime/slimeboss.png", 128, 100);
         this.game.load.spritesheet("wasp", "bin/assets/wasp/wasp.png", 32, 32);
-        this.game.load.spritesheet("werewolf", "bin/assets/werewolf/werewolf.png", 32, 32);
-        this.game.load.spritesheet("yeti", "bin/assets/yeti/yeti.png", 32, 32);
+        this.game.load.spritesheet("werewolf", "bin/assets/werewolf/werewolf.png", 73, 43);
+        this.game.load.spritesheet("yeti", "bin/assets/yeti/yeti.png", 73, 57);
     };
     PreloadState.prototype.finishedLoading = function () {
         this.loadingText.setText("Load Complete");
