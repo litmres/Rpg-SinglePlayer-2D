@@ -103,7 +103,7 @@ class MasterEnemy extends Phaser.Sprite {
     handleInput() {
         if (this.player) {
             const distance = this.game.physics.arcade.distanceBetween(this, this.player);
-            if (this.isAllowedToAttack(distance)) {
+            if (this.isAllowedToAttack()) {
                 this.attack();
             } else if (this.isAllowedToChase(distance)) {
                 this.chase();
@@ -135,7 +135,7 @@ class MasterEnemy extends Phaser.Sprite {
         return false;
     }
 
-    isAllowedToAttack(distance: number) {
+    isAllowedToAttack() {
         if (this.game.physics.arcade.overlap(this.player, this.hitBox1) &&
             this.canAttack[this.enemyState] &&
             this.allowAttack) {

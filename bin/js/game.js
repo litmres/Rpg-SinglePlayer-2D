@@ -201,7 +201,7 @@ var MasterEnemy = /** @class */ (function (_super) {
     MasterEnemy.prototype.handleInput = function () {
         if (this.player) {
             var distance = this.game.physics.arcade.distanceBetween(this, this.player);
-            if (this.isAllowedToAttack(distance)) {
+            if (this.isAllowedToAttack()) {
                 this.attack();
             }
             else if (this.isAllowedToChase(distance)) {
@@ -234,7 +234,7 @@ var MasterEnemy = /** @class */ (function (_super) {
         }
         return false;
     };
-    MasterEnemy.prototype.isAllowedToAttack = function (distance) {
+    MasterEnemy.prototype.isAllowedToAttack = function () {
         if (this.game.physics.arcade.overlap(this.player, this.hitBox1) &&
             this.canAttack[this.enemyState] &&
             this.allowAttack) {
@@ -1498,7 +1498,7 @@ var MasterLevel = /** @class */ (function (_super) {
         var _this = _super !== null && _super.apply(this, arguments) || this;
         _this.levelNumber = levelsEnum.level0;
         _this.playerStorage = JSON.parse(window.localStorage.getItem("player"));
-        _this.debugMode = true;
+        _this.debugMode = false;
         return _this;
     }
     MasterLevel.prototype.update = function () {
@@ -2169,6 +2169,9 @@ var MasterNpc = /** @class */ (function (_super) {
         _this.player = null;
         _this.targetX = 0;
         _this.targetY = 0;
+        _this.defaultScaleWidth = 1;
+        _this.defaultScaleHeight = 1;
+        _this.defaultDirection = 1;
         _this.maxWanderRange = 100;
         _this.attackRange = 0;
         _this.aggroRange = 100;
@@ -2186,11 +2189,12 @@ var MasterNpc = /** @class */ (function (_super) {
         };
         _this.friendly = true;
         _this.canWalk = npcAllowance([
-            npcStateEnum.movingWalk,
             npcStateEnum.idle,
             npcStateEnum.idleSpecial
         ]);
-        _this.canIdle = npcAllowance([]);
+        _this.canIdle = npcAllowance([
+            npcStateEnum.movingChase
+        ]);
         _this.canChase = npcAllowance([
             npcStateEnum.movingWalk,
             npcStateEnum.idle,
@@ -2219,7 +2223,9 @@ var MasterNpc = /** @class */ (function (_super) {
             _a);
         _this.invincible = false;
         _this.hitBox1 = null;
+        _this.patrolDirection = 1;
         _this.damageFrames = [];
+        _this.moveOption = moveOption.guard;
         _this.anchor.setTo(0.5, 0);
         game.physics.arcade.enableBody(_this);
         game.add.existing(_this);
@@ -2249,7 +2255,6 @@ var MasterNpc = /** @class */ (function (_super) {
         if (!this.friendly) {
             this.handleInput();
             this.stopMovingTo();
-            this.idle();
             this.canInteract = false;
         }
         this.interaction();
@@ -2261,14 +2266,19 @@ var MasterNpc = /** @class */ (function (_super) {
     MasterNpc.prototype.handleInput = function () {
         if (this.player) {
             var distance = this.game.physics.arcade.distanceBetween(this, this.player);
-            if (this.isAllowedToAttack(distance)) {
+            if (this.isAllowedToAttack()) {
                 this.attack();
             }
             else if (this.isAllowedToChase(distance)) {
                 this.chase();
             }
             else if (this.isAllowedToWander()) {
-                //this.wander();
+                if (this.moveOption === moveOption.patrol) {
+                    this.patrol();
+                }
+                else if (this.moveOption === moveOption.wander) {
+                    this.wander();
+                }
             }
             else {
                 this.idle();
@@ -2289,7 +2299,7 @@ var MasterNpc = /** @class */ (function (_super) {
         }
         return false;
     };
-    MasterNpc.prototype.isAllowedToAttack = function (distance) {
+    MasterNpc.prototype.isAllowedToAttack = function () {
         if (this.game.physics.arcade.overlap(this.player, this.hitBox1) &&
             this.canAttack[this.npcState] &&
             this.allowAttack) {
@@ -2311,9 +2321,9 @@ var MasterNpc = /** @class */ (function (_super) {
     };
     MasterNpc.prototype.stopMovingTo = function () {
         if (this.npcState === npcStateEnum.movingWalk) {
-            if (this.game.physics.arcade.distanceToXY(this, this.targetX, this.targetY) < 5) {
+            if (Math.abs(this.targetX - this.x) < 5) {
                 this.x = this.targetX;
-                this.y = this.targetY;
+                this.y = this.y;
                 this.body.velocity.setTo(0, 0);
                 this.npcState = npcStateEnum.idle;
             }
@@ -2366,9 +2376,18 @@ var MasterNpc = /** @class */ (function (_super) {
             this.invincible = true;
             if (this.stats.health > 0) {
                 this.game.time.events.add(1000, this.resetInvincable, this);
+                //this.hurt();
+                //fix knockback
                 this.knockBack(objPositionX);
             }
         }
+    };
+    MasterNpc.prototype.hurt = function () {
+        var _this = this;
+        this.npcState = npcStateEnum.knockBack;
+        setTimeout(function () {
+            _this.npcState = npcStateEnum.idle;
+        }, 750);
     };
     MasterNpc.prototype.knockBack = function (objPositionX) {
         this.npcState = npcStateEnum.knockBack;
@@ -2399,7 +2418,7 @@ var MasterNpc = /** @class */ (function (_super) {
     };
     MasterNpc.prototype.calculateDamage = function (damage) {
         if (this.stats.health - damage < 0) {
-            return 0;
+            return this.stats.health;
         }
         return damage;
     };
@@ -2410,13 +2429,18 @@ var MasterNpc = /** @class */ (function (_super) {
         return true;
     };
     MasterNpc.prototype.attack = function () {
+        var _this = this;
         if (this.player && this.player.x > this.x) {
-            this.scale.setTo(1, 1);
+            this.scale.setTo(this.defaultDirection * this.defaultScaleWidth, this.defaultScaleHeight);
         }
         else {
-            this.scale.setTo(-1, 1);
+            this.scale.setTo(this.defaultDirection * this.defaultScaleWidth * -1, this.defaultScaleHeight);
         }
         this.npcState = npcStateEnum.attack1;
+        this.allowAttack = false;
+        this.attackTimer = setTimeout(function () {
+            _this.allowAttack = true;
+        }, this.attackCooldown);
     };
     MasterNpc.prototype.chase = function () {
         if (!this.player) {
@@ -2431,13 +2455,31 @@ var MasterNpc = /** @class */ (function (_super) {
         }
         this.game.physics.arcade.moveToXY(this, this.player.x, this.y, this.stats.movespeed);
     };
+    MasterNpc.prototype.patrol = function () {
+        if (this.x > this.spawnPositionX + this.maxWanderRange) {
+            this.patrolDirection = 1;
+        }
+        else if (this.x < this.spawnPositionX - this.maxWanderRange) {
+            this.patrolDirection = 0;
+        }
+        if (this.patrolDirection) {
+            this.moveLeft(this.maxWanderRange);
+        }
+        else {
+            this.moveRight(this.maxWanderRange);
+        }
+    };
     MasterNpc.prototype.wander = function () {
-        if (this.game.physics.arcade.distanceToXY(this, this.spawnPositionX, this.spawnPositionY) > this.maxWanderRange) {
+        if (this.x > this.spawnPositionX + this.maxWanderRange) {
+            this.moveNpcTo(this.spawnPositionX, this.spawnPositionY, this.stats.movespeed);
+            return;
+        }
+        else if (this.x < this.spawnPositionX - this.maxWanderRange) {
             this.moveNpcTo(this.spawnPositionX, this.spawnPositionY, this.stats.movespeed);
             return;
         }
         var direction = this.game.rnd.integerInRange(0, 1);
-        var distance = this.game.rnd.integerInRange(10, this.maxWanderRange);
+        var distance = this.game.rnd.integerInRange(20, this.maxWanderRange);
         if (direction) {
             this.moveLeft(distance);
         }
@@ -2512,6 +2554,11 @@ var MasterNpc = /** @class */ (function (_super) {
                 this.npcState = npcStateEnum.idle;
             }
         }
+    };
+    MasterNpc.prototype.updateScale = function (direction, upsideDown) {
+        if (direction === void 0) { direction = 1; }
+        if (upsideDown === void 0) { upsideDown = 1; }
+        this.scale.setTo(this.defaultDirection * this.defaultScaleWidth * direction, this.defaultScaleHeight * upsideDown);
     };
     return MasterNpc;
 }(Phaser.Sprite));

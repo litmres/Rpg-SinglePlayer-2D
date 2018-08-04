@@ -7,6 +7,9 @@ class MasterNpc extends Phaser.Sprite {
     player: Player | null = null;
     targetX = 0;
     targetY = 0;
+    defaultScaleWidth = 1;
+    defaultScaleHeight = 1;
+    defaultDirection = 1;
     maxWanderRange = 100;
     attackRange = 0;
     spawnPositionX: number;
@@ -27,11 +30,12 @@ class MasterNpc extends Phaser.Sprite {
     };
     friendly = true;
     canWalk = npcAllowance([
-        npcStateEnum.movingWalk,
         npcStateEnum.idle,
         npcStateEnum.idleSpecial
     ]);
-    canIdle = npcAllowance([]);
+    canIdle = npcAllowance([
+        npcStateEnum.movingChase
+    ]);
     canChase = npcAllowance([
         npcStateEnum.movingWalk,
         npcStateEnum.idle,
@@ -62,7 +66,9 @@ class MasterNpc extends Phaser.Sprite {
     invincible = false;
     hitBoxes: Phaser.Group;
     hitBox1: Phaser.Sprite | null = null;
+    patrolDirection = 1;
     damageFrames: number[] = [];
+    moveOption = moveOption.guard;
     constructor(game: Phaser.Game, x: number, y: number, key?: string, frame?: number) {
         super(game, x, y, key, frame);
         this.anchor.setTo(0.5, 0);
@@ -98,7 +104,6 @@ class MasterNpc extends Phaser.Sprite {
         if (!this.friendly) {
             this.handleInput();
             this.stopMovingTo();
-            this.idle();
             this.canInteract = false;
         }
 
@@ -116,12 +121,16 @@ class MasterNpc extends Phaser.Sprite {
     handleInput() {
         if (this.player) {
             const distance = this.game.physics.arcade.distanceBetween(this, this.player);
-            if (this.isAllowedToAttack(distance)) {
+            if (this.isAllowedToAttack()) {
                 this.attack();
             } else if (this.isAllowedToChase(distance)) {
                 this.chase();
             } else if (this.isAllowedToWander()) {
-                //this.wander();
+                if (this.moveOption === moveOption.patrol) {
+                    this.patrol();
+                } else if (this.moveOption === moveOption.wander) {
+                    this.wander();
+                }
             } else {
                 this.idle();
             }
@@ -144,7 +153,7 @@ class MasterNpc extends Phaser.Sprite {
         return false;
     }
 
-    isAllowedToAttack(distance: number) {
+    isAllowedToAttack() {
         if (this.game.physics.arcade.overlap(this.player, this.hitBox1) &&
             this.canAttack[this.npcState] &&
             this.allowAttack) {
@@ -169,9 +178,9 @@ class MasterNpc extends Phaser.Sprite {
 
     stopMovingTo() {
         if (this.npcState === npcStateEnum.movingWalk) {
-            if (this.game.physics.arcade.distanceToXY(this, this.targetX, this.targetY) < 5) {
+            if (Math.abs(this.targetX - this.x) < 5) {
                 this.x = this.targetX;
-                this.y = this.targetY;
+                this.y = this.y;
                 this.body.velocity.setTo(0, 0);
                 this.npcState = npcStateEnum.idle;
             }
@@ -226,9 +235,18 @@ class MasterNpc extends Phaser.Sprite {
             this.invincible = true;
             if (this.stats.health > 0) {
                 this.game.time.events.add(1000, this.resetInvincable, this);
+                //this.hurt();
+                //fix knockback
                 this.knockBack(objPositionX);
             }
         }
+    }
+
+    hurt() {
+        this.npcState = npcStateEnum.knockBack;
+        setTimeout(() => {
+            this.npcState = npcStateEnum.idle;
+        }, 750);
     }
 
     knockBack(objPositionX: number) {
@@ -266,7 +284,7 @@ class MasterNpc extends Phaser.Sprite {
 
     calculateDamage(damage: number) {
         if (this.stats.health - damage < 0) {
-            return 0;
+            return this.stats.health;
         }
         return damage;
     }
@@ -280,11 +298,15 @@ class MasterNpc extends Phaser.Sprite {
 
     attack() {
         if (this.player && this.player.x > this.x) {
-            this.scale.setTo(1, 1);
+            this.scale.setTo(this.defaultDirection * this.defaultScaleWidth, this.defaultScaleHeight);
         } else {
-            this.scale.setTo(-1, 1);
+            this.scale.setTo(this.defaultDirection * this.defaultScaleWidth * -1, this.defaultScaleHeight);
         }
         this.npcState = npcStateEnum.attack1;
+        this.allowAttack = false;
+        this.attackTimer = setTimeout(() => {
+            this.allowAttack = true;
+        }, this.attackCooldown);
     }
 
     chase() {
@@ -298,13 +320,30 @@ class MasterNpc extends Phaser.Sprite {
         this.game.physics.arcade.moveToXY(this, this.player.x, this.y, this.stats.movespeed);
     }
 
+    patrol() {
+        if (this.x > this.spawnPositionX + this.maxWanderRange) {
+            this.patrolDirection = 1;
+        } else if (this.x < this.spawnPositionX - this.maxWanderRange) {
+            this.patrolDirection = 0;
+        }
+
+        if (this.patrolDirection) {
+            this.moveLeft(this.maxWanderRange);
+        } else {
+            this.moveRight(this.maxWanderRange);
+        }
+    }
+
     wander() {
-        if (this.game.physics.arcade.distanceToXY(this, this.spawnPositionX, this.spawnPositionY) > this.maxWanderRange) {
+        if (this.x > this.spawnPositionX + this.maxWanderRange) {
+            this.moveNpcTo(this.spawnPositionX, this.spawnPositionY, this.stats.movespeed);
+            return;
+        } else if (this.x < this.spawnPositionX - this.maxWanderRange) {
             this.moveNpcTo(this.spawnPositionX, this.spawnPositionY, this.stats.movespeed);
             return;
         }
         const direction = this.game.rnd.integerInRange(0, 1);
-        const distance = this.game.rnd.integerInRange(10, this.maxWanderRange);
+        const distance = this.game.rnd.integerInRange(20, this.maxWanderRange);
         if (direction) {
             this.moveLeft(distance);
         } else {
@@ -388,6 +427,10 @@ class MasterNpc extends Phaser.Sprite {
                 this.npcState = npcStateEnum.idle;
             }
         }
+    }
+
+    updateScale(direction = 1, upsideDown = 1) {
+        this.scale.setTo(this.defaultDirection * this.defaultScaleWidth * direction, this.defaultScaleHeight * upsideDown);
     }
 }
 

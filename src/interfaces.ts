@@ -49,12 +49,6 @@ interface playerStatsInterface {
 	luck: number;
 }
 
-interface moveOptionInterface {
-	guard: number;
-	wander: number;
-	patrol: number;
-}
-
 interface slimeBossAnimationInterface {
 	[slimeBossStateEnum.jumpingToPlayer]: string;
 	[slimeBossStateEnum.jumpingToWall]: string;
