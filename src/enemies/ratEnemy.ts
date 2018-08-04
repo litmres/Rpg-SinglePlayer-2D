@@ -36,6 +36,8 @@ class RatEnemy extends MasterEnemy {
         this.animations.add("death", [20, 21], 10, false).onComplete.add(() => {
             this.kill();
         });
+        this.animations.add("knockback", [18, 19], 10, false);
+
         this.health = this.maxHealth;
 
         this.hitBox1 = this.hitBoxes.create(0, this.height / 2);

@@ -36,6 +36,8 @@ class MinotaurEnemy extends MasterEnemy {
         this.animations.add("death", [37, 38, 39, 40, 41, 42], 10, false).onComplete.add(() => {
             this.kill();
         });
+        this.animations.add("knockback", [31, 32, 33, 34, 35, 36], 10, false);
+
         this.health = this.maxHealth;
 
         this.hitBox1 = this.hitBoxes.create(-10, this.height / 2);

@@ -36,6 +36,7 @@ class YetiEnemy extends MasterEnemy {
         this.animations.add("death", [28, 29, 30, 31, 32, 33], 10, false).onComplete.add(() => {
             this.kill();
         });
+        this.animations.add("knockback", [23, 24, 25, 26, 27], 10, false);
         this.health = this.maxHealth;
 
         this.hitBox1 = this.hitBoxes.create(0, this.height / 2);

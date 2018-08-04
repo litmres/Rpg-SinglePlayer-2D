@@ -36,6 +36,8 @@ class SatyrEnemy extends MasterEnemy {
         this.animations.add("death", [23, 24, 25, 26, 27], 10, false).onComplete.add(() => {
             this.kill();
         });
+        this.animations.add("knockback", [18, 19, 20, 21, 22], 10, false);
+
         this.health = this.maxHealth;
 
         this.hitBox1 = this.hitBoxes.create(5, this.height / 2);

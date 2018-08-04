@@ -40,6 +40,7 @@ class Slime extends MasterEnemy {
         this.animations.add("death", [17, 18, 19, 20], 10, false).onComplete.add(() => {
             this.kill();
         });
+        this.animations.add("knockback", [13, 14, 15, 16], 10, false);
         this.health = this.maxHealth;
 
         this.hitBox1 = this.hitBoxes.create(0, this.height / 2);

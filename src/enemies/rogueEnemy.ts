@@ -39,6 +39,8 @@ class RogueEnemy extends MasterEnemy {
         this.animations.add("death", [40, 41, 42, 43, 44, 45, 46, 47, 48, 49], 10, false).onComplete.add(() => {
             this.kill();
         });
+        this.animations.add("knockback", [40], 10, false);
+
         this.health = this.maxHealth;
 
         this.hitBox1 = this.hitBoxes.create(0, this.height / 2);

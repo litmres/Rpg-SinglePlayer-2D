@@ -39,6 +39,7 @@ class AdventurerEnemy extends MasterEnemy {
         this.animations.add("death", [62, 63, 64, 65, 66, 67, 68], 10, false).onComplete.add(() => {
             this.kill();
         });
+        this.animations.add("knockback", [57, 58, 59, 60, 61], 10, false);
         this.health = this.maxHealth;
 
         this.hitBox1 = this.hitBoxes.create(0, this.height / 2);

@@ -36,6 +36,7 @@ class WerewolfEnemy extends MasterEnemy {
         this.animations.add("death", [21, 22, 23, 24, 25, 26, 27], 10, false).onComplete.add(() => {
             this.kill();
         });
+        this.animations.add("knockback", [16, 17, 18, 19, 20], 10, false);
         this.health = this.maxHealth;
 
         this.hitBox1 = this.hitBoxes.create(35, this.height / 2);

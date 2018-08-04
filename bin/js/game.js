@@ -288,9 +288,18 @@ var MasterEnemy = /** @class */ (function (_super) {
             this.invincible = true;
             if (this.stats.health > 0) {
                 this.game.time.events.add(1000, this.resetInvincable, this);
-                this.knockBack(objPositionX);
+                this.hurt();
+                //fix knockback
+                //this.knockBack(objPositionX);
             }
         }
+    };
+    MasterEnemy.prototype.hurt = function () {
+        var _this = this;
+        this.enemyState = enemyStateEnum.knockBack;
+        setTimeout(function () {
+            _this.enemyState = enemyStateEnum.idle;
+        }, 750);
     };
     MasterEnemy.prototype.knockBack = function (objPositionX) {
         this.enemyState = enemyStateEnum.knockBack;
@@ -490,6 +499,7 @@ var AdventurerEnemy = /** @class */ (function (_super) {
         _this.animations.add("death", [62, 63, 64, 65, 66, 67, 68], 10, false).onComplete.add(function () {
             _this.kill();
         });
+        _this.animations.add("knockback", [57, 58, 59, 60, 61], 10, false);
         _this.health = _this.maxHealth;
         _this.hitBox1 = _this.hitBoxes.create(0, _this.height / 2);
         _this.game.physics.enable(_this.hitBoxes, Phaser.Physics.ARCADE);
@@ -557,6 +567,7 @@ var DjinnBanditEnemy = /** @class */ (function (_super) {
         _this.animations.add("death", [20, 21, 22, 23, 24, 25, 26], 10, false).onComplete.add(function () {
             _this.kill();
         });
+        _this.animations.add("knockback", [15, 16, 17, 18, 19], 10, false);
         _this.health = _this.maxHealth;
         _this.hitBox1 = _this.hitBoxes.create(5, _this.height / 2);
         _this.game.physics.enable(_this.hitBoxes, Phaser.Physics.ARCADE);
@@ -671,6 +682,7 @@ var MandrakeEnemy = /** @class */ (function (_super) {
         _this.animations.add("death", [29, 30, 31, 32, 33, 34], 10, false).onComplete.add(function () {
             _this.kill();
         });
+        _this.animations.add("knockback", [22, 23, 24, 25, 26, 27, 28, 29], 10, false);
         _this.health = _this.maxHealth;
         _this.hitBox1 = _this.hitBoxes.create(10, _this.height / 2);
         _this.game.physics.enable(_this.hitBoxes, Phaser.Physics.ARCADE);
@@ -714,6 +726,7 @@ var MinotaurEnemy = /** @class */ (function (_super) {
         _this.animations.add("death", [37, 38, 39, 40, 41, 42], 10, false).onComplete.add(function () {
             _this.kill();
         });
+        _this.animations.add("knockback", [31, 32, 33, 34, 35, 36], 10, false);
         _this.health = _this.maxHealth;
         _this.hitBox1 = _this.hitBoxes.create(-10, _this.height / 2);
         _this.game.physics.enable(_this.hitBoxes, Phaser.Physics.ARCADE);
@@ -757,6 +770,7 @@ var OgreEnemy = /** @class */ (function (_super) {
         _this.animations.add("death", [23, 24, 25, 26, 27, 28], 10, false).onComplete.add(function () {
             _this.kill();
         });
+        _this.animations.add("knockback", [18, 19, 20, 21, 22], 10, false);
         _this.health = _this.maxHealth;
         _this.hitBox1 = _this.hitBoxes.create(0, _this.height / 2);
         _this.game.physics.enable(_this.hitBoxes, Phaser.Physics.ARCADE);
@@ -800,6 +814,7 @@ var RatEnemy = /** @class */ (function (_super) {
         _this.animations.add("death", [20, 21], 10, false).onComplete.add(function () {
             _this.kill();
         });
+        _this.animations.add("knockback", [18, 19], 10, false);
         _this.health = _this.maxHealth;
         _this.hitBox1 = _this.hitBoxes.create(0, _this.height / 2);
         _this.game.physics.enable(_this.hitBoxes, Phaser.Physics.ARCADE);
@@ -843,6 +858,7 @@ var RedOgreEnemy = /** @class */ (function (_super) {
         _this.animations.add("death", [25, 26, 27, 28, 29], 10, false).onComplete.add(function () {
             _this.kill();
         });
+        _this.animations.add("knockback", [20, 21, 22, 23, 24], 10, false);
         _this.health = _this.maxHealth;
         _this.hitBox1 = _this.hitBoxes.create(0, _this.height / 2);
         _this.game.physics.enable(_this.hitBoxes, Phaser.Physics.ARCADE);
@@ -889,6 +905,7 @@ var RogueEnemy = /** @class */ (function (_super) {
         _this.animations.add("death", [40, 41, 42, 43, 44, 45, 46, 47, 48, 49], 10, false).onComplete.add(function () {
             _this.kill();
         });
+        _this.animations.add("knockback", [40], 10, false);
         _this.health = _this.maxHealth;
         _this.hitBox1 = _this.hitBoxes.create(0, _this.height / 2);
         _this.game.physics.enable(_this.hitBoxes, Phaser.Physics.ARCADE);
@@ -932,6 +949,7 @@ var SatyrEnemy = /** @class */ (function (_super) {
         _this.animations.add("death", [23, 24, 25, 26, 27], 10, false).onComplete.add(function () {
             _this.kill();
         });
+        _this.animations.add("knockback", [18, 19, 20, 21, 22], 10, false);
         _this.health = _this.maxHealth;
         _this.hitBox1 = _this.hitBoxes.create(5, _this.height / 2);
         _this.game.physics.enable(_this.hitBoxes, Phaser.Physics.ARCADE);
@@ -979,6 +997,7 @@ var Slime = /** @class */ (function (_super) {
         _this.animations.add("death", [17, 18, 19, 20], 10, false).onComplete.add(function () {
             _this.kill();
         });
+        _this.animations.add("knockback", [13, 14, 15, 16], 10, false);
         _this.health = _this.maxHealth;
         _this.hitBox1 = _this.hitBoxes.create(0, _this.height / 2);
         _this.game.physics.enable(_this.hitBoxes, Phaser.Physics.ARCADE);
@@ -1389,6 +1408,7 @@ var WerewolfEnemy = /** @class */ (function (_super) {
         _this.animations.add("death", [21, 22, 23, 24, 25, 26, 27], 10, false).onComplete.add(function () {
             _this.kill();
         });
+        _this.animations.add("knockback", [16, 17, 18, 19, 20], 10, false);
         _this.health = _this.maxHealth;
         _this.hitBox1 = _this.hitBoxes.create(35, _this.height / 2);
         _this.game.physics.enable(_this.hitBoxes, Phaser.Physics.ARCADE);
@@ -1432,6 +1452,7 @@ var YetiEnemy = /** @class */ (function (_super) {
         _this.animations.add("death", [28, 29, 30, 31, 32, 33], 10, false).onComplete.add(function () {
             _this.kill();
         });
+        _this.animations.add("knockback", [23, 24, 25, 26, 27], 10, false);
         _this.health = _this.maxHealth;
         _this.hitBox1 = _this.hitBoxes.create(0, _this.height / 2);
         _this.game.physics.enable(_this.hitBoxes, Phaser.Physics.ARCADE);

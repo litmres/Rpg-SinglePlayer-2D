@@ -36,6 +36,8 @@ class RedOgreEnemy extends MasterEnemy {
         this.animations.add("death", [25, 26, 27, 28, 29], 10, false).onComplete.add(() => {
             this.kill();
         });
+        this.animations.add("knockback", [20, 21, 22, 23, 24], 10, false);
+
         this.health = this.maxHealth;
 
         this.hitBox1 = this.hitBoxes.create(0, this.height / 2);

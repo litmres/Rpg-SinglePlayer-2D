@@ -199,9 +199,18 @@ class MasterEnemy extends Phaser.Sprite {
             this.invincible = true;
             if (this.stats.health > 0) {
                 this.game.time.events.add(1000, this.resetInvincable, this);
-                this.knockBack(objPositionX);
+                this.hurt();
+                //fix knockback
+                //this.knockBack(objPositionX);
             }
         }
+    }
+
+    hurt() {
+        this.enemyState = enemyStateEnum.knockBack;
+        setTimeout(() => {
+            this.enemyState = enemyStateEnum.idle;
+        }, 750);
     }
 
     knockBack(objPositionX: number) {

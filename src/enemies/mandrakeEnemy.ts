@@ -36,6 +36,8 @@ class MandrakeEnemy extends MasterEnemy {
         this.animations.add("death", [29, 30, 31, 32, 33, 34], 10, false).onComplete.add(() => {
             this.kill();
         });
+        this.animations.add("knockback", [22, 23, 24, 25, 26, 27, 28, 29], 10, false);
+
         this.health = this.maxHealth;
 
         this.hitBox1 = this.hitBoxes.create(10, this.height / 2);

@@ -36,6 +36,8 @@ class DjinnBanditEnemy extends MasterEnemy {
         this.animations.add("death", [20, 21, 22, 23, 24, 25, 26], 10, false).onComplete.add(() => {
             this.kill();
         });
+        this.animations.add("knockback", [15, 16, 17, 18, 19], 10, false);
+
         this.health = this.maxHealth;
 
         this.hitBox1 = this.hitBoxes.create(5, this.height / 2);
