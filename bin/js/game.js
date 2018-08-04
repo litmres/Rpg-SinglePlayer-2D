@@ -301,9 +301,9 @@ var MasterEnemy = /** @class */ (function (_super) {
             this.invincible = true;
             if (this.stats.health > 0) {
                 this.game.time.events.add(1000, this.resetInvincable, this);
-                this.hurt();
+                //this.hurt();
                 //fix knockback
-                //this.knockBack(objPositionX);
+                this.knockBack(objPositionX);
             }
         }
     };
