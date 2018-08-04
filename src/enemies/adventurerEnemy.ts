@@ -8,6 +8,7 @@ class AdventurerEnemy extends MasterEnemy {
     maxAggroRange = 100;
     hitBox1: Phaser.Sprite;
     damageFrames = [45, 46];
+    moveOption = moveOption.wander;
     constructor(game: Phaser.Game, x: number, y: number) {
         super(game, x, y, "adventurer", 0);
         this.bodyWidth = 10;

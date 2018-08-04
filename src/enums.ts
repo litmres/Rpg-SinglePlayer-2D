@@ -69,3 +69,9 @@ enum levelsEnum {
 	level2,
 	level3,
 }
+
+enum moveOption {
+	guard = 0,
+	wander,
+	patrol,
+}

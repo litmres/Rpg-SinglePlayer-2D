@@ -1,7 +1,6 @@
 /// <reference path="./masterEnemy.ts"/>
 
 class Slime extends MasterEnemy {
-    minWanderRange = 100;
     bodyWidth: number;
     bodyHeight: number;
     maxWanderRange = 100;
@@ -9,6 +8,7 @@ class Slime extends MasterEnemy {
     hitBox1: Phaser.Sprite;
     defaultDirection = -1;
     damageFrames = [10, 11];
+    moveOption = moveOption.wander;
     constructor(game: Phaser.Game, x: number, y: number) {
         super(game, x, y, "slime", 0);
         this.bodyWidth = 16;

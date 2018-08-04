@@ -52,7 +52,9 @@ class MasterEnemy extends Phaser.Sprite {
     hitBox1: Phaser.Sprite | null = null;
     invincible = false;
     hitBoxes: Phaser.Group;
+    patrolDirection = 1;
     damageFrames: number[] = [];
+    moveOption = moveOption.guard;
     constructor(game: Phaser.Game, x: number, y: number, key?: string, frame?: number) {
         super(game, x, y, key, frame);
         this.anchor.setTo(0.5, 0);
@@ -106,7 +108,11 @@ class MasterEnemy extends Phaser.Sprite {
             } else if (this.isAllowedToChase(distance)) {
                 this.chase();
             } else if (this.isAllowedToWander()) {
-                //this.wander();
+                if (this.moveOption === moveOption.patrol) {
+                    this.patrol();
+                } else if (this.moveOption === moveOption.wander) {
+                    this.wander();
+                }
             } else {
                 this.idle();
             }
@@ -154,9 +160,9 @@ class MasterEnemy extends Phaser.Sprite {
 
     stopMovingTo() {
         if (this.enemyState === enemyStateEnum.movingWalk) {
-            if (this.game.physics.arcade.distanceToXY(this, this.targetX, this.targetY) < 10) {
+            if (Math.abs(this.targetX - this.x) < 5) {
                 this.x = this.targetX;
-                this.y = this.targetY;
+                this.y = this.y;
                 this.body.velocity.setTo(0, 0);
                 this.enemyState = enemyStateEnum.idle;
             }
@@ -302,14 +308,30 @@ class MasterEnemy extends Phaser.Sprite {
         this.game.physics.arcade.moveToXY(this, this.player.x, this.y, this.stats.movespeed);
     }
 
-    //hella bugged
+    patrol() {
+        if (this.x > this.spawnPositionX + this.maxWanderRange) {
+            this.patrolDirection = 1;
+        } else if (this.x < this.spawnPositionX - this.maxWanderRange) {
+            this.patrolDirection = 0;
+        }
+
+        if (this.patrolDirection) {
+            this.moveLeft(this.maxWanderRange);
+        } else {
+            this.moveRight(this.maxWanderRange);
+        }
+    }
+
     wander() {
-        if (this.game.physics.arcade.distanceToXY(this, this.spawnPositionX, this.spawnPositionY) > this.maxWanderRange) {
+        if (this.x > this.spawnPositionX + this.maxWanderRange) {
+            this.moveEnemyTo(this.spawnPositionX, this.spawnPositionY, this.stats.movespeed);
+            return;
+        } else if (this.x < this.spawnPositionX - this.maxWanderRange) {
             this.moveEnemyTo(this.spawnPositionX, this.spawnPositionY, this.stats.movespeed);
             return;
         }
         const direction = this.game.rnd.integerInRange(0, 1);
-        const distance = this.game.rnd.integerInRange(10, this.maxWanderRange);
+        const distance = this.game.rnd.integerInRange(20, this.maxWanderRange);
         if (direction) {
             this.moveLeft(distance);
         } else {

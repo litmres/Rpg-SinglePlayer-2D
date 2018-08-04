@@ -81,6 +81,12 @@ var levelsEnum;
     levelsEnum[levelsEnum["level2"] = 2] = "level2";
     levelsEnum[levelsEnum["level3"] = 3] = "level3";
 })(levelsEnum || (levelsEnum = {}));
+var moveOption;
+(function (moveOption) {
+    moveOption[moveOption["guard"] = 0] = "guard";
+    moveOption[moveOption["wander"] = 1] = "wander";
+    moveOption[moveOption["patrol"] = 2] = "patrol";
+})(moveOption || (moveOption = {}));
 var SimpleGame = /** @class */ (function (_super) {
     __extends(SimpleGame, _super);
     function SimpleGame() {
@@ -154,7 +160,9 @@ var MasterEnemy = /** @class */ (function (_super) {
             _a);
         _this.hitBox1 = null;
         _this.invincible = false;
+        _this.patrolDirection = 1;
         _this.damageFrames = [];
+        _this.moveOption = moveOption.guard;
         _this.anchor.setTo(0.5, 0);
         game.physics.arcade.enableBody(_this);
         game.add.existing(_this);
@@ -200,7 +208,12 @@ var MasterEnemy = /** @class */ (function (_super) {
                 this.chase();
             }
             else if (this.isAllowedToWander()) {
-                //this.wander();
+                if (this.moveOption === moveOption.patrol) {
+                    this.patrol();
+                }
+                else if (this.moveOption === moveOption.wander) {
+                    this.wander();
+                }
             }
             else {
                 this.idle();
@@ -243,9 +256,9 @@ var MasterEnemy = /** @class */ (function (_super) {
     };
     MasterEnemy.prototype.stopMovingTo = function () {
         if (this.enemyState === enemyStateEnum.movingWalk) {
-            if (this.game.physics.arcade.distanceToXY(this, this.targetX, this.targetY) < 10) {
+            if (Math.abs(this.targetX - this.x) < 5) {
                 this.x = this.targetX;
-                this.y = this.targetY;
+                this.y = this.y;
                 this.body.velocity.setTo(0, 0);
                 this.enemyState = enemyStateEnum.idle;
             }
@@ -380,14 +393,31 @@ var MasterEnemy = /** @class */ (function (_super) {
         }
         this.game.physics.arcade.moveToXY(this, this.player.x, this.y, this.stats.movespeed);
     };
-    //hella bugged
+    MasterEnemy.prototype.patrol = function () {
+        if (this.x > this.spawnPositionX + this.maxWanderRange) {
+            this.patrolDirection = 1;
+        }
+        else if (this.x < this.spawnPositionX - this.maxWanderRange) {
+            this.patrolDirection = 0;
+        }
+        if (this.patrolDirection) {
+            this.moveLeft(this.maxWanderRange);
+        }
+        else {
+            this.moveRight(this.maxWanderRange);
+        }
+    };
     MasterEnemy.prototype.wander = function () {
-        if (this.game.physics.arcade.distanceToXY(this, this.spawnPositionX, this.spawnPositionY) > this.maxWanderRange) {
+        if (this.x > this.spawnPositionX + this.maxWanderRange) {
+            this.moveEnemyTo(this.spawnPositionX, this.spawnPositionY, this.stats.movespeed);
+            return;
+        }
+        else if (this.x < this.spawnPositionX - this.maxWanderRange) {
             this.moveEnemyTo(this.spawnPositionX, this.spawnPositionY, this.stats.movespeed);
             return;
         }
         var direction = this.game.rnd.integerInRange(0, 1);
-        var distance = this.game.rnd.integerInRange(10, this.maxWanderRange);
+        var distance = this.game.rnd.integerInRange(20, this.maxWanderRange);
         if (direction) {
             this.moveLeft(distance);
         }
@@ -471,6 +501,7 @@ var AdventurerEnemy = /** @class */ (function (_super) {
         _this.maxWanderRange = 100;
         _this.maxAggroRange = 100;
         _this.damageFrames = [45, 46];
+        _this.moveOption = moveOption.wander;
         _this.bodyWidth = 10;
         _this.bodyHeight = 30;
         _this.body.setSize(_this.bodyWidth / _this.scale.x, _this.bodyHeight / _this.scale.y, (_this.width - _this.bodyWidth) / 2, 5);
@@ -590,6 +621,7 @@ var KoboldEnemy = /** @class */ (function (_super) {
         _this.attackCount = 0;
         _this.resetAttackCount = null;
         _this.attackCooldown = 5000;
+        _this.moveOption = moveOption.patrol;
         _this.bodyWidth = 18;
         _this.bodyHeight = 28;
         _this.body.setSize(_this.bodyWidth / _this.scale.x, _this.bodyHeight / _this.scale.y, (_this.width - _this.bodyWidth) / 2 + 10, 5);
@@ -653,7 +685,6 @@ var MandrakeEnemy = /** @class */ (function (_super) {
     __extends(MandrakeEnemy, _super);
     function MandrakeEnemy(game, x, y) {
         var _this = _super.call(this, game, x, y, "mandrake", 0) || this;
-        _this.minWanderRange = 100;
         _this.maxWanderRange = 100;
         _this.maxAggroRange = 100;
         _this.damageFrames = [19, 20];
@@ -873,7 +904,6 @@ var RogueEnemy = /** @class */ (function (_super) {
     __extends(RogueEnemy, _super);
     function RogueEnemy(game, x, y) {
         var _this = _super.call(this, game, x, y, "rogue", 0) || this;
-        _this.minWanderRange = 100;
         _this.maxWanderRange = 100;
         _this.maxAggroRange = 100;
         _this.damageFrames = [34, 35, 36];
@@ -964,11 +994,11 @@ var Slime = /** @class */ (function (_super) {
     __extends(Slime, _super);
     function Slime(game, x, y) {
         var _this = _super.call(this, game, x, y, "slime", 0) || this;
-        _this.minWanderRange = 100;
         _this.maxWanderRange = 100;
         _this.maxAggroRange = 100;
         _this.defaultDirection = -1;
         _this.damageFrames = [10, 11];
+        _this.moveOption = moveOption.wander;
         _this.bodyWidth = 16;
         _this.bodyHeight = 15;
         _this.body.setSize(_this.bodyWidth / _this.scale.x, _this.bodyHeight / _this.scale.y, (_this.width - _this.bodyWidth) / 2, _this.height - _this.bodyHeight);

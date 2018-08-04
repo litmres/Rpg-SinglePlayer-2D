@@ -1,7 +1,6 @@
 /// <reference path="./masterEnemy.ts"/>
 
 class MandrakeEnemy extends MasterEnemy {
-    minWanderRange = 100;
     maxWanderRange = 100;
     bodyWidth: number;
     bodyHeight: number;

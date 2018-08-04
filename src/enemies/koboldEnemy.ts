@@ -12,6 +12,7 @@ class KoboldEnemy extends MasterEnemy {
     attackCount = 0;
     resetAttackCount: null | number = null;
     attackCooldown = 5000;
+    moveOption = moveOption.patrol;
     constructor(game: Phaser.Game, x: number, y: number) {
         super(game, x, y, "kobold", 0);
         this.bodyWidth = 18;

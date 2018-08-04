@@ -1,7 +1,6 @@
 /// <reference path="./masterEnemy.ts"/>
 
 class RogueEnemy extends MasterEnemy {
-    minWanderRange = 100;
     bodyWidth: number;
     bodyHeight: number;
     maxWanderRange = 100;
